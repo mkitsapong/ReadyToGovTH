@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- 1. พื้นหลังทรงสี่เหลี่ยมมุมมน (Navy Blue) -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#0F172A" />
+
+  <!-- 2. ไอคอนยอดอาคาร/เสาราชการแบบ Minimal (Warm Orange) -->
+  <path d="M 32 10 L 48 20 L 16 20 Z" fill="#F97316" />
+  <rect x="20" y="22" width="24" height="4" rx="1" fill="#F97316" />
+
+  <!-- 3. ข้อความ R2G ตัวหนา เด่นชัด (สีขาว + ส้ม) -->
+  <g font-family="'Inter', 'Prompt', sans-serif" font-weight="900" font-size="22">
+    <text x="14" y="50" fill="#FFFFFF">R</text>
+    <text x="28" y="50" fill="#F97316">2</text>
+    <text x="40" y="50" fill="#FFFFFF">G</text>
+  </g>
+</svg>
