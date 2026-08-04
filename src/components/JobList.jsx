@@ -40,7 +40,8 @@ export default function JobList({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
 
   const categoryFilter = CATEGORY_FILTER[activePage];
   const hero = PAGE_HERO_MAP[activePage] || PAGE_HERO_MAP.home;
@@ -96,10 +97,13 @@ export default function JobList({
     0
   );
 
-  // Reset visible count when filters change
+  // Reset page when filters change
   useEffect(() => {
-    setVisibleCount(6);
+    setCurrentPage(1);
   }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const currentJobs = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <>
@@ -291,7 +295,7 @@ export default function JobList({
               </div>
             ) : (
               <>
-                {filtered.slice(0, visibleCount).map((job, i) => (
+                {currentJobs.map((job, i) => (
                   <JobCard
                     key={job.id}
                     job={job}
@@ -306,14 +310,61 @@ export default function JobList({
             )}
           </div>
 
-          {!isLoading && !isError && filtered.length > visibleCount && (
-            <div style={{ textAlign: "center", marginTop: "3rem" }}>
-              <button
-                className="btn-primary"
-                style={{ padding: "12px 32px", fontSize: "1rem", borderRadius: "999px", boxShadow: "0 4px 14px rgba(0,0,0,0.15)" }}
-                onClick={() => setVisibleCount((prev) => prev + 6)}
+          {/* Pagination Controls */}
+          {!isLoading && !isError && totalPages > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: "3rem" }}>
+              <button 
+                onClick={() => {
+                  setCurrentPage(p => Math.max(1, p - 1));
+                  window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
+                }}
+                disabled={currentPage === 1}
+                style={{ padding: "8px 16px", border: "1px solid var(--gray-200)", borderRadius: "var(--radius-md)", background: currentPage === 1 ? "var(--gray-50)" : "white", cursor: currentPage === 1 ? "not-allowed" : "pointer", color: currentPage === 1 ? "var(--gray-400)" : "var(--navy-600)", fontWeight: 600 }}
               >
-                แสดงเพิ่มเติม (เหลืออีก {filtered.length - visibleCount} รายการ) ↓
+                ก่อนหน้า
+              </button>
+              
+              {Array.from({ length: totalPages }).map((_, i) => {
+                const p = i + 1;
+                // Show first, last, current, and one adjacent
+                if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => {
+                        setCurrentPage(p);
+                        window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
+                      }}
+                      style={{
+                        width: 40, height: 40,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        borderRadius: "var(--radius-md)",
+                        border: p === currentPage ? "none" : "1px solid var(--gray-200)",
+                        background: p === currentPage ? "linear-gradient(135deg, var(--navy-600), var(--navy-800))" : "white",
+                        color: p === currentPage ? "white" : "var(--navy-600)",
+                        fontWeight: p === currentPage ? 700 : 500,
+                        cursor: "pointer",
+                        boxShadow: p === currentPage ? "0 4px 12px rgba(13,31,60,0.2)" : "none"
+                      }}
+                    >
+                      {p}
+                    </button>
+                  );
+                } else if (p === currentPage - 2 || p === currentPage + 2) {
+                  return <span key={`dots-${p}`} style={{ padding: "0 4px", color: "var(--gray-400)" }}>...</span>;
+                }
+                return null;
+              })}
+
+              <button 
+                onClick={() => {
+                  setCurrentPage(p => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
+                }}
+                disabled={currentPage === totalPages}
+                style={{ padding: "8px 16px", border: "1px solid var(--gray-200)", borderRadius: "var(--radius-md)", background: currentPage === totalPages ? "var(--gray-50)" : "white", cursor: currentPage === totalPages ? "not-allowed" : "pointer", color: currentPage === totalPages ? "var(--gray-400)" : "var(--navy-600)", fontWeight: 600 }}
+              >
+                ถัดไป
               </button>
             </div>
           )}

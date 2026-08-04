@@ -39,15 +39,18 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const provinces  = getProvinces(job);
 
   const content = (
-    <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none' } : { maxWidth: 660 }} role={inline ? "region" : "dialog"} aria-modal={!inline}>
+    <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none', maxHeight: 'none', overflow: 'visible' } : { maxWidth: 660 }} role={inline ? "region" : "dialog"} aria-modal={!inline}>
 
       {/* ── Header ── */}
         <div style={{ position: "relative" }}>
           {/* Dark gradient banner */}
           <div style={{
             background: "linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 100%)",
-            padding: "28px 28px 56px",
+            padding: "24px 28px",
             position: "relative", overflow: "hidden",
+            borderTopLeftRadius: "var(--radius-2xl)",
+            borderTopRightRadius: "var(--radius-2xl)",
+            display: "flex", alignItems: "center", gap: 20
           }}>
             {/* Glow accents */}
             <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: "radial-gradient(circle, rgba(234,88,12,0.18) 0%, transparent 65%)", pointerEvents: "none" }} />
@@ -61,50 +64,50 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               </button>
             )}
 
-            {/* Category badge */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <span className={`badge ${meta.badge}`}>{job.category}</span>
-              {job.isNoOCSC && (
-                <span style={{
-                  padding: "2px 8px", background: "rgba(234,88,12,0.2)",
-                  border: "1px solid rgba(234,88,12,0.4)", borderRadius: "999px",
-                  fontSize: "0.72rem", fontWeight: 700, color: "#fed7aa",
-                  whiteSpace: "nowrap"
-                }}>
-                  ✨ ไม่ต้องผ่าน ภาค ก
-                </span>
-              )}
+            {/* Logo */}
+            <div style={{
+              width: 80, height: 80,
+              borderRadius: "var(--radius-xl)",
+              background: job.logoUrl ? "white" : "linear-gradient(135deg, #1e3a8a, #3b82f6)",
+              border: "3px solid rgba(255,255,255,0.2)",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden", flexShrink: 0,
+              zIndex: 10,
+            }}>
+              {job.logoUrl
+                ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8 }} />
+                : <span style={{ fontSize: "2.2rem" }}>{meta.icon}</span>}
             </div>
 
-            {/* Dept name */}
-            <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", lineHeight: 1.3, margin: 0 }}>
-              {job.department}
-            </h2>
-          </div>
+            {/* Text details */}
+            <div style={{ flex: 1, zIndex: 10 }}>
+              {/* Category badge */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <span className={`badge ${meta.badge}`}>{job.category}</span>
+                {job.isNoOCSC && (
+                  <span style={{
+                    padding: "2px 8px", background: "rgba(234,88,12,0.2)",
+                    border: "1px solid rgba(234,88,12,0.4)", borderRadius: "999px",
+                    fontSize: "0.72rem", fontWeight: 700, color: "#fed7aa",
+                    whiteSpace: "nowrap"
+                  }}>
+                    ✨ ไม่ต้องผ่าน ภาค ก
+                  </span>
+                )}
+              </div>
 
-          {/* Floating logo — overlaps banner and body */}
-          <div style={{
-            position: "absolute",
-            bottom: -44,
-            left: 28,
-            width: 88, height: 88,
-            borderRadius: "var(--radius-xl)",
-            background: job.logoUrl ? "white" : "linear-gradient(135deg, #1e3a8a, #3b82f6)",
-            border: "4px solid white",
-            boxShadow: "0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.06)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            overflow: "hidden",
-            zIndex: 10,
-          }}>
-            {job.logoUrl
-              ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8 }} />
-              : <span style={{ fontSize: "2.2rem" }}>{meta.icon}</span>}
+              {/* Dept name */}
+              <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", lineHeight: 1.3, margin: 0 }}>
+                {job.department}
+              </h2>
+            </div>
           </div>
         </div>
 
-        {/* Province tags — below banner, offset for floating logo */}
+        {/* Province tags */}
         <div style={{
-          padding: "56px 28px 16px",
+          padding: "16px 28px",
           borderBottom: "1px solid var(--gray-100)",
           background: "var(--white)",
         }}>

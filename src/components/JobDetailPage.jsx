@@ -1,4 +1,5 @@
-import { Link, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import JobDetailModal from "./JobDetailModal.jsx";
 import SEO from "./SEO.jsx";
 
@@ -36,6 +37,22 @@ function generateJobPostingSchema(job) {
 
 export default function JobDetailPage({ jobs, books, isAdmin, onEditJob }) {
   const { jobId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBack = (e) => {
+    e.preventDefault();
+    // ถ้ามีประวัติการเข้าชม (ไม่ได้เข้าลิงก์นี้โดยตรง) ให้กด Back เพื่อให้จำตำแหน่ง Scroll
+    if (location.key !== "default") {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [jobId]);
   
   if (!jobs || jobs.length === 0) {
     return <div className="container" style={{ padding: "40px 0", textAlign: "center" }}>กำลังโหลดข้อมูล...</div>;
@@ -67,9 +84,9 @@ export default function JobDetailPage({ jobs, books, isAdmin, onEditJob }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: generateJobPostingSchema(job) }} />
 
       <div className="container" style={{ padding: "40px 0" }}>
-        <Link to="/" style={{ color: "var(--navy-600)", fontWeight: "600", display: "inline-block", marginBottom: "20px" }}>
+        <a href="/" onClick={handleBack} style={{ color: "var(--navy-600)", fontWeight: "600", display: "inline-block", marginBottom: "20px", textDecoration: "none" }}>
           ← กลับหน้าแรก
-        </Link>
+        </a>
         <article className="job-detail-page">
            {/* Re-use JobDetailModal content logic but render it directly on the page instead of a modal */}
            {/* For simplicity, we can just render the modal component directly inline, but modify it slightly or we just render it full width */}

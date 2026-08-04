@@ -440,9 +440,21 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", gap: 8 }}>
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label className="form-label" style={{ fontSize: "0.72rem" }}>เงินเดือน *</label>
-                        <input className="form-input" placeholder="เช่น 15,000 บาท"
+                        <input className="form-input" placeholder="เช่น 15,000"
                           value={pos.salary}
-                          onChange={(e) => handlePositionChange(i, "salary", e.target.value)} />
+                          onChange={(e) => handlePositionChange(i, "salary", e.target.value)}
+                          onBlur={(e) => {
+                            let val = e.target.value.trim();
+                            if (val) {
+                              let text = val.replace(/บาท/g, "").trim();
+                              let formatted = text.replace(/\b\d+(?:,\d+)*\b/g, (match) => {
+                                const num = parseInt(match.replace(/,/g, ""), 10);
+                                return isNaN(num) ? match : num.toLocaleString("th-TH");
+                              });
+                              handlePositionChange(i, "salary", formatted + " บาท");
+                            }
+                          }}
+                        />
                       </div>
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label className="form-label" style={{ fontSize: "0.72rem" }}>อัตรา</label>
