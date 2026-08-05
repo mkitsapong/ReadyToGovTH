@@ -164,32 +164,7 @@ export default function App() {
     },
   });
 
-  // Temporarily add BOI job
-  useEffect(() => {
-    if (!localStorage.getItem("seededBOI_2")) {
-      addJobMutation.mutate({
-        department: "สำนักงานคณะกรรมการส่งเสริมการลงทุน (BOI)",
-        category: "พนักงานราชการ",
-        postedDate: "2026-07-22",
-        deadline: "2026-08-10",
-        positions: 10,
-        salary: "13,800 - 18,000",
-        announcementUrl: "https://boi.thaijobjob.com",
-        applyUrl: "https://boi.thaijobjob.com",
-        description: "เปิดรับสมัครสอบทางอินเทอร์เน็ตตลอด 24 ชั่วโมง (ไม่เว้นวันหยุดราชการ) ค่าธรรมเนียมสมัครสอบ 330 บาท ประกาศรายชื่อผู้มีสิทธิสอบวันที่ 20 ส.ค. 2569",
-        provinces: ["ส่วนกลาง"],
-        positionList: [
-          { title: "พนักงานสนับสนุนการลงทุน (ปฏิบัติงานทั่วไป / ช่าง)", salary: "13,800", count: 3, education: "ปวส." },
-          { title: "พนักงานส่งเสริมการลงทุน (บริหาร / คอมพิวเตอร์ / บัญชี / ศิลป์)", salary: "18,000", count: 7, education: "ปริญญาตรี" }
-        ],
-        requirements: []
-      }, {
-        onSuccess: () => {
-          localStorage.setItem("seededBOI_2", "true");
-        }
-      });
-    }
-  }, [addJobMutation]);
+
 
   const updateJobMutation = useMutation({
     mutationFn: api.updateJob,
