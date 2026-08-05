@@ -20,8 +20,9 @@ const EDU_ORDER = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญ�
 function getEduMatchStatus(positionList, userEdu) {
   if (!userEdu || !positionList?.length) return null;
   const matchCount = positionList.filter((p) => {
-    if (p.education === "ไม่จำกัดวุฒิ") return true;
-    return p.education === userEdu;           // exact match เท่านั้น
+    const edus = Array.isArray(p.education) ? p.education : (p.education ? [p.education] : []);
+    if (edus.includes("ไม่จำกัดวุฒิ")) return true;
+    return edus.includes(userEdu);           // exact match เท่านั้น
   }).length;
   if (matchCount === positionList.length) return "all";
   if (matchCount > 0) return "some";
@@ -250,11 +251,14 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
               // per-position edu match
               let rowMatch = null;
               if (userEducation) {
-                if (pos.education === "ไม่จำกัดวุฒิ") rowMatch = true;
+                const edus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
+                if (edus.includes("ไม่จำกัดวุฒิ")) rowMatch = true;
                 else {
-                  const req = EDU_ORDER.indexOf(pos.education);
                   const have = EDU_ORDER.indexOf(userEducation);
-                  rowMatch = req !== -1 && have !== -1 && have >= req;
+                  rowMatch = have !== -1 && edus.some(edu => {
+                    const req = EDU_ORDER.indexOf(edu);
+                    return req !== -1 && have >= req;
+                  });
                 }
               }
 
@@ -303,7 +307,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
         {/* ── Card Footer ── */}
         <div className="job-card-footer" style={{ marginTop: 12 }}>
           <div className="job-positions">
-            🎓 {[...new Set(job.positionList?.map((p) => p.education))].join(", ")}
+            🎓 {[...new Set(job.positionList?.flatMap((p) => Array.isArray(p.education) ? p.education : (p.education ? [p.education] : [])))].join(", ")}
           </div>
           <Link id={`btn-detail-${job.id}`} className="btn-apply" to={`/job/${job.id}`} style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
             รายละเอียด ▸

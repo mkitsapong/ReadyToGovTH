@@ -93,7 +93,10 @@ export default function JobList({
     if (userEducation) {
       result = result.filter((j) =>
         j.positionList?.some(
-          (p) => p.education === "ไม่จำกัดวุฒิ" || p.education === userEducation
+          (p) => {
+            const edus = Array.isArray(p.education) ? p.education : (p.education ? [p.education] : []);
+            return edus.includes("ไม่จำกัดวุฒิ") || edus.includes(userEducation);
+          }
         )
       );
     }

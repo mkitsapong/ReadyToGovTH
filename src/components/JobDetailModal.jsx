@@ -208,7 +208,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           {/* ── Position cards (document style) ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
             {job.positionList?.map((pos, i) => {
-              const eduStyle = EDU_COLORS[pos.education] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+              const posEdus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
                   if (pos.units && pos.units.length > 0) {
                     return (
                       <div key={i} style={{
@@ -256,7 +256,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                         {/* Units Body */}
                         <div style={{ background: "var(--white)", padding: "8px 16px" }}>
                           {pos.units.map((unit, uIdx) => {
-                            const unitEduStyle = EDU_COLORS[unit.education] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+                            const unitEdus = Array.isArray(unit.education) ? unit.education : (unit.education ? [unit.education] : []);
                             return (
                               <div key={uIdx} style={{
                                 padding: "12px 0",
@@ -269,14 +269,19 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                                 <div style={{ fontSize: "0.85rem", color: "var(--gray-700)", lineHeight: 1.6, marginLeft: 24 }}>
                                   <div style={{ marginBottom: 6, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                                     <span style={{ fontWeight: 700, color: "var(--navy-700)" }}>🎓 วุฒิที่เปิดรับ:</span>
-                                    <span style={{
-                                      padding: "2px 10px",
-                                      background: unitEduStyle.bg, border: `1px solid ${unitEduStyle.border}`,
-                                      borderRadius: "999px",
-                                      fontSize: "0.75rem", fontWeight: 700, color: unitEduStyle.color,
-                                    }}>
-                                      {unit.education}
-                                    </span>
+                                    {unitEdus.map((edu, eIdx) => {
+                                      const eduStyle = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+                                      return (
+                                        <span key={eIdx} style={{
+                                          padding: "2px 10px",
+                                          background: eduStyle.bg, border: `1px solid ${eduStyle.border}`,
+                                          borderRadius: "999px",
+                                          fontSize: "0.75rem", fontWeight: 700, color: eduStyle.color,
+                                        }}>
+                                          {edu}
+                                        </span>
+                                      );
+                                    })}
                                     {unit.major && (
                                       <span style={{ fontSize: "0.85rem", color: "var(--gray-700)" }}>
                                         {unit.major}
@@ -358,16 +363,21 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                             </span>
                           </div>
                           {/* Education */}
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                             <span style={{ fontSize: "0.72rem", color: "var(--gray-400)", fontWeight: 600 }}>🎓 วุฒิ</span>
-                            <span style={{
-                              padding: "3px 12px",
-                              background: eduStyle.bg, border: `1px solid ${eduStyle.border}`,
-                              borderRadius: "999px",
-                              fontSize: "0.78rem", fontWeight: 700, color: eduStyle.color,
-                            }}>
-                              {pos.education}
-                            </span>
+                            {posEdus.map((edu, eIdx) => {
+                              const style = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+                              return (
+                                <span key={eIdx} style={{
+                                  padding: "3px 12px",
+                                  background: style.bg, border: `1px solid ${style.border}`,
+                                  borderRadius: "999px",
+                                  fontSize: "0.78rem", fontWeight: 700, color: style.color,
+                                }}>
+                                  {edu}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
 

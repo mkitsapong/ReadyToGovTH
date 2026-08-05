@@ -9,8 +9,8 @@ const uniqueProvinces = [...new Set(allProvinces)].sort((a, b) => a.localeCompar
 
 const CATEGORY_ICONS = { ข้าราชการ: "🏛️", พนักงานราชการ: "📋", รัฐวิสาหกิจ: "🏢", ลูกจ้างชั่วคราว: "📝" };
 
-const EMPTY_UNIT = { name: "", count: 1, education: "ปริญญาตรี", major: "", details: "" };
-const EMPTY_POSITION = { title: "", salary: "", count: 1, education: "ปริญญาตรี", details: "", units: [] };
+const EMPTY_UNIT = { name: "", count: 1, education: ["ปริญญาตรี"], major: "", details: "" };
+const EMPTY_POSITION = { title: "", salary: "", count: 1, education: ["ปริญญาตรี"], details: "", units: [] };
 
 const EMPTY_FORM = {
   department: "",
@@ -57,7 +57,14 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
           isOCSC:          editJob.isOCSC || false,
           startDate:       editJob.startDate || "",
           positionList:    editJob.positionList?.length
-            ? editJob.positionList.map((p) => ({ ...p }))
+            ? editJob.positionList.map((p) => ({
+                ...p,
+                education: Array.isArray(p.education) ? p.education : (p.education ? [p.education] : []),
+                units: p.units ? p.units.map((u) => ({
+                  ...u,
+                  education: Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []),
+                })) : []
+              }))
             : [{ ...EMPTY_POSITION }],
         }
       : EMPTY_FORM
@@ -559,12 +566,36 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                               onChange={(e) => handlePositionChange(i, "count", e.target.value)} />
                           </div>
                           <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label className="form-label" style={{ fontSize: "0.72rem" }}>วุฒิที่ต้องการ</label>
-                            <select className="form-select"
-                              value={pos.education}
-                              onChange={(e) => handlePositionChange(i, "education", e.target.value)}>
-                              {EDUCATION.map((ed) => <option key={ed} value={ed}>{ed}</option>)}
-                            </select>
+                            <label className="form-label" style={{ fontSize: "0.72rem" }}>วุฒิที่ต้องการ (เลือกได้มากกว่า 1)</label>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                              {EDUCATION.map((ed) => {
+                                const isSelected = Array.isArray(pos.education) ? pos.education.includes(ed) : pos.education === ed;
+                                return (
+                                  <button
+                                    key={ed}
+                                    type="button"
+                                    onClick={() => {
+                                      let current = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
+                                      let newEdu = isSelected ? current.filter(e => e !== ed) : [...current, ed];
+                                      if (newEdu.length === 0) newEdu = [ed]; // Prevent empty selection
+                                      handlePositionChange(i, "education", newEdu);
+                                    }}
+                                    style={{
+                                      padding: "4px 10px",
+                                      borderRadius: "999px",
+                                      fontSize: "0.75rem",
+                                      fontWeight: isSelected ? 600 : 400,
+                                      cursor: "pointer",
+                                      border: isSelected ? "1px solid var(--accent)" : "1px solid var(--gray-300)",
+                                      background: isSelected ? "rgba(234, 88, 12, 0.1)" : "var(--white)",
+                                      color: isSelected ? "var(--accent)" : "var(--gray-600)"
+                                    }}
+                                  >
+                                    {ed}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
                         </>
                       )}
@@ -605,11 +636,35 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "10px", marginBottom: "10px" }}>
                               <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>วุฒิที่ต้องการ</label>
-                                <select className="form-select" style={{ fontSize: "0.75rem", padding: "6px 10px" }}
-                                  value={unit.education}
-                                  onChange={(e) => handleUnitChange(i, uIdx, "education", e.target.value)}>
-                                  {EDUCATION.map((ed) => <option key={ed} value={ed}>{ed}</option>)}
-                                </select>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                                  {EDUCATION.map((ed) => {
+                                    const isSelected = Array.isArray(unit.education) ? unit.education.includes(ed) : unit.education === ed;
+                                    return (
+                                      <button
+                                        key={ed}
+                                        type="button"
+                                        onClick={() => {
+                                          let current = Array.isArray(unit.education) ? unit.education : (unit.education ? [unit.education] : []);
+                                          let newEdu = isSelected ? current.filter(e => e !== ed) : [...current, ed];
+                                          if (newEdu.length === 0) newEdu = [ed];
+                                          handleUnitChange(i, uIdx, "education", newEdu);
+                                        }}
+                                        style={{
+                                          padding: "2px 8px",
+                                          borderRadius: "999px",
+                                          fontSize: "0.7rem",
+                                          fontWeight: isSelected ? 600 : 400,
+                                          cursor: "pointer",
+                                          border: isSelected ? "1px solid var(--accent)" : "1px solid var(--gray-300)",
+                                          background: isSelected ? "rgba(234, 88, 12, 0.1)" : "var(--white)",
+                                          color: isSelected ? "var(--accent)" : "var(--gray-600)"
+                                        }}
+                                      >
+                                        {ed}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               </div>
                               <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>สาขาวิชา (ถ้ามี)</label>
