@@ -474,8 +474,14 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 ⏳ ยังไม่เปิดรับสมัคร
               </button>
             ) : (
-              <a href={job.applyUrl || "#"} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: "none" }}>
-                สมัครงาน →
+              <a 
+                href={job.applyUrl || "#"} 
+                target={job.applyUrl?.startsWith("mailto:") ? undefined : "_blank"} 
+                rel="noreferrer" 
+                className="btn btn-primary" 
+                style={{ textDecoration: "none" }}
+              >
+                {job.applyUrl?.startsWith("mailto:") ? "ส่งอีเมลสมัครงาน ✉️" : "สมัครงาน →"}
               </a>
             )}
           </div>
