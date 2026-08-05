@@ -1,19 +1,22 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import JobCard from "./JobCard.jsx";
 import { ExamPrepBanner } from "./ExamResources.jsx";
+import { regions } from "../data/provinces.js";
 
 const CATEGORY_FILTER = {
-  home:       null,
-  civil:      "ข้าราชการ",
+  home: null,
+  civil: "ข้าราชการ",
   government: "พนักงานราชการ",
-  state:      "รัฐวิสาหกิจ",
+  state: "รัฐวิสาหกิจ",
+  temp: "ลูกจ้างชั่วคราว",
 };
 
 const PAGE_HERO_MAP = {
-  home:       { title: "งานราชการทุกประเภท",    subtitle: "รวบรวมประกาศรับสมัครงานภาครัฐไทยในที่เดียว อัปเดตล่าสุด" },
-  civil:      { title: "ข้าราชการ",               subtitle: "ตำแหน่งข้าราชการพลเรือนและข้าราชการพิเศษ" },
-  government: { title: "พนักงานราชการ",           subtitle: "ตำแหน่งพนักงานราชการทั่วไปและพนักงานราชการพิเศษ" },
-  state:      { title: "รัฐวิสาหกิจ",             subtitle: "ตำแหน่งในองค์กรรัฐวิสาหกิจและหน่วยงานของรัฐ" },
+  home: { title: "งานราชการทุกประเภท", subtitle: "รวบรวมประกาศรับสมัครงานภาครัฐไทยในที่เดียว อัปเดตล่าสุด" },
+  civil: { title: "ข้าราชการ", subtitle: "ตำแหน่งข้าราชการพลเรือนและข้าราชการพิเศษ" },
+  government: { title: "พนักงานราชการ", subtitle: "ตำแหน่งพนักงานราชการทั่วไปและพนักงานราชการพิเศษ" },
+  state: { title: "รัฐวิสาหกิจ", subtitle: "ตำแหน่งในองค์กรรัฐวิสาหกิจและหน่วยงานของรัฐ" },
+  temp: { title: "ลูกจ้างชั่วคราว", subtitle: "ตำแหน่งลูกจ้างชั่วคราวและพนักงานจ้างเหมาบริการ" },
 };
 
 // Helper: normalize province field — รองรับทั้ง string เก่าและ array ใหม่
@@ -37,11 +40,24 @@ export default function JobList({
   onAddBook,
   onUpdateBook,
   onDeleteBook,
+  onSelectProvince,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
+  const regionDropdownRef = useRef(null);
   const ITEMS_PER_PAGE = 9;
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (regionDropdownRef.current && !regionDropdownRef.current.contains(e.target)) {
+        setIsRegionDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const categoryFilter = CATEGORY_FILTER[activePage];
   const hero = PAGE_HERO_MAP[activePage] || PAGE_HERO_MAP.home;
@@ -54,9 +70,20 @@ export default function JobList({
       result = result.filter((j) => j.category === categoryFilter);
     }
 
-    // Province filter — รองรับหลายจังหวัด
+    // Province / Region filter
     if (selectedProvince) {
-      result = result.filter((j) => getProvinces(j).includes(selectedProvince));
+      const regionMatch = regions.find((r) => r.name === selectedProvince);
+      if (regionMatch) {
+        result = result.filter((j) => {
+          const jobProvinces = getProvinces(j);
+          return jobProvinces.some((p) => regionMatch.provinces.includes(p) || p === "ทุกจังหวัด" || p === "ทั่วประเทศ");
+        });
+      } else {
+        result = result.filter((j) => {
+          const jobProvinces = getProvinces(j);
+          return jobProvinces.includes(selectedProvince) || jobProvinces.includes("ทุกจังหวัด") || jobProvinces.includes("ทั่วประเทศ");
+        });
+      }
     }
 
     // Education filter — แสดงเฉพาะ job ที่มีตำแหน่งตรงวุฒิ
@@ -111,7 +138,7 @@ export default function JobList({
       <section className="page-hero">
         <div className="container hero-content" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32, flexWrap: "wrap" }}>
           {/* Left Column: Title & Stats */}
-          <div style={{ flex: "1 1 450px" }}>
+          <div style={{ flex: "1 1 300px", minWidth: "280px" }}>
             <h1 className="hero-title">
               <span>{hero.title}</span>
             </h1>
@@ -138,7 +165,8 @@ export default function JobList({
 
           {/* Right Column: Quick Edu Filter Card */}
           <div style={{
-            flex: "0 1 420px",
+            flex: "1 1 320px",
+            minWidth: "280px",
             background: "rgba(255,255,255,0.06)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
@@ -211,8 +239,115 @@ export default function JobList({
       <div className="filter-bar">
         <div className="container">
           <div className="filter-bar-inner">
+            {/* Region Dropdown */}
+            <div className="custom-region-dropdown" ref={regionDropdownRef} style={{ position: "relative" }}>
+              <button
+                className="filter-sort"
+                onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
+                style={{
+                  border: "1.5px solid var(--gray-200)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "9px 14px",
+                  background: "var(--gray-50)",
+                  fontSize: "0.875rem",
+                  cursor: "pointer",
+                  minWidth: "160px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  color: "var(--navy-900)",
+                  fontWeight: 500,
+                  height: "100%"
+                }}
+              >
+                <span>{selectedProvince ? `📍 ${selectedProvince}` : "📍 ทุกภูมิภาค"}</span>
+                <span style={{ fontSize: "0.7rem", opacity: 0.6 }}>▼</span>
+              </button>
+
+              {isRegionDropdownOpen && (
+                <div style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  marginTop: "8px",
+                  background: "var(--white)",
+                  border: "1px solid var(--gray-200)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                  width: "280px",
+                  maxHeight: "350px",
+                  overflowY: "auto",
+                  zIndex: 100,
+                  padding: "8px 0"
+                }}>
+                  <div
+                    onClick={() => { onSelectProvince(null); setIsRegionDropdownOpen(false); }}
+                    style={{
+                      padding: "10px 16px",
+                      cursor: "pointer",
+                      fontSize: "0.9rem",
+                      fontWeight: !selectedProvince ? 600 : 400,
+                      color: !selectedProvince ? "var(--accent)" : "var(--navy-900)",
+                      background: !selectedProvince ? "var(--gray-50)" : "transparent",
+                      borderBottom: "1px solid var(--gray-100)"
+                    }}
+                  >
+                    📍 ทุกภูมิภาค
+                  </div>
+                  
+                  {regions.map(r => (
+                    <div key={r.id}>
+                      <div 
+                        onClick={() => { onSelectProvince(r.name); setIsRegionDropdownOpen(false); }}
+                        style={{
+                          padding: "10px 16px",
+                          fontSize: "0.85rem",
+                          fontWeight: selectedProvince === r.name ? 700 : 600,
+                          color: selectedProvince === r.name ? "var(--accent)" : "var(--navy-800)",
+                          background: selectedProvince === r.name ? "rgba(234, 88, 12, 0.08)" : "var(--gray-50)",
+                          cursor: "pointer",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginTop: "4px",
+                          borderTop: "1px solid var(--gray-100)",
+                          borderBottom: "1px solid var(--gray-100)"
+                        }}
+                      >
+                        <span>📍 {r.name} (ทั้งหมด)</span>
+                        {selectedProvince === r.name && <span style={{ fontSize: "0.8rem" }}>✓</span>}
+                      </div>
+                      {r.provinces.map(p => {
+                        const isSelected = selectedProvince === p;
+                        return (
+                          <div
+                            key={p}
+                            onClick={() => { onSelectProvince(p); setIsRegionDropdownOpen(false); }}
+                            style={{
+                              padding: "8px 16px 8px 24px",
+                              cursor: "pointer",
+                              fontSize: "0.875rem",
+                              color: isSelected ? "var(--accent)" : "var(--navy-700)",
+                              fontWeight: isSelected ? 600 : 400,
+                              background: isSelected ? "rgba(234, 88, 12, 0.05)" : "transparent",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between"
+                            }}
+                          >
+                            <span>{p}</span>
+                            {isSelected && <span style={{ fontSize: "0.75rem" }}>✓</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Search */}
-            <div className="filter-search">
+            <div className="filter-search" style={{ position: "relative", flex: 1 }}>
               <span className="filter-search-icon">🔍</span>
               <input
                 id="job-search-input"
@@ -220,7 +355,34 @@ export default function JobList({
                 placeholder="ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: "100%", paddingRight: searchQuery ? "32px" : "16px" }}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--gray-400)",
+                    cursor: "pointer",
+                    fontSize: "1rem",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "50%",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "var(--gray-600)"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "var(--gray-400)"}
+                  title="ล้างคำค้นหา"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
             {/* Sort */}
@@ -246,14 +408,6 @@ export default function JobList({
       {/* Job Grid */}
       <section className="jobs-section">
         <div className="container">
-          {/* Banner แนะนำหนังสือ & คอร์สเตรียมสอบ */}
-          <ExamPrepBanner
-            books={books}
-            isAdmin={isAdmin}
-            onAddBook={onAddBook}
-            onUpdateBook={onUpdateBook}
-            onDeleteBook={onDeleteBook}
-          />
 
           <div className="jobs-grid">
             {isLoading ? (
@@ -279,9 +433,9 @@ export default function JobList({
                 <div className="empty-state-icon" style={{ color: "#ef4444" }}>⚠️</div>
                 <h3 style={{ color: "#ef4444" }}>เกิดข้อผิดพลาดในการโหลดข้อมูล</h3>
                 <p>โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง</p>
-                <button 
-                  className="btn-primary" 
-                  onClick={() => window.location.reload()} 
+                <button
+                  className="btn-primary"
+                  onClick={() => window.location.reload()}
                   style={{ marginTop: 16, padding: "10px 24px" }}
                 >
                   โหลดใหม่
@@ -313,7 +467,7 @@ export default function JobList({
           {/* Pagination Controls */}
           {!isLoading && !isError && totalPages > 1 && (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: "3rem" }}>
-              <button 
+              <button
                 onClick={() => {
                   setCurrentPage(p => Math.max(1, p - 1));
                   window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
@@ -323,7 +477,7 @@ export default function JobList({
               >
                 ก่อนหน้า
               </button>
-              
+
               {Array.from({ length: totalPages }).map((_, i) => {
                 const p = i + 1;
                 // Show first, last, current, and one adjacent
@@ -356,7 +510,7 @@ export default function JobList({
                 return null;
               })}
 
-              <button 
+              <button
                 onClick={() => {
                   setCurrentPage(p => Math.min(totalPages, p + 1));
                   window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
@@ -368,6 +522,17 @@ export default function JobList({
               </button>
             </div>
           )}
+
+          {/* Banner แนะนำหนังสือ & คอร์สเตรียมสอบ */}
+          <div style={{ marginTop: 40 }}>
+            <ExamPrepBanner
+              books={books}
+              isAdmin={isAdmin}
+              onAddBook={onAddBook}
+              onUpdateBook={onUpdateBook}
+              onDeleteBook={onDeleteBook}
+            />
+          </div>
         </div>
       </section>
     </>

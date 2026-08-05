@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-05T08:28:25+07:00",
+  "title": "Design System: Jobs Platform",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Tech Slate Blue", "canonical": "#122754" },
+      "accent": { "role": "secondary", "displayName": "Neon Orange", "canonical": "#f97316" },
+      "neutral-bg": { "role": "neutral", "displayName": "Cool Background", "canonical": "#f8fafc" }
+    },
+    "typographyMeta": {
+      "body": { "displayName": "Body", "purpose": "Primary reading text and descriptions." }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 2px 4px rgba(5, 11, 20, 0.04), 0 1px 2px rgba(5, 11, 20, 0.02)", "purpose": "Card at rest." },
+      { "name": "shadow-xl", "value": "0 24px 48px rgba(5, 11, 20, 0.12), 0 12px 24px rgba(5, 11, 20, 0.08)", "purpose": "Card on hover." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Used for standard form submissions and secondary actions.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">SUBMIT</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 24px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; letter-spacing: 0.01em; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); font-family: 'Prompt', sans-serif; } .ds-btn-primary { background: linear-gradient(135deg, #122754 0%, #1a3a6b 100%); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 12px rgba(18, 39, 84, 0.2); } .ds-btn-primary:hover { background: linear-gradient(135deg, #1a3a6b 0%, #1e4d8c 100%); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(18, 39, 84, 0.3); }"
+    },
+    {
+      "name": "Accent Button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "Used for the most important calls to action on the page.",
+      "html": "<button class=\"ds-btn ds-btn-accent\">APPLY NOW</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; padding: 12px 24px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; letter-spacing: 0.01em; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); font-family: 'Prompt', sans-serif; } .ds-btn-accent { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25); } .ds-btn-accent:hover { background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); transform: translateY(-2px); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }"
+    },
+    {
+      "name": "Header Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Sticky top bar that anchors the application and provides primary routing.",
+      "html": "<header class=\"ds-header\"><div class=\"ds-header-inner\"><div class=\"ds-logo\">LOGO</div><nav class=\"ds-nav\"><a href=\"#\" class=\"ds-nav-link\">Find Jobs</a><a href=\"#\" class=\"ds-nav-link active\">Companies</a></nav></div></header>",
+      "css": ".ds-header { background: rgba(13, 31, 60, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15); font-family: 'Prompt', sans-serif; width: 100%; position: relative; } .ds-header-inner { display: flex; align-items: center; height: 68px; gap: 32px; padding: 0 24px; } .ds-logo { color: #fff; font-weight: 700; } .ds-nav { display: flex; align-items: center; gap: 8px; } .ds-nav-link { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; color: #93c5fd; font-size: 0.95rem; font-weight: 500; text-decoration: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-nav-link:hover { color: #ffffff; background: rgba(255,255,255,0.08); } .ds-nav-link.active { color: #f97316; background: rgba(234,88,12,0.12); }"
+    },
+    {
+      "name": "Standard Modal",
+      "kind": "custom",
+      "refersTo": "modal",
+      "description": "Overlay container for focused tasks, forms, or confirmations.",
+      "html": "<div class=\"ds-modal-overlay\"><div class=\"ds-modal\"><div class=\"ds-modal-header\"><h3 class=\"ds-modal-title\">Update Settings</h3><button class=\"ds-modal-close\">✕</button></div><div class=\"ds-modal-body\">Modal content goes here.</div><div class=\"ds-modal-footer\"><button class=\"ds-btn-outline\">Cancel</button><button class=\"ds-btn-primary\">Save</button></div></div></div>",
+      "css": ".ds-modal-overlay { position: relative; width: 100%; height: 300px; background: rgba(10,22,40,0.7); display: flex; align-items: center; justify-content: center; padding: 24px; font-family: 'Prompt', sans-serif; } .ds-modal { background: #ffffff; border-radius: 28px; box-shadow: 0 24px 48px rgba(5, 11, 20, 0.12), 0 12px 24px rgba(5, 11, 20, 0.08); width: 100%; max-width: 400px; } .ds-modal-header { padding: 20px 24px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; } .ds-modal-title { font-size: 1.1rem; font-weight: 700; color: #0a1628; margin: 0; } .ds-modal-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border: none; border-radius: 10px; color: #64748b; cursor: pointer; transition: all 0.2s ease; } .ds-modal-close:hover { background: #e2e8f0; color: #1e293b; } .ds-modal-body { padding: 24px; color: #334155; font-size: 0.95rem; } .ds-modal-footer { padding: 16px 24px 20px; display: flex; gap: 10px; justify-content: flex-end; } .ds-btn-outline { padding: 8px 16px; background: transparent; border: 1px solid #cbd5e1; border-radius: 10px; color: #334155; font-weight: 600; cursor: pointer; } .ds-btn-primary { padding: 8px 16px; background: #122754; color: #fff; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Calm Assessor",
+    "overview": "This visual system is restrained, focused, data-driven, and minimal. It prioritizes clarity and efficiency, ensuring that job seekers and employers can navigate complex data without being overwhelmed by unnecessary visual noise. The design recedes to let the content lead, using strategic pops of vibrant color only where action is required.",
+    "keyCharacteristics": [
+      "Content-first layout with high legibility.",
+      "Subdued backgrounds contrasting with vibrant interactive elements.",
+      "Clean and consistent spacing."
+    ],
+    "rules": [
+      {
+        "name": "The 90/10 Focus Rule",
+        "body": "90% of the interface remains neutral and calm (white, slate, and gray). The remaining 10% uses the vibrant Neon Orange accent exclusively for interactive actions and important data visualization.",
+        "section": "colors"
+      },
+      {
+        "name": "The Data Legibility Rule",
+        "body": "Data points, metadata, and labels must use distinct font weights or colors (e.g., Gray 500) to separate them visually from primary reading text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Lifted Surface Rule",
+        "body": "Cards and containers sit on a slightly off-white background and use a pure white surface with a distinct shadow to create physical separation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the Neon Orange accent strictly for interactive or primary actions.",
+      "Do maintain a minimum of 20px padding inside all lifted cards."
+    ],
+    "donts": [
+      "Don't use pure black for text; rely on the slate gray shades.",
+      "Don't mix shadows; use the predefined shadow tokens to maintain a consistent perceived light source."
+    ]
+  }
+}

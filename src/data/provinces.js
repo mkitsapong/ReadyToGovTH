@@ -1,5 +1,13 @@
 export const regions = [
   {
+    id: "special",
+    name: "ส่วนกลาง / ทั่วประเทศ",
+    provinces: [
+      "ส่วนกลาง",
+      "ทั่วประเทศ"
+    ],
+  },
+  {
     id: "north",
     name: "ภาคเหนือ",
     provinces: [

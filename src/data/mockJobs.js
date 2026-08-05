@@ -1,5 +1,25 @@
 export const mockJobs = [
   {
+    id: 999,
+    department: "กรมการพัฒนาชุมชน (Mockup 30 ตำแหน่ง)",
+    category: "ข้าราชการ",
+    provinces: ["ทุกจังหวัด"],
+    deadline: "2026-12-31",
+    postedDate: "2026-08-01",
+    description: "รับสมัครข้าราชการ กรมการพัฒนาชุมชน จำนวน 30 ตำแหน่ง",
+    applyUrl: "#",
+    announcementUrl: "#",
+    logoUrl: "",
+    showBooks: false,
+    positionList: Array.from({ length: 30 }).map((_, i) => ({
+      title: `นักวิชาการพัฒนาชุมชนปฏิบัติการ (สายงานที่ ${i + 1})`,
+      salary: "15,000–16,500 บาท",
+      count: Math.floor(Math.random() * 5) + 1,
+      education: ["ปริญญาตรี", "ปริญญาโท", "ปวส."][i % 3],
+      details: `รายละเอียดสำหรับตำแหน่งที่ ${i + 1}`
+    }))
+  },
+  {
     id: 1,
     department: "สำนักงานปลัดกระทรวงการคลัง",
     category: "ข้าราชการ",

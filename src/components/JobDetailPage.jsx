@@ -55,14 +55,14 @@ export default function JobDetailPage({ jobs, books, isAdmin, onEditJob }) {
   }, [jobId]);
   
   if (!jobs || jobs.length === 0) {
-    return <div className="container" style={{ padding: "40px 0", textAlign: "center" }}>กำลังโหลดข้อมูล...</div>;
+    return <div className="container" style={{ paddingTop: "40px", paddingBottom: "40px", textAlign: "center" }}>กำลังโหลดข้อมูล...</div>;
   }
 
   const job = jobs.find((j) => String(j.id) === String(jobId));
 
   if (!job) {
     return (
-      <div className="container" style={{ padding: "40px 0", textAlign: "center" }}>
+      <div className="container" style={{ paddingTop: "40px", paddingBottom: "40px", textAlign: "center" }}>
         <h2>ไม่พบประกาศงานนี้</h2>
         <Link to="/" className="btn-primary" style={{ padding: "10px 24px", display: "inline-block", marginTop: "20px" }}>
           กลับหน้าหลัก
@@ -83,7 +83,7 @@ export default function JobDetailPage({ jobs, books, isAdmin, onEditJob }) {
       {/* Inject Structured Data */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: generateJobPostingSchema(job) }} />
 
-      <div className="container" style={{ padding: "40px 0" }}>
+      <div className="container" style={{ paddingTop: "24px", paddingBottom: "40px" }}>
         <a href="/" onClick={handleBack} style={{ color: "var(--navy-600)", fontWeight: "600", display: "inline-block", marginBottom: "20px", textDecoration: "none" }}>
           ← กลับหน้าแรก
         </a>

@@ -30,15 +30,15 @@ export default function AuthModal({ onClose }) {
 
   return (
     <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal animate-fade-up" style={{ maxWidth: 400 }} role="dialog" aria-modal="true">
-        <div className="modal-header">
-          <h2 className="modal-title" style={{ fontSize: "1rem" }}>🔐 เข้าสู่ระบบผู้ดูแลระบบ (Admin)</h2>
-          <button className="modal-close" onClick={onClose}>✕</button>
+      <div className="modal animate-fade-up" style={{ maxWidth: 420 }} role="dialog" aria-modal="true">
+        <div className="modal-header" style={{ padding: "24px 24px 16px", borderBottom: "1px solid rgba(226, 232, 240, 0.6)", background: "linear-gradient(135deg, var(--gray-50), var(--white))" }}>
+          <h2 className="modal-title" style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--navy-800)" }}>🔐 เข้าสู่ระบบผู้ดูแลระบบ</h2>
+          <button className="modal-close" onClick={onClose} style={{ top: 20, right: 20 }}>✕</button>
         </div>
 
-        <div className="modal-body">
-          <p style={{ fontSize: "0.82rem", color: "var(--gray-500)", marginBottom: 16 }}>
-            เข้าสู่ระบบเพื่อเพิ่ม แก้ไข หรือลบประกาศงานราชการและหนังสือติวสอบ
+        <div className="modal-body" style={{ padding: "24px" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--navy-300)", marginBottom: 24, lineHeight: 1.5 }}>
+            เข้าสู่ระบบเพื่อจัดการประกาศงานราชการและหนังสือติวสอบ
           </p>
 
           <form onSubmit={handleLogin}>
@@ -48,7 +48,6 @@ export default function AuthModal({ onClose }) {
                 id="auth-email"
                 type="email"
                 className="form-input"
-                placeholder="admin@readytogovth.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
@@ -81,10 +80,14 @@ export default function AuthModal({ onClose }) {
               </div>
             )}
 
-            <div className="modal-footer" style={{ padding: "0", paddingTop: 10 }}>
-              <button type="button" className="btn btn-outline" onClick={onClose}>ยกเลิก</button>
-              <button id="auth-submit-btn" type="submit" className="btn btn-accent" disabled={loading}>
-                {loading ? "⏳ กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ Admin →"}
+            <div style={{ marginTop: 32 }}>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                style={{ width: "100%", justifyContent: "center", padding: "14px", fontSize: "1rem" }} 
+                disabled={loading}
+              >
+                {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
               </button>
             </div>
           </form>

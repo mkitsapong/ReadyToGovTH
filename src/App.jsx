@@ -12,6 +12,8 @@ import JobDetailPage from "./components/JobDetailPage.jsx";
 import AdminPanel  from "./components/AdminPanel.jsx";
 import AuthModal   from "./components/AuthModal.jsx";
 import Footer      from "./components/Footer.jsx";
+import PolicyPage  from "./components/PolicyPage.jsx";
+import CookieBanner from "./components/CookieBanner.jsx";
 import SEO         from "./components/SEO.jsx";
 import * as api    from "./api.js";
 
@@ -30,7 +32,7 @@ function Toast({ toasts }) {
 
 // ─── Main Content Wrapper ───────────────────────────────────────────────────
 // This component handles the URL params/search and passes them to JobList
-function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, isBooksError, isAdmin, handleEditJob, userEducation, setUserEducation, handleAddBook, handleUpdateBook, handleDeleteBook }) {
+function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, isBooksError, isAdmin, handleEditJob, userEducation, setUserEducation, handleAddBook, handleUpdateBook, handleDeleteBook, onSelectProvince }) {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   
@@ -39,6 +41,7 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
   if (location.pathname === "/category/civil") activePage = "civil";
   if (location.pathname === "/category/government") activePage = "government";
   if (location.pathname === "/category/state") activePage = "state";
+  if (location.pathname === "/category/temp") activePage = "temp";
 
   // Parse selectedProvince from query string (?province=xxx)
   const selectedProvince = searchParams.get("province");
@@ -48,7 +51,8 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
     home: "หน้าแรก",
     civil: "งานราชการ",
     government: "งานพนักงานราชการ",
-    state: "งานรัฐวิสาหกิจ"
+    state: "งานรัฐวิสาหกิจ",
+    temp: "งานลูกจ้างชั่วคราว"
   };
   
   let seoTitle = pageTitles[activePage] || "หน้าแรก";
@@ -69,6 +73,7 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
         isError={isJobsError || isBooksError}
         activePage={activePage}
         selectedProvince={selectedProvince}
+        onSelectProvince={onSelectProvince}
         isAdmin={isAdmin}
         onEditJob={handleEditJob}
         userEducation={userEducation}
@@ -159,6 +164,33 @@ export default function App() {
     },
   });
 
+  // Temporarily add BOI job
+  useEffect(() => {
+    if (!localStorage.getItem("seededBOI_2")) {
+      addJobMutation.mutate({
+        department: "สำนักงานคณะกรรมการส่งเสริมการลงทุน (BOI)",
+        category: "พนักงานราชการ",
+        postedDate: "2026-07-22",
+        deadline: "2026-08-10",
+        positions: 10,
+        salary: "13,800 - 18,000",
+        announcementUrl: "https://boi.thaijobjob.com",
+        applyUrl: "https://boi.thaijobjob.com",
+        description: "เปิดรับสมัครสอบทางอินเทอร์เน็ตตลอด 24 ชั่วโมง (ไม่เว้นวันหยุดราชการ) ค่าธรรมเนียมสมัครสอบ 330 บาท ประกาศรายชื่อผู้มีสิทธิสอบวันที่ 20 ส.ค. 2569",
+        provinces: ["ส่วนกลาง"],
+        positionList: [
+          { title: "พนักงานสนับสนุนการลงทุน (ปฏิบัติงานทั่วไป / ช่าง)", salary: "13,800", count: 3, education: "ปวส." },
+          { title: "พนักงานส่งเสริมการลงทุน (บริหาร / คอมพิวเตอร์ / บัญชี / ศิลป์)", salary: "18,000", count: 7, education: "ปริญญาตรี" }
+        ],
+        requirements: []
+      }, {
+        onSuccess: () => {
+          localStorage.setItem("seededBOI_2", "true");
+        }
+      });
+    }
+  }, [addJobMutation]);
+
   const updateJobMutation = useMutation({
     mutationFn: api.updateJob,
     onSuccess: (updatedJob) => {
@@ -216,6 +248,11 @@ export default function App() {
   const selectedProvince = searchParams.get("province");
 
   function handleNavigate(page) {
+    if (page.startsWith("policy/")) {
+      navigate(`/${page}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const provinceQuery = selectedProvince ? `?province=${encodeURIComponent(selectedProvince)}` : "";
     if (page === "home") navigate("/" + provinceQuery);
     else navigate(`/category/${page}${provinceQuery}`);
@@ -256,6 +293,7 @@ export default function App() {
             isAdmin={isAdmin} handleEditJob={handleEditJob}
             userEducation={userEducation} setUserEducation={setUserEducation}
             handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
+            onSelectProvince={handleSelectProvince}
           />} />
           <Route path="/category/:categoryId" element={<MainContent
             jobs={jobs} books={books}
@@ -264,8 +302,10 @@ export default function App() {
             isAdmin={isAdmin} handleEditJob={handleEditJob}
             userEducation={userEducation} setUserEducation={setUserEducation}
             handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
+            onSelectProvince={handleSelectProvince}
           />} />
           <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isAdmin={isAdmin} onEditJob={handleEditJob} />} />
+          <Route path="/policy/:policyId" element={<PolicyPage />} />
         </Routes>
       </main>
 
@@ -309,6 +349,9 @@ export default function App() {
 
       {/* Toast Notifications */}
       <Toast toasts={toasts} />
+      
+      {/* Cookie Banner */}
+      <CookieBanner />
     </>
   );
 }

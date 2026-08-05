@@ -2,9 +2,10 @@ import { Link } from "react-router-dom";
 
 
 const CATEGORY_MAP = {
-  ข้าราชการ:    { badge: "badge-civil",      icon: "🏛️" },
+  ข้าราชการ: { badge: "badge-civil", icon: "🏛️" },
   พนักงานราชการ: { badge: "badge-government", icon: "📋" },
   รัฐวิสาหกิจ:  { badge: "badge-state",      icon: "🏢" },
+  ลูกจ้างชั่วคราว: { badge: "badge-temp",       icon: "📝" },
 };
 
 // Helper: normalize province field
@@ -31,18 +32,25 @@ function daysLeft(deadline) {
   return Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
 }
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
+  return new Date(dateStr).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function JobCard({ job, books = [], style, isAdmin, onEdit, userEducation }) {
 
 
-  const meta       = CATEGORY_MAP[job.category] || { badge: "badge-civil", icon: "📄" };
-  const days       = daysLeft(job.deadline);
-  const urgent     = days <= 7 && days > 0;
-  const expired    = days <= 0;
-  const eduStatus  = getEduMatchStatus(job.positionList, userEducation);
+  const meta = CATEGORY_MAP[job.category] || { badge: "badge-civil", icon: "📄" };
+  const days = daysLeft(job.deadline);
+  const urgent = days <= 7 && days > 0;
+  const expired = days <= 0;
+  const eduStatus = getEduMatchStatus(job.positionList, userEducation);
   const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
+
+  const dateText = job.startDate 
+    ? `เปิดรับ ${formatDate(job.startDate)} - ${formatDate(job.deadline)}`
+    : `ปิดรับ ${formatDate(job.deadline)}`;
+  const dateTextExpired = job.startDate 
+    ? `${formatDate(job.startDate)} - ${formatDate(job.deadline)}`
+    : `ปิดรับ ${formatDate(job.deadline)}`;
 
   return (
     <>
@@ -52,10 +60,11 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
 
           {/* Top banner: logo + dept info */}
           <div style={{
-            display: "flex", alignItems: "flex-start", gap: 0,
+            display: "flex", alignItems: "stretch", gap: 0,
             background: "linear-gradient(135deg, var(--navy-800) 0%, var(--navy-700) 100%)",
             padding: "18px 20px 14px",
             position: "relative", overflow: "hidden",
+            height: 135, // Fixed height to ensure all cards align perfectly
           }}>
             {/* BG glow accent */}
             <div style={{
@@ -67,7 +76,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
 
             {/* Logo — prominent */}
             <div style={{
-              width: 72, height: 72, flexShrink: 0,
+              width: 96, height: 96, flexShrink: 0,
               borderRadius: "var(--radius-xl)",
               background: job.logoUrl
                 ? "white"
@@ -78,27 +87,30 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
               boxShadow: "0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1)",
               display: "flex", alignItems: "center", justifyContent: "center",
               overflow: "hidden",
-              marginRight: 14,
+              marginRight: 16,
             }}>
               {job.logoUrl
-                ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 6 }} />
+                ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }} />
                 : <span style={{ fontSize: "1.8rem" }}>{meta.icon}</span>}
             </div>
 
             {/* Right: dept name + badges */}
-            <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
+            <div style={{ 
+              flex: 1, minWidth: 0, paddingTop: 2,
+              display: "flex", flexDirection: "column", justifyContent: "space-between" 
+            }}>
               <div style={{
                 fontSize: "0.98rem", fontWeight: 700,
                 color: "white", lineHeight: 1.35,
-                marginBottom: 8,
                 overflow: "hidden",
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
+                paddingRight: isAdmin ? 65 : 0, // prevent overlap with absolute Edit button
               }}>
                 {job.department}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: "auto" }}>
                 <span className={`badge ${meta.badge}`}>{job.category}</span>
                 {job.isNoOCSC && (
                   <span style={{
@@ -108,6 +120,16 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                     whiteSpace: "nowrap"
                   }}>
                     ✨ ไม่ต้องผ่าน ภาค ก
+                  </span>
+                )}
+                {job.isOCSC && (
+                  <span style={{
+                    padding: "2px 8px", background: "rgba(59,130,212,0.2)",
+                    border: "1px solid rgba(59,130,212,0.4)", borderRadius: "999px",
+                    fontSize: "0.68rem", fontWeight: 700, color: "#bfdbfe",
+                    whiteSpace: "nowrap"
+                  }}>
+                    📝 ต้องผ่าน ภาค ก
                   </span>
                 )}
                 {getProvinces(job).length === 1 ? (
@@ -140,6 +162,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
             {isAdmin && (
               <button id={`btn-edit-${job.id}`} onClick={() => onEdit(job)} title="แก้ไขประกาศ"
                 style={{
+                  position: "absolute", top: 18, right: 20,
                   display: "flex", alignItems: "center", gap: 4,
                   padding: "4px 10px",
                   background: "rgba(255,255,255,0.1)",
@@ -148,8 +171,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                   color: "rgba(255,255,255,0.85)",
                   fontSize: "0.72rem", fontWeight: 600,
                   cursor: "pointer", fontFamily: "var(--font-sans)",
-                  transition: "all 0.15s", whiteSpace: "nowrap", flexShrink: 0,
-                  alignSelf: "flex-start",
+                  transition: "all 0.15s", whiteSpace: "nowrap", zIndex: 10,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
@@ -168,11 +190,21 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
           }}>
             <span className="icon">{urgent ? "🔥" : expired ? "⚠️" : "📅"}</span>
             <span>
-              {urgent
-                ? <strong style={{ color: "var(--orange-600)" }}>เหลือ {days} วัน!</strong>
-                : days === 0 ? <strong style={{ color: "#dc2626" }}>ปิดรับวันนี้!</strong>
-                : expired   ? <span style={{ color: "#9ca3af" }}>หมดเขตแล้ว</span>
-                : <span>ปิดรับ {formatDate(job.deadline)}</span>}
+              {expired 
+                ? <span style={{ color: "#9ca3af" }}>{dateTextExpired} (หมดเขตแล้ว)</span>
+                : days === 0 
+                  ? <span>{job.postedDate ? `เปิดรับ ${formatDate(job.postedDate)} - วันนี้!` : `ปิดรับวันนี้!`} <span style={{ color: "#dc2626", fontWeight: 700, marginLeft: 4 }}>(รีบเลย!)</span></span>
+                  : <span>
+                      {dateText} 
+                      <span style={{ 
+                        color: urgent ? "var(--orange-600)" : "var(--gray-500)", 
+                        fontWeight: urgent ? 700 : 500, 
+                        marginLeft: 6 
+                      }}>
+                        (เหลือ {days} วัน)
+                      </span>
+                    </span>
+              }
             </span>
           </div>
         </div>
@@ -209,13 +241,13 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
 
           {/* Rows */}
           <div style={{ display: "flex", flexDirection: "column", gap: 1, borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--gray-200)" }}>
-            {job.positionList?.map((pos, i) => {
+            {job.positionList?.slice(0, 3).map((pos, i) => {
               // per-position edu match
               let rowMatch = null;
               if (userEducation) {
                 if (pos.education === "ไม่จำกัดวุฒิ") rowMatch = true;
                 else {
-                  const req  = EDU_ORDER.indexOf(pos.education);
+                  const req = EDU_ORDER.indexOf(pos.education);
                   const have = EDU_ORDER.indexOf(userEducation);
                   rowMatch = req !== -1 && have !== -1 && have >= req;
                 }
@@ -234,7 +266,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                     <span style={{ width: 8, height: 8, borderRadius: "50%", background: rowMatch ? "#22c55e" : "#ef4444", flexShrink: 0 }} title={rowMatch ? "วุฒิตรง" : "วุฒิไม่ตรง"} />
                   )}
                   {/* Title */}
-                  <span style={{ flex: 1, fontSize: "0.82rem", fontWeight: 600, color: "var(--navy-800)", lineHeight: 1.3 }}>
+                  <span style={{ flex: 1, fontSize: "0.82rem", fontWeight: 600, color: "var(--navy-800)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {pos.title}
                   </span>
                   {/* Salary */}
@@ -248,6 +280,18 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                 </div>
               );
             })}
+            
+            {/* If more than 3 positions */}
+            {job.positionList?.length > 3 && (
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "8px 12px", background: "var(--gray-50)",
+                fontSize: "0.75rem", fontWeight: 600, color: "var(--navy-500)",
+                borderTop: "1px dashed var(--gray-200)"
+              }}>
+                และอีก {job.positionList.length - 3} ตำแหน่ง... (กดดูรายละเอียด)
+              </div>
+            )}
           </div>
         </div>
 

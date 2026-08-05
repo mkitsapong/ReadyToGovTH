@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
-import { regions } from "../data/provinces.js";
+import { useState } from "react";
 
 const NAV_ITEMS = [
   { id: "home",       label: "หน้าแรก" },
   { id: "civil",      label: "ข้าราชการ" },
   { id: "government", label: "พนักงานราชการ" },
   { id: "state",      label: "รัฐวิสาหกิจ" },
+  { id: "temp",       label: "ลูกจ้างชั่วคราว" },
 ];
 
 export default function Header({
@@ -17,42 +17,44 @@ export default function Header({
   onLoginClick,
   onLogout,
 }) {
-  const [activeRegion, setActiveRegion] = useState(null);
-  const dropdownRef = useRef(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClick(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setActiveRegion(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  function handleRegionClick(regionId) {
-    setActiveRegion(activeRegion === regionId ? null : regionId);
-  }
-
-  function handleProvinceClick(province) {
-    onSelectProvince(province === selectedProvince ? null : province);
-    setActiveRegion(null);
-  }
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="header">
+    <>
+    <header className={`header ${isMobileMenuOpen ? "menu-open" : ""}`}>
       <div className="container">
         {/* Main nav row */}
         <div className="header-inner">
           {/* Logo */}
           <a className="logo" onClick={() => onNavigate("home")} href="#" style={{ cursor: "pointer" }}>
-            <div className="logo-icon">🏛️</div>
+            <img src="/favicon.svg" alt="Logo" style={{ width: "40px", height: "40px", objectFit: "contain", flexShrink: 0 }} />
             <div className="logo-text">
               <span>ReadyToGovTH</span>
               <span>งานราชการไทย</span>
             </div>
           </a>
+
+          {/* Hamburger button (visible on mobile) */}
+          <button 
+            className="mobile-menu-btn" 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              {isMobileMenuOpen ? (
+                <>
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </>
+              ) : (
+                <>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </>
+              )}
+            </svg>
+          </button>
 
           {/* Nav links */}
           <nav className="nav">
@@ -126,57 +128,7 @@ export default function Header({
           </div>
         </div>
       </div>
-
-      {/* Region / Province search bar */}
-      <div className="region-search-bar">
-        <div className="container">
-          <div className="region-search-inner" ref={dropdownRef}>
-            <span className="region-label">📍 ค้นหาตามภาค:</span>
-
-            <div className="region-pills">
-              {regions.map((region) => (
-                <div key={region.id} className="province-dropdown" style={{ position: "relative" }}>
-                  <button
-                    className={`region-pill${activeRegion === region.id ? " active" : ""}`}
-                    onClick={() => handleRegionClick(region.id)}
-                  >
-                    {region.name}
-                    <span style={{ marginLeft: 4, opacity: 0.7 }}>
-                      {activeRegion === region.id ? "▲" : "▼"}
-                    </span>
-                  </button>
-
-                  {activeRegion === region.id && (
-                    <div className="province-dropdown-menu">
-                      <div className="province-dropdown-header">{region.name}</div>
-                      <div className="province-dropdown-list">
-                        {region.provinces.map((prov) => (
-                          <button
-                            key={prov}
-                            className={`province-item${selectedProvince === prov ? " selected" : ""}`}
-                            onClick={() => handleProvinceClick(prov)}
-                          >
-                            {selectedProvince === prov ? "✓ " : ""}
-                            {prov}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Active province tag */}
-            {selectedProvince && (
-              <div className="active-province-tag">
-                <span>🏙 {selectedProvince}</span>
-                <button onClick={() => onSelectProvince(null)} title="ล้างการเลือก">✕</button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
     </header>
+    </>
   );
 }

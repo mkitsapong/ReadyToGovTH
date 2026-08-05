@@ -1,20 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 import { regions } from "../data/provinces.js";
 
-const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ"];
+const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว"];
 const EDUCATION = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
 
 const allProvinces = regions.flatMap((r) => r.provinces);
 const uniqueProvinces = [...new Set(allProvinces)].sort((a, b) => a.localeCompare(b, "th"));
 
-const CATEGORY_ICONS = { ข้าราชการ: "🏛️", พนักงานราชการ: "📋", รัฐวิสาหกิจ: "🏢" };
+const CATEGORY_ICONS = { ข้าราชการ: "🏛️", พนักงานราชการ: "📋", รัฐวิสาหกิจ: "🏢", ลูกจ้างชั่วคราว: "📝" };
 
-const EMPTY_POSITION = { title: "", salary: "", count: 1, education: "ปริญญาตรี", details: "" };
+const EMPTY_UNIT = { name: "", count: 1, education: "ปริญญาตรี", major: "", details: "" };
+const EMPTY_POSITION = { title: "", salary: "", count: 1, education: "ปริญญาตรี", details: "", units: [] };
 
 const EMPTY_FORM = {
   department: "",
   category: "ข้าราชการ",
   provinces: [],
+  postedDate: "",
   deadline: "",
   description: "",
   logoUrl: "",
@@ -24,6 +26,8 @@ const EMPTY_FORM = {
   customBookTitle: "",
   customBookUrl: "",
   isNoOCSC: false,
+  isOCSC: false,
+  startDate: "",
   positionList: [{ ...EMPTY_POSITION }],
 };
 
@@ -40,6 +44,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
           provinces:       Array.isArray(editJob.provinces)
                              ? editJob.provinces
                              : editJob.province ? [editJob.province] : [],
+          postedDate:      editJob.postedDate || "",
           deadline:        editJob.deadline,
           description:     editJob.description || "",
           logoUrl:         editJob.logoUrl || "",
@@ -49,7 +54,9 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
           customBookTitle: editJob.customBookTitle || "",
           customBookUrl:   editJob.customBookUrl || "",
           isNoOCSC:        editJob.isNoOCSC || false,
-          positionList: editJob.positionList?.length
+          isOCSC:          editJob.isOCSC || false,
+          startDate:       editJob.startDate || "",
+          positionList:    editJob.positionList?.length
             ? editJob.positionList.map((p) => ({ ...p }))
             : [{ ...EMPTY_POSITION }],
         }
@@ -117,6 +124,38 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     }));
   }
 
+  function handleUnitChange(posIndex, unitIndex, field, value) {
+    setForm(prev => {
+      const list = [...prev.positionList];
+      const newPos = { ...list[posIndex] };
+      const newUnits = [...(newPos.units || [])];
+      newUnits[unitIndex] = { ...newUnits[unitIndex], [field]: value };
+      newPos.units = newUnits;
+      list[posIndex] = newPos;
+      return { ...prev, positionList: list };
+    });
+  }
+
+  function addUnit(posIndex) {
+    setForm(prev => {
+      const list = [...prev.positionList];
+      const newPos = { ...list[posIndex] };
+      newPos.units = [...(newPos.units || []), { ...EMPTY_UNIT }];
+      list[posIndex] = newPos;
+      return { ...prev, positionList: list };
+    });
+  }
+
+  function removeUnit(posIndex, unitIndex) {
+    setForm(prev => {
+      const list = [...prev.positionList];
+      const newPos = { ...list[posIndex] };
+      newPos.units = (newPos.units || []).filter((_, i) => i !== unitIndex);
+      list[posIndex] = newPos;
+      return { ...prev, positionList: list };
+    });
+  }
+
   // ── Form handlers ──────────────────────────────────────────────────────────
   function handleChange(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -129,8 +168,14 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     if (!form.deadline)          e.deadline   = "กรุณาระบุวันปิดรับสมัคร";
     if (!form.provinces.length)  e.provinces  = "กรุณาเลือกจังหวัดอย่างน้อย 1 จังหวัด";
     // Validate positionList
-    const hasEmpty = form.positionList.some((p) => !p.title.trim() || !p.salary.trim());
-    if (hasEmpty) e.positionList = "กรุณากรอกชื่อตำแหน่งและเงินเดือนให้ครบทุกแถว";
+    const hasEmpty = form.positionList.some((p) => {
+      if (!p.title.trim() || !p.salary.trim()) return true;
+      if (p.units && p.units.length > 0) {
+        return p.units.some(u => !u.name.trim());
+      }
+      return false;
+    });
+    if (hasEmpty) e.positionList = "กรุณากรอกชื่อตำแหน่ง เงินเดือน และชื่อหน่วยงานย่อยให้ครบทุกแถว";
     if (form.positionList.length === 0) e.positionList = "กรุณาเพิ่มตำแหน่งอย่างน้อย 1 ตำแหน่ง";
     return e;
   }
@@ -143,7 +188,13 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     setLoading(true);
     await new Promise((r) => setTimeout(r, 600));
 
-    const positionList = form.positionList.map((p) => ({ ...p, count: Number(p.count) || 1 }));
+    const positionList = form.positionList.map((p) => {
+      let updatedP = { ...p, count: Number(p.count) || 1 };
+      if (updatedP.units && updatedP.units.length > 0) {
+        updatedP.units = updatedP.units.map(u => ({ ...u, count: Number(u.count) || 1 }));
+      }
+      return updatedP;
+    });
 
     if (isEditMode) {
       onUpdateJob({ ...editJob, ...form, positionList });
@@ -153,7 +204,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
         positionList,
         id: Date.now(),
         requirements: [],
-        postedDate: new Date().toISOString().split("T")[0],
+        postedDate: form.postedDate || new Date().toISOString().split("T")[0],
       });
     }
     setLoading(false);
@@ -162,7 +213,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
 
   // ─── JSX ──────────────────────────────────────────────────────────────────
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div
         className="modal"
         role="dialog"
@@ -179,7 +230,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <div className="modal-body">
 
             {/* Logo Upload */}
@@ -239,16 +290,33 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                     value={form.category} onChange={(e) => handleChange("category", e.target.value)}>
                     {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, cursor: "pointer", fontSize: "0.82rem", color: "var(--navy-700)", fontWeight: 600 }}>
-                    <input
-                      type="checkbox"
-                      checked={form.isNoOCSC}
-                      onChange={(e) => handleChange("isNoOCSC", e.target.checked)}
-                      style={{ width: 16, height: 16, cursor: "pointer" }}
-                    />
-                    ไม่ต้องผ่าน ภาค ก
-                  </label>
+                  <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.82rem", color: "var(--navy-700)", fontWeight: 600 }}>
+                      <input
+                        type="checkbox"
+                        checked={form.isOCSC}
+                        onChange={(e) => {
+                          handleChange("isOCSC", e.target.checked);
+                          if (e.target.checked) handleChange("isNoOCSC", false);
+                        }}
+                        style={{ width: 16, height: 16, cursor: "pointer" }}
+                      />
+                      ต้องผ่าน ภาค ก
+                    </label>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.82rem", color: "var(--navy-700)", fontWeight: 600 }}>
+                      <input
+                        type="checkbox"
+                        checked={form.isNoOCSC}
+                        onChange={(e) => {
+                          handleChange("isNoOCSC", e.target.checked);
+                          if (e.target.checked) handleChange("isOCSC", false);
+                        }}
+                        style={{ width: 16, height: 16, cursor: "pointer" }}
+                      />
+                      ไม่ต้องผ่าน ภาค ก
+                    </label>
+                  </div>
                 </div>
 
                 {/* Multi-select province */}
@@ -363,12 +431,20 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
               </div>
             </div>
 
-            {/* Deadline */}
-            <div className="form-group">
-              <label className="form-label">วันปิดรับสมัคร <span className="required">*</span></label>
-              <input id="admin-field-deadline" type="date" className="form-input"
-                value={form.deadline} onChange={(e) => handleChange("deadline", e.target.value)} />
-              {errors.deadline && <p style={{ color: "var(--accent)", fontSize: "0.78rem", marginTop: 4 }}>{errors.deadline}</p>}
+            {/* Dates */}
+            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+
+              <div className="form-group" style={{ flex: 1, minWidth: 150 }}>
+                <label className="form-label">วันเปิดรับสมัคร <span style={{fontSize: "0.7rem", color: "var(--gray-400)", fontWeight: "normal"}}>(ถ้ามี)</span></label>
+                <input id="admin-field-startDate" type="date" className="form-input"
+                  value={form.startDate} onChange={(e) => handleChange("startDate", e.target.value)} />
+              </div>
+              <div className="form-group" style={{ flex: 1, minWidth: 150 }}>
+                <label className="form-label">วันปิดรับสมัคร <span className="required">*</span></label>
+                <input id="admin-field-deadline" type="date" className="form-input"
+                  value={form.deadline} onChange={(e) => handleChange("deadline", e.target.value)} />
+                {errors.deadline && <p style={{ color: "var(--accent)", fontSize: "0.78rem", marginTop: 4 }}>{errors.deadline}</p>}
+              </div>
             </div>
 
             {/* ── Position List ─────────────────────────────────────────── */}
@@ -437,7 +513,8 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                     </div>
 
                     {/* Salary + Count + Education */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", gap: 8 }}>
+                    {/* Salary + Count + Education (only if no units) */}
+                    <div style={{ display: "grid", gridTemplateColumns: (!pos.units || pos.units.length === 0) ? "1fr 80px 1fr" : "1fr", gap: 8 }}>
                       <div className="form-group" style={{ marginBottom: 0 }}>
                         <label className="form-label" style={{ fontSize: "0.72rem" }}>เงินเดือน *</label>
                         <input className="form-input" placeholder="เช่น 15,000"
@@ -456,30 +533,107 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                           }}
                         />
                       </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: "0.72rem" }}>อัตรา</label>
-                        <input type="number" min="1" className="form-input"
-                          value={pos.count}
-                          onChange={(e) => handlePositionChange(i, "count", e.target.value)} />
-                      </div>
-                      <div className="form-group" style={{ marginBottom: 0 }}>
-                        <label className="form-label" style={{ fontSize: "0.72rem" }}>วุฒิที่ต้องการ</label>
-                        <select className="form-select"
-                          value={pos.education}
-                          onChange={(e) => handlePositionChange(i, "education", e.target.value)}>
-                          {EDUCATION.map((ed) => <option key={ed} value={ed}>{ed}</option>)}
-                        </select>
-                      </div>
+                      {(!pos.units || pos.units.length === 0) && (
+                        <>
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label" style={{ fontSize: "0.72rem" }}>อัตรา</label>
+                            <input type="number" min="1" className="form-input"
+                              value={pos.count}
+                              onChange={(e) => handlePositionChange(i, "count", e.target.value)} />
+                          </div>
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label className="form-label" style={{ fontSize: "0.72rem" }}>วุฒิที่ต้องการ</label>
+                            <select className="form-select"
+                              value={pos.education}
+                              onChange={(e) => handlePositionChange(i, "education", e.target.value)}>
+                              {EDUCATION.map((ed) => <option key={ed} value={ed}>{ed}</option>)}
+                            </select>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    {/* Details */}
-                    <div className="form-group" style={{ marginBottom: 0, marginTop: 8 }}>
-                      <label className="form-label" style={{ fontSize: "0.72rem" }}>รายละเอียดตำแหน่ง (อัตราเงินเดือน / คุณสมบัติเฉพาะ)</label>
-                      <textarea className="form-textarea"
-                        placeholder="เช่น อัตราเงินเดือนระหว่าง 25,410 – 27,960 บาท&#10;คุณสมบัติเฉพาะ: ได้รับปริญญาในสาขาวิชา..."
-                        rows={4}
-                        style={{ fontSize: "0.8rem", resize: "vertical" }}
-                        value={pos.details || ""}
-                        onChange={(e) => handlePositionChange(i, "details", e.target.value)} />
+                    {/* Details (only if no units) */}
+                    {(!pos.units || pos.units.length === 0) && (
+                      <div className="form-group" style={{ marginBottom: 0, marginTop: 8 }}>
+                        <label className="form-label" style={{ fontSize: "0.72rem" }}>รายละเอียดตำแหน่ง (คุณสมบัติเฉพาะ)</label>
+                        <textarea className="form-textarea"
+                          placeholder="เช่น อัตราเงินเดือนระหว่าง 25,410 – 27,960 บาท&#10;คุณสมบัติเฉพาะ: ได้รับปริญญาในสาขาวิชา..."
+                          rows={2}
+                          style={{ fontSize: "0.8rem", resize: "vertical" }}
+                          value={pos.details || ""}
+                          onChange={(e) => handlePositionChange(i, "details", e.target.value)} />
+                      </div>
+                    )}
+
+                    {/* Units Section */}
+                    {pos.units && pos.units.length > 0 && (
+                      <div style={{ marginTop: 12, paddingLeft: 12, borderLeft: "2px solid var(--accent-light)" }}>
+                        {pos.units.map((unit, uIdx) => (
+                          <div key={uIdx} style={{ marginBottom: 12, position: "relative" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", gap: 8, marginBottom: 4 }}>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>สถานที่ / หน่วยงานย่อย *</label>
+                                <input className="form-input" style={{ fontSize: "0.75rem", padding: "6px 10px" }}
+                                  placeholder="เช่น หน่วยที่ 1 (จำนวน 1 อัตรา)"
+                                  value={unit.name}
+                                  onChange={(e) => handleUnitChange(i, uIdx, "name", e.target.value)} />
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>อัตรา</label>
+                                <input type="number" min="1" className="form-input" style={{ fontSize: "0.75rem", padding: "6px 10px" }}
+                                  value={unit.count}
+                                  onChange={(e) => handleUnitChange(i, uIdx, "count", e.target.value)} />
+                              </div>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "10px", marginBottom: "10px" }}>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>วุฒิที่ต้องการ</label>
+                                <select className="form-select" style={{ fontSize: "0.75rem", padding: "6px 10px" }}
+                                  value={unit.education}
+                                  onChange={(e) => handleUnitChange(i, uIdx, "education", e.target.value)}>
+                                  {EDUCATION.map((ed) => <option key={ed} value={ed}>{ed}</option>)}
+                                </select>
+                              </div>
+                              <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>สาขาวิชา (ถ้ามี)</label>
+                                <input className="form-input" style={{ fontSize: "0.75rem", padding: "6px 10px" }}
+                                  placeholder="เช่น วิศวกรรมศาสตร์, คอมพิวเตอร์..."
+                                  value={unit.major || ""}
+                                  onChange={(e) => handleUnitChange(i, uIdx, "major", e.target.value)} />
+                              </div>
+                            </div>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                              <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>ลักษณะงาน</label>
+                              <textarea className="form-textarea"
+                                placeholder="เช่น งานสารบรรณ รับ-ส่งเอกสาร..."
+                                rows={2}
+                                style={{ fontSize: "0.75rem", resize: "vertical", padding: "6px 10px" }}
+                                value={unit.details || ""}
+                                onChange={(e) => handleUnitChange(i, uIdx, "details", e.target.value)} />
+                            </div>
+                            <button type="button" onClick={() => removeUnit(i, uIdx)}
+                              style={{
+                                position: "absolute", top: 2, right: -24,
+                                background: "none", border: "none",
+                                fontSize: "0.9rem", color: "var(--gray-400)",
+                                cursor: "pointer", lineHeight: 1,
+                              }}
+                              title="ลบหน่วยนี้">✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: 8 }}>
+                      <button type="button" onClick={() => addUnit(i)}
+                        style={{
+                          background: "none", border: "1px dashed var(--gray-300)",
+                          color: "var(--navy-600)", fontSize: "0.75rem", fontWeight: 600,
+                          padding: "6px 12px", borderRadius: "var(--radius-md)",
+                          cursor: "pointer", width: "100%"
+                        }}>
+                        ＋ เพิ่มหน่วยงานย่อย / สถานที่ปฏิบัติงาน
+                      </button>
                     </div>
                   </div>
                 ))}
