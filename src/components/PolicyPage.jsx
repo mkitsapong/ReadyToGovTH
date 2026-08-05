@@ -12,10 +12,10 @@ export default function PolicyPage() {
     content = (
       <>
         <p><strong>อัปเดตล่าสุดเมื่อ:</strong> 5 สิงหาคม 2569</p>
-        <p>เว็บไซต์ <strong>ReadyToGovTH</strong> ("เว็บไซต์", "เรา") ให้ความสำคัญกับข้อมูลส่วนบุคคลของคุณ นโยบายนี้อธิบายถึงวิธีที่เราเก็บรวบรวม ใช้ และปกป้องข้อมูลของคุณเมื่อคุณเข้าใช้บริการของเรา</p>
-        
+        <p>เว็บไซต์ <strong>ReadyToGovTH</strong> ให้ความสำคัญกับข้อมูลส่วนบุคคลของคุณ นโยบายนี้อธิบายถึงวิธีที่เราเก็บรวบรวม ใช้ และปกป้องข้อมูลของคุณเมื่อคุณเข้าใช้บริการของเรา</p>
+
         <h3>1. ข้อมูลที่เราเก็บรวบรวม</h3>
-        <p>เราอาจเก็บรวบรวมข้อมูลต่อไปนี้เมื่อคุณเข้าใช้งานหรือสมัครสมาชิก:</p>
+        <p>เราอาจเก็บรวบรวมข้อมูลต่อไปนี้เมื่อคุณเข้าใช้งาน:</p>
         <ul>
           <li><strong>ข้อมูลการติดต่อและบัญชีผู้ใช้:</strong> เช่น ชื่อ-นามสกุล, อีเมล (เมื่อลงชื่อเข้าใช้ผ่านระบบ)</li>
           <li><strong>ข้อมูลการใช้งาน:</strong> ข้อมูลเกี่ยวกับอุปกรณ์, เบราว์เซอร์, หมายเลข IP, และสถิติการเข้าชมเว็บไซต์</li>
@@ -59,13 +59,7 @@ export default function PolicyPage() {
           <li><strong>ผู้ใช้งานควรตรวจสอบรายละเอียดเพิ่มเติมกับเว็บไซต์อย่างเป็นทางการของหน่วยงานต้นสังกัดอีกครั้งก่อนทำการสมัคร</strong></li>
         </ul>
 
-        <h3>3. บัญชีผู้ใช้งาน</h3>
-        <ul>
-          <li>หากคุณลงทะเบียนใช้งานบัญชี คุณมีหน้าที่รักษาความลับของรหัสผ่านและรับผิดชอบต่อกิจกรรมที่เกิดขึ้นภายใต้บัญชีของคุณ</li>
-          <li>เราขอสงวนสิทธิ์ในการระงับหรือยกเลิกบัญชีผู้ใช้ที่พบว่ามีการกระทำผิดเงื่อนไข</li>
-        </ul>
-
-        <h3>4. การจำกัดความรับผิดชอบ</h3>
+        <h3>3. การจำกัดความรับผิดชอบ</h3>
         <ul>
           <li>เราจะไม่รับผิดชอบต่อความเสียหายใดๆ ที่เกิดขึ้นจากการใช้งานเว็บไซต์ หรือการไม่สามารถเข้าถึงเว็บไซต์ได้ หรือจากการตีความข้อมูลบนเว็บไซต์ผิดพลาด</li>
         </ul>
@@ -101,17 +95,17 @@ export default function PolicyPage() {
   return (
     <>
       <SEO title={`${title} | ReadyToGovTH`} description={title} />
-      
+
       <div className="container" style={{ padding: "40px 24px", minHeight: "60vh" }}>
-        <Link to="/" style={{ 
-          display: "inline-flex", alignItems: "center", gap: 8, 
-          color: "var(--navy-300)", textDecoration: "none", marginBottom: 24, fontWeight: 500 
+        <Link to="/" style={{
+          display: "inline-flex", alignItems: "center", gap: 8,
+          color: "var(--navy-300)", textDecoration: "none", marginBottom: 24, fontWeight: 500
         }}>
           <span>←</span> กลับหน้าแรก
         </Link>
-        
+
         <div style={{
-          background: "white", padding: 40, borderRadius: "var(--radius-xl)", 
+          background: "white", padding: 40, borderRadius: "var(--radius-xl)",
           boxShadow: "0 10px 40px rgba(0,0,0,0.05)", maxWidth: 800, margin: "0 auto"
         }}>
           <h1 style={{ color: "var(--navy-800)", marginBottom: 24, fontSize: "1.8rem" }}>{title}</h1>
