@@ -65,7 +65,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
             background: "linear-gradient(135deg, var(--navy-800) 0%, var(--navy-700) 100%)",
             padding: "18px 20px 14px",
             position: "relative", overflow: "hidden",
-            height: 135, // Fixed height to ensure all cards align perfectly
+            minHeight: 148, // Changed from fixed height to minHeight to prevent overlap
           }}>
             {/* BG glow accent */}
             <div style={{
@@ -108,10 +108,11 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
                 paddingRight: isAdmin ? 65 : 0, // prevent overlap with absolute Edit button
+                flexShrink: 0,
               }}>
                 {job.department}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: "auto" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: "auto", flexShrink: 0 }}>
                 {categories.map((cat, idx) => {
                   const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
                   return <span key={idx} className={`badge ${catMeta.badge}`}>{cat}</span>;
