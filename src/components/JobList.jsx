@@ -43,7 +43,7 @@ export default function JobList({
   onSelectProvince,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState("deadline");
   const [currentPage, setCurrentPage] = useState(1);
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
   const regionDropdownRef = useRef(null);
