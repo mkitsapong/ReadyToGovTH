@@ -38,7 +38,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [showPdf, setShowPdf] = useState(false);
 
   if (!job) return null;
-  const meta       = CATEGORY_MAP[job.category] || { badge: "badge-civil", icon: "📄" };
+  const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const mainMeta   = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   const days       = daysLeft(job.deadline);
   const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
   const provinces  = getProvinces(job);
@@ -85,14 +86,17 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             }}>
               {job.logoUrl
                 ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }} />
-                : <span style={{ fontSize: "2.2rem" }}>{meta.icon}</span>}
+                : <span style={{ fontSize: "2.2rem" }}>{mainMeta.icon}</span>}
             </div>
 
             {/* Text details */}
             <div style={{ flex: 1, zIndex: 10 }}>
               {/* Category badge */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <span className={`badge ${meta.badge}`}>{job.category}</span>
+                {categories.map((cat, idx) => {
+                  const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
+                  return <span key={idx} className={`badge ${catMeta.badge}`}>{cat}</span>;
+                })}
                 {job.isNoOCSC && (
                   <span style={{
                     padding: "2px 8px", background: "rgba(234,88,12,0.2)",

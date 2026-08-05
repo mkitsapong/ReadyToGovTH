@@ -14,7 +14,7 @@ const EMPTY_POSITION = { title: "", salary: "", count: 1, education: "ปริ�
 
 const EMPTY_FORM = {
   department: "",
-  category: "ข้าราชการ",
+  categories: ["ข้าราชการ"],
   provinces: [],
   postedDate: "",
   deadline: "",
@@ -39,7 +39,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     isEditMode
       ? {
           department:      editJob.department,
-          category:        editJob.category,
+          categories:      editJob.categories ? editJob.categories : (editJob.category ? [editJob.category] : []),
           // backward-compat: สนับสนุนทั้ง provinces array และ province string เก่า
           provinces:       Array.isArray(editJob.provinces)
                              ? editJob.provinces
@@ -165,6 +165,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   function validate() {
     const e = {};
     if (!form.department.trim()) e.department = "กรุณาระบุหน่วยงาน";
+    if (!form.categories || form.categories.length === 0) e.categories = "กรุณาเลือกประเภทงานอย่างน้อย 1 ประเภท";
     if (!form.deadline)          e.deadline   = "กรุณาระบุวันปิดรับสมัคร";
     if (!form.provinces.length)  e.provinces  = "กรุณาเลือกจังหวัดอย่างน้อย 1 จังหวัด";
     // Validate positionList
@@ -197,10 +198,11 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     });
 
     if (isEditMode) {
-      onUpdateJob({ ...editJob, ...form, positionList });
+      onUpdateJob({ ...editJob, ...form, category: form.categories[0], positionList });
     } else {
       onAddJob({
         ...form,
+        category: form.categories[0],
         positionList,
         id: Date.now(),
         requirements: [],
@@ -250,7 +252,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                 >
                   {logoPreview
                     ? <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <span style={{ fontSize: "1.5rem" }}>{CATEGORY_ICONS[form.category] || "🏛️"}</span>}
+                    : <span style={{ fontSize: "1.5rem" }}>{CATEGORY_ICONS[form.categories?.[0]] || "🏛️"}</span>}
                 </div>
                 <div style={{ flex: 1 }}>
                   <input id="logo-upload-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -285,11 +287,26 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
             <div className="form-group">
               <div className="form-grid-2">
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">ประเภทงาน</label>
-                  <select id="admin-field-category" className="form-select"
-                    value={form.category} onChange={(e) => handleChange("category", e.target.value)}>
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <label className="form-label">ประเภทงาน <span className="required">*</span></label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 16px" }}>
+                    {CATEGORIES.map((c) => (
+                      <label key={c} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: "0.85rem", color: "var(--navy-800)" }}>
+                        <input 
+                          type="checkbox" 
+                          checked={form.categories?.includes(c)}
+                          onChange={(e) => {
+                            let newCats = [...(form.categories || [])];
+                            if (e.target.checked) newCats.push(c);
+                            else newCats = newCats.filter(cat => cat !== c);
+                            handleChange("categories", newCats);
+                          }}
+                          style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--accent)" }}
+                        />
+                        {c}
+                      </label>
+                    ))}
+                  </div>
+                  {errors.categories && <p style={{ color: "var(--accent)", fontSize: "0.78rem", marginTop: 4 }}>{errors.categories}</p>}
                   <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
                     <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.82rem", color: "var(--navy-700)", fontWeight: 600 }}>
                       <input

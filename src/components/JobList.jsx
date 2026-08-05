@@ -67,7 +67,10 @@ export default function JobList({
 
     // Category filter
     if (categoryFilter) {
-      result = result.filter((j) => j.category === categoryFilter);
+      result = result.filter((j) => {
+        const cats = j.categories && j.categories.length > 0 ? j.categories : (j.category ? [j.category] : []);
+        return cats.includes(categoryFilter);
+      });
     }
 
     // Province / Region filter

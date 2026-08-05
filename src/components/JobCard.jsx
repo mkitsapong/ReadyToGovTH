@@ -38,7 +38,8 @@ function formatDate(dateStr) {
 export default function JobCard({ job, books = [], style, isAdmin, onEdit, userEducation }) {
 
 
-  const meta = CATEGORY_MAP[job.category] || { badge: "badge-civil", icon: "📄" };
+  const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const mainMeta = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   const days = daysLeft(job.deadline);
   const urgent = days <= 7 && days > 0;
   const expired = days <= 0;
@@ -91,7 +92,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
             }}>
               {job.logoUrl
                 ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }} />
-                : <span style={{ fontSize: "1.8rem" }}>{meta.icon}</span>}
+                : <span style={{ fontSize: "1.8rem" }}>{mainMeta.icon}</span>}
             </div>
 
             {/* Right: dept name + badges */}
@@ -111,7 +112,10 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                 {job.department}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: "auto" }}>
-                <span className={`badge ${meta.badge}`}>{job.category}</span>
+                {categories.map((cat, idx) => {
+                  const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
+                  return <span key={idx} className={`badge ${catMeta.badge}`}>{cat}</span>;
+                })}
                 {job.isNoOCSC && (
                   <span style={{
                     padding: "2px 8px", background: "rgba(234,88,12,0.15)",
