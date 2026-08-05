@@ -162,23 +162,30 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
           {/* Deadline banner */}
           <div style={{
-            display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+            display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px",
             background: days <= 7 && days > 0 ? "var(--orange-50)" : days <= 0 ? "#fef2f2" : "var(--navy-50)",
             border: `1px solid ${days <= 7 && days > 0 ? "var(--orange-200)" : days <= 0 ? "#fecaca" : "var(--navy-100)"}`,
             borderRadius: "var(--radius-md)", marginBottom: 20, fontSize: "0.875rem",
             color: days <= 7 && days > 0 ? "var(--orange-700)" : days <= 0 ? "#dc2626" : "var(--navy-700)",
+            lineHeight: 1.5
           }}>
-            {days > 0
-              ? <>📅 {job.postedDate ? `เปิดรับ ${formatDate(job.postedDate)} - ` : "ปิดรับสมัคร "} <strong>{formatDate(job.deadline)}</strong>
-                  <span style={{ 
-                    color: (days <= 7 && days > 0) ? "var(--orange-700)" : "var(--gray-500)", 
-                    fontWeight: (days <= 7 && days > 0) ? 700 : 500, 
-                    marginLeft: 6 
-                  }}>
-                    (เหลือ {days} วัน)
-                  </span>
-                </>
-              : <>❌ หมดเขตรับสมัครแล้ว ({job.postedDate ? `${formatDate(job.postedDate)} - ` : ""}{formatDate(job.deadline)})</>}
+            <span style={{ flexShrink: 0, fontSize: "1rem" }}>{days > 0 ? "📅" : "❌"}</span>
+            <div style={{ flex: 1, wordBreak: "break-word" }}>
+              {days > 0
+                ? <>
+                    {job.postedDate ? `เปิดรับ ${formatDate(job.postedDate)} - ` : "ปิดรับสมัคร "} 
+                    <strong>{formatDate(job.deadline)}</strong>
+                    <span style={{ 
+                      color: (days <= 7 && days > 0) ? "var(--orange-700)" : "var(--gray-500)", 
+                      fontWeight: (days <= 7 && days > 0) ? 700 : 500, 
+                      display: "inline-block",
+                      marginLeft: 4 
+                    }}>
+                      (เหลือ {days} วัน)
+                    </span>
+                  </>
+                : <>หมดเขตรับสมัครแล้ว ({job.postedDate ? `${formatDate(job.postedDate)} - ` : ""}{formatDate(job.deadline)})</>}
+            </div>
           </div>
 
           {/* ── Position section header ── */}
@@ -212,8 +219,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                       }}>
                         {/* Group Header */}
                         <div style={{
-                          display: "flex", alignItems: "center", gap: 10,
-                          padding: "10px 16px",
+                          display: "flex", alignItems: "flex-start", gap: 10,
+                          padding: "12px 16px",
                           background: "linear-gradient(135deg, var(--navy-800), var(--navy-700))",
                         }}>
                           <span style={{
@@ -222,23 +229,28 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                             borderRadius: "50%",
                             display: "inline-flex", alignItems: "center", justifyContent: "center",
                             fontSize: "0.72rem", fontWeight: 800, color: "white",
+                            marginTop: 2
                           }}>
                             {i + 1}
                           </span>
-                          <span style={{ flex: 1, fontSize: "0.92rem", fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: 6 }}>
-                            <span style={{ fontSize: "1.1rem" }}>📁</span> {pos.title}
-                          </span>
+                          <div style={{ flex: 1, fontSize: "0.92rem", fontWeight: 700, color: "white", lineHeight: 1.4, wordBreak: "break-word" }}>
+                            <span style={{ fontSize: "1rem", marginRight: 6 }}>📁</span>
+                            {pos.title}
+                          </div>
                           {/* Salary badge */}
-                          <span style={{
-                            padding: "2px 10px",
-                            background: "rgba(255,255,255,0.15)",
-                            border: "1px solid rgba(255,255,255,0.25)",
-                            borderRadius: "999px",
-                            fontSize: "0.72rem", fontWeight: 700, color: "white",
-                            whiteSpace: "nowrap", flexShrink: 0,
-                          }}>
-                            💰 {pos.salary}
-                          </span>
+                          {pos.salary && (
+                            <span style={{
+                              padding: "2px 10px",
+                              background: "rgba(255,255,255,0.15)",
+                              border: "1px solid rgba(255,255,255,0.25)",
+                              borderRadius: "999px",
+                              fontSize: "0.72rem", fontWeight: 700, color: "white",
+                              whiteSpace: "nowrap", flexShrink: 0,
+                              marginTop: 2
+                            }}>
+                              💰 {pos.salary}
+                            </span>
+                          )}
                         </div>
 
                         {/* Units Body */}
@@ -295,8 +307,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                     }}>
                       {/* Position header bar */}
                       <div style={{
-                        display: "flex", alignItems: "center", gap: 10,
-                        padding: "10px 16px",
+                        display: "flex", alignItems: "flex-start", gap: 10,
+                        padding: "12px 16px",
                         background: "linear-gradient(135deg, var(--navy-800), var(--navy-700))",
                       }}>
                         {/* Number badge */}
@@ -306,23 +318,27 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                           borderRadius: "50%",
                           display: "inline-flex", alignItems: "center", justifyContent: "center",
                           fontSize: "0.72rem", fontWeight: 800, color: "white",
+                          marginTop: 2
                         }}>
                           {i + 1}
                         </span>
-                        <span style={{ flex: 1, fontSize: "0.92rem", fontWeight: 700, color: "white" }}>
+                        <div style={{ flex: 1, fontSize: "0.92rem", fontWeight: 700, color: "white", lineHeight: 1.4, wordBreak: "break-word" }}>
                           {pos.title}
-                        </span>
+                        </div>
                         {/* Count badge */}
-                        <span style={{
-                          padding: "2px 10px",
-                          background: "rgba(255,255,255,0.15)",
-                          border: "1px solid rgba(255,255,255,0.25)",
-                          borderRadius: "999px",
-                          fontSize: "0.72rem", fontWeight: 700, color: "white",
-                          whiteSpace: "nowrap", flexShrink: 0,
-                        }}>
-                          {pos.count} อัตรา
-                        </span>
+                        {pos.count && (
+                          <span style={{
+                            padding: "2px 10px",
+                            background: "rgba(255,255,255,0.15)",
+                            border: "1px solid rgba(255,255,255,0.25)",
+                            borderRadius: "999px",
+                            fontSize: "0.72rem", fontWeight: 700, color: "white",
+                            whiteSpace: "nowrap", flexShrink: 0,
+                            marginTop: 2
+                          }}>
+                            {pos.count} อัตรา
+                          </span>
+                        )}
                       </div>
 
                       {/* Position details body */}
@@ -477,7 +493,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "var(--gray-500)", padding: 4 }}>✕</button>
           ) : <div style={{ width: 62 }} />}
         </div>
-        <iframe src={job.announcementUrl} style={{ flex: 1, width: "100%", border: "none", borderRadius: inline ? 0 : "0 0 var(--radius-2xl) var(--radius-2xl)" }} title="ประกาศรับสมัคร" />
+        <iframe src={`${job.announcementUrl}${job.announcementUrl.includes('#') ? '&' : '#'}view=FitH`} style={{ flex: 1, width: "100%", border: "none", borderRadius: inline ? 0 : "0 0 var(--radius-2xl) var(--radius-2xl)" }} title="ประกาศรับสมัคร" />
       </div>
     );
 
