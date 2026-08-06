@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import JobCard from "./JobCard.jsx";
+import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
 
@@ -9,14 +10,16 @@ const CATEGORY_FILTER = {
   government: "พนักงานราชการ",
   state: "รัฐวิสาหกิจ",
   temp: "ลูกจ้างชั่วคราว",
+  agency: "พนักงานหน่วยงานของรัฐ",
 };
 
 const PAGE_HERO_MAP = {
   home: { title: "งานราชการทุกประเภท", subtitle: "รวบรวมประกาศรับสมัครงานภาครัฐไทยในที่เดียว อัปเดตล่าสุด" },
   civil: { title: "ข้าราชการ", subtitle: "ตำแหน่งข้าราชการพลเรือนและข้าราชการพิเศษ" },
   government: { title: "พนักงานราชการ", subtitle: "ตำแหน่งพนักงานราชการทั่วไปและพนักงานราชการพิเศษ" },
-  state: { title: "รัฐวิสาหกิจ", subtitle: "ตำแหน่งในองค์กรรัฐวิสาหกิจและหน่วยงานของรัฐ" },
+  state: { title: "รัฐวิสาหกิจ", subtitle: "ตำแหน่งในองค์กรรัฐวิสาหกิจ" },
   temp: { title: "ลูกจ้างชั่วคราว", subtitle: "ตำแหน่งลูกจ้างชั่วคราวและพนักงานจ้างเหมาบริการ" },
+  agency: { title: "พนักงานหน่วยงานของรัฐ", subtitle: "ตำแหน่งในหน่วยงานของรัฐ กองทุน มหาวิทยาลัย และองค์การมหาชน" },
 };
 
 // Helper: normalize province field — รองรับทั้ง string เก่าและ array ใหม่
@@ -46,6 +49,9 @@ export default function JobList({
   const [sortBy, setSortBy] = useState("deadline");
   const [currentPage, setCurrentPage] = useState(1);
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  
+  const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
   const regionDropdownRef = useRef(null);
   const ITEMS_PER_PAGE = 9;
 
@@ -72,6 +78,11 @@ export default function JobList({
         return cats.includes(categoryFilter);
       });
     }
+    
+    // Bookmarks Filter
+    if (showBookmarksOnly) {
+      result = result.filter((j) => isBookmarked(j.id));
+    }
 
     // Province / Region filter
     if (selectedProvince) {
@@ -89,27 +100,78 @@ export default function JobList({
       }
     }
 
-    // Education filter — แสดงเฉพาะ job ที่มีตำแหน่งตรงวุฒิ
-    if (userEducation) {
-      result = result.filter((j) =>
-        j.positionList?.some(
-          (p) => {
-            const edus = Array.isArray(p.education) ? p.education : (p.education ? [p.education] : []);
-            return edus.includes("ไม่จำกัดวุฒิ") || edus.includes(userEducation);
-          }
-        )
-      );
-    }
+    // Deep filter for Education and Search Query
+    if (userEducation || searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      
+      result = result.reduce((acc, j) => {
+        // Check if the agency/department itself matches the query or if provinces match
+        const agencyMatchesQuery = q && (
+          j.department.toLowerCase().includes(q) || 
+          getProvinces(j).some((p) => p.toLowerCase().includes(q))
+        );
 
-    // Search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (j) =>
-          j.department.toLowerCase().includes(q) ||
-          getProvinces(j).some((p) => p.toLowerCase().includes(q)) ||
-          j.positionList?.some((p) => p.title.toLowerCase().includes(q))
-      );
+        // Filter positions and their units based on education and search query
+        const filteredPositions = [];
+        let hasAnyEduMatch = false; // To track if this job passes the userEducation filter
+
+        for (const p of (j.positionList || [])) {
+          // 1. Check if this position matches userEducation (for the Job-level filter)
+          const pEdus = Array.isArray(p.education) ? p.education : (p.education ? [p.education] : []);
+          let pMatchesEdu = !userEducation || pEdus.includes("ไม่จำกัดวุฒิ") || pEdus.includes(userEducation);
+
+          if (p.units && p.units.length > 0) {
+            const anyUnitMatches = p.units.some(u => {
+              const uEdus = Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []);
+              return !userEducation || uEdus.includes("ไม่จำกัดวุฒิ") || uEdus.includes(userEducation);
+            });
+            pMatchesEdu = anyUnitMatches;
+          }
+          if (pMatchesEdu) hasAnyEduMatch = true;
+
+          // If there is NO search query, we keep ALL positions intact!
+          // We DO NOT filter out positions or units that failed the education check.
+          // This allows JobCard to render them with a red dot.
+          if (!q) {
+            filteredPositions.push(p);
+            continue;
+          }
+
+          // 2. Query check: If there IS a search query, we deep-filter positions/units
+          const titleMatches = p.title && p.title.toLowerCase().includes(q);
+          const finalUnits = p.units || [];
+          
+          let queryMatchedUnits = [];
+          if (finalUnits.length > 0) {
+            queryMatchedUnits = finalUnits.filter(u => 
+              (u.name && u.name.toLowerCase().includes(q)) ||
+              (u.major && u.major.toLowerCase().includes(q)) ||
+              (u.details && u.details.toLowerCase().includes(q))
+            );
+          }
+
+          if (queryMatchedUnits.length > 0) {
+            // Specific units matched the query -> keep only those units
+            const newCount = queryMatchedUnits.reduce((s, u) => s + (Number(u.count) || 1), 0);
+            filteredPositions.push({ ...p, units: queryMatchedUnits, count: newCount });
+          } else if (titleMatches || agencyMatchesQuery) {
+            // No specific units matched, but the position title or agency matched -> keep all units
+            filteredPositions.push(p);
+          }
+        }
+
+        // Job is kept if it passes the education check AND has any matching positions left (or edge case match)
+        const passesEdu = !userEducation || hasAnyEduMatch;
+        const hasPositionsLeft = filteredPositions && filteredPositions.length > 0;
+        const edgeCaseAgencyMatch = agencyMatchesQuery && (!j.positionList || j.positionList.length === 0);
+
+        if (passesEdu && (hasPositionsLeft || edgeCaseAgencyMatch)) {
+          acc.push({ ...j, positionList: filteredPositions });
+        }
+
+
+        return acc;
+      }, []);
     }
 
     // Sort
@@ -118,11 +180,15 @@ export default function JobList({
     } else if (sortBy === "deadline") {
       result.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
     } else if (sortBy === "positions") {
-      result.sort((a, b) => b.positions - a.positions);
+      result.sort((a, b) => {
+        const countA = a.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
+        const countB = b.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
+        return countB - countA;
+      });
     }
 
     return result;
-  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy]);
+  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, bookmarks]);
 
   // Stats
   const totalPositions = filtered.reduce(
@@ -133,7 +199,7 @@ export default function JobList({
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy]);
+  }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const currentJobs = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -352,6 +418,25 @@ export default function JobList({
               )}
             </div>
 
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <button
+                onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
+                className={`btn-favorite-filter ${showBookmarksOnly ? 'active' : ''}`}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "0 16px", height: "46px",
+                  borderRadius: "var(--radius-full)",
+                  background: showBookmarksOnly ? "#fee2e2" : "white",
+                  border: `1px solid ${showBookmarksOnly ? "#fca5a5" : "var(--gray-200)"}`,
+                  color: showBookmarksOnly ? "#ef4444" : "var(--gray-500)",
+                  fontWeight: 600, fontSize: "0.9rem",
+                  cursor: "pointer", transition: "all 0.2s"
+                }}
+              >
+                {showBookmarksOnly ? "❤️ ที่บันทึกไว้" : "🤍 ที่บันทึกไว้"}
+              </button>
+            </div>
+
             {/* Search */}
             <div className="filter-search" style={{ position: "relative", flex: 1 }}>
               <span className="filter-search-icon">🔍</span>
@@ -405,7 +490,7 @@ export default function JobList({
             </select>
 
             <span className="filter-count">
-              พบ <strong>{filtered.length}</strong> ตำแหน่ง
+              พบ <strong>{filtered.length}</strong> ประกาศ
             </span>
           </div>
         </div>
@@ -464,6 +549,8 @@ export default function JobList({
                     isAdmin={isAdmin}
                     onEdit={onEditJob}
                     userEducation={userEducation}
+                    isBookmarked={isBookmarked(job.id)}
+                    onToggleBookmark={() => toggleBookmark(job.id)}
                   />
                 ))}
               </>

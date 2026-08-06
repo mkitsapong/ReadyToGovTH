@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { id: "government", label: "พนักงานราชการ" },
   { id: "state",      label: "รัฐวิสาหกิจ" },
   { id: "temp",       label: "ลูกจ้างชั่วคราว" },
+  { id: "agency",     label: "พนักงานหน่วยงานของรัฐ" },
 ];
 
 export default function Header({
@@ -97,7 +98,7 @@ export default function Header({
               </span>
             </div>
 
-            {user ? (
+            {user && (
               <>
                 <div className={`header-role-badge ${user.role}`}>
                   <span>👑</span>
@@ -107,23 +108,6 @@ export default function Header({
                   ออกจากระบบ
                 </button>
               </>
-            ) : (
-              <div style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 14px",
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: "999px",
-                fontSize: "0.76rem",
-                color: "var(--navy-200)",
-                fontWeight: 600,
-                whiteSpace: "nowrap",
-              }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 8px #22c55e" }} />
-                อัปเดตประกาศทุกวัน
-              </div>
             )}
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ModalExamPrepSection } from "./ExamResources.jsx";
 
 const CATEGORY_MAP = {
@@ -6,6 +7,7 @@ const CATEGORY_MAP = {
   พนักงานราชการ: { badge: "badge-government", icon: "📋" },
   รัฐวิสาหกิจ:  { badge: "badge-state",      icon: "🏢" },
   ลูกจ้างชั่วคราว: { badge: "badge-temp",       icon: "📝" },
+  พนักงานหน่วยงานของรัฐ: { badge: "badge-agency", icon: "🏫" },
 };
 
 function formatDate(dateStr) {
@@ -13,12 +15,17 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
 }
 function daysLeft(deadline) {
-  return Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
+  const d1 = new Date();
+  d1.setHours(0, 0, 0, 0);
+  const d2 = new Date(deadline);
+  d2.setHours(0, 0, 0, 0);
+  return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
 }
 function getProvinces(job) {
-  if (Array.isArray(job.provinces)) return job.provinces;
-  if (job.province) return [job.province];
-  return [];
+  let list = [];
+  if (Array.isArray(job.provinces)) list = job.provinces;
+  else if (job.province) list = [job.province];
+  return list.filter(p => p !== "ไม่ระบุ");
 }
 
 // Education badge color map
@@ -36,6 +43,13 @@ const EDU_COLORS = {
 export default function JobDetailModal({ job, books = [], onClose, inline = false }) {
   const [isCopied, setIsCopied] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
+  const [selectedPdfIndex, setSelectedPdfIndex] = useState(0);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+  const bookmarked = isBookmarked(job?.id);
+
+  const pdfUrls = job.announcementUrl 
+    ? job.announcementUrl.split(/[\s,]+/).filter(url => url.trim().length > 0)
+    : [];
 
   if (!job) return null;
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
@@ -55,27 +69,71 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           {/* Dark gradient banner */}
           <div style={{
             background: "linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 100%)",
-            padding: "24px 28px",
+            padding: "clamp(16px, 5vw, 24px) clamp(16px, 5vw, 28px)",
             position: "relative", overflow: "hidden",
             borderTopLeftRadius: "var(--radius-2xl)",
             borderTopRightRadius: "var(--radius-2xl)",
-            display: "flex", alignItems: "center", gap: 20
+            display: "flex", alignItems: "center", gap: "clamp(12px, 4vw, 20px)",
+            flexWrap: "wrap"
           }}>
             {/* Glow accents */}
             <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: "radial-gradient(circle, rgba(234,88,12,0.18) 0%, transparent 65%)", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: -20, left: -20, width: 150, height: 150, background: "radial-gradient(circle, rgba(37,99,176,0.2) 0%, transparent 65%)", pointerEvents: "none" }} />
 
-            {/* Close button */}
-            {!inline && (
-              <button className="modal-close" onClick={onClose} aria-label="ปิด"
-                style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                ✕
+            {/* Top Right Actions */}
+            <div style={{ position: "absolute", top: 16, right: 16, display: "flex", gap: 8, zIndex: 10 }}>
+              {/* Share Button */}
+              <button onClick={() => {
+                const url = `${window.location.origin}/?jobId=${job.id}`;
+                navigator.clipboard.writeText(url);
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000);
+              }}
+              title="แชร์ลิงก์งานนี้"
+              style={{
+                background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.9)", 
+                border: "1px solid rgba(255,255,255,0.15)", borderRadius: "var(--radius-sm)",
+                padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 4, transition: "all 0.2s"
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+                {isCopied ? "✅ คัดลอกแล้ว" : "🔗 แชร์"}
               </button>
-            )}
+              
+              {/* Bookmark Button */}
+              <button onClick={() => toggleBookmark(job.id)} title={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 28, height: 28,
+                  background: bookmarked ? "rgba(255, 255, 255, 0.2)" : "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "50%",
+                  color: bookmarked ? "#f87171" : "rgba(255,255,255,0.8)",
+                  fontSize: "1rem", cursor: "pointer", transition: "all 0.2s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}>
+                {bookmarked ? "❤️" : "🤍"}
+              </button>
+
+              {/* Close button */}
+              {!inline && (
+                <button className="modal-close" onClick={onClose} aria-label="ปิด"
+                  style={{ 
+                    background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", 
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
+                    borderRadius: "50%", cursor: "pointer"
+                  }}>
+                  ✕
+                </button>
+              )}
+            </div>
 
             {/* Logo */}
             <div style={{
-              width: 100, height: 100,
+              width: "clamp(72px, 20vw, 100px)", height: "clamp(72px, 20vw, 100px)",
               borderRadius: "var(--radius-xl)",
               background: job.logoUrl ? "white" : "linear-gradient(135deg, #1e3a8a, #3b82f6)",
               border: "3px solid rgba(255,255,255,0.2)",
@@ -86,13 +144,13 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             }}>
               {job.logoUrl
                 ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }} />
-                : <span style={{ fontSize: "2.2rem" }}>{mainMeta.icon}</span>}
+                : <span style={{ fontSize: "clamp(1.5rem, 5vw, 2.2rem)" }}>{mainMeta.icon}</span>}
             </div>
 
             {/* Text details */}
-            <div style={{ flex: 1, zIndex: 10 }}>
+            <div style={{ flex: 1, zIndex: 10, minWidth: "220px", paddingRight: !inline ? 150 : 0 }}>
               {/* Category badge */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                 {categories.map((cat, idx) => {
                   const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
                   return <span key={idx} className={`badge ${catMeta.badge}`}>{cat}</span>;
@@ -163,25 +221,25 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           {/* Deadline banner */}
           <div style={{
             display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px",
-            background: days <= 7 && days > 0 ? "var(--orange-50)" : days <= 0 ? "#fef2f2" : "var(--navy-50)",
-            border: `1px solid ${days <= 7 && days > 0 ? "var(--orange-200)" : days <= 0 ? "#fecaca" : "var(--navy-100)"}`,
+            background: days <= 7 && days >= 0 ? "var(--orange-50)" : days < 0 ? "#fef2f2" : "var(--navy-50)",
+            border: `1px solid ${days <= 7 && days >= 0 ? "var(--orange-200)" : days < 0 ? "#fecaca" : "var(--navy-100)"}`,
             borderRadius: "var(--radius-md)", marginBottom: 20, fontSize: "0.875rem",
-            color: days <= 7 && days > 0 ? "var(--orange-700)" : days <= 0 ? "#dc2626" : "var(--navy-700)",
+            color: days <= 7 && days >= 0 ? "var(--orange-700)" : days < 0 ? "#dc2626" : "var(--navy-700)",
             lineHeight: 1.5
           }}>
-            <span style={{ flexShrink: 0, fontSize: "1rem" }}>{days > 0 ? "📅" : "❌"}</span>
+            <span style={{ flexShrink: 0, fontSize: "1rem" }}>{days >= 0 ? "📅" : "❌"}</span>
             <div style={{ flex: 1, wordBreak: "break-word" }}>
-              {days > 0
+              {days >= 0
                 ? <>
                     {job.postedDate ? `เปิดรับ ${formatDate(job.postedDate)} - ` : "ปิดรับสมัคร "} 
                     <strong>{formatDate(job.deadline)}</strong>
                     <span style={{ 
-                      color: (days <= 7 && days > 0) ? "var(--orange-700)" : "var(--gray-500)", 
-                      fontWeight: (days <= 7 && days > 0) ? 700 : 500, 
+                      color: (days <= 7 && days >= 0) ? "var(--orange-700)" : "var(--gray-500)", 
+                      fontWeight: (days <= 7 && days >= 0) ? 700 : 500, 
                       display: "inline-block",
                       marginLeft: 4 
                     }}>
-                      (เหลือ {days} วัน)
+                      {days === 0 ? "(ปิดรับวันนี้!)" : `(เหลือ ${days} วัน)`}
                     </span>
                   </>
                 : <>หมดเขตรับสมัครแล้ว ({job.postedDate ? `${formatDate(job.postedDate)} - ` : ""}{formatDate(job.deadline)})</>}
@@ -442,7 +500,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
         </div>
 
         {/* ── Footer ── */}
-        <div className="modal-footer" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+        <div className="modal-footer">
           <button
             onClick={async () => {
               const url = `${window.location.origin}/job/${job.id}`;
@@ -462,36 +520,37 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 setTimeout(() => setIsCopied(false), 2000);
               }
             }}
-            className="btn btn-outline"
-            style={{ padding: "10px 14px", flexShrink: 0 }}
+            className="btn btn-outline modal-btn-share"
             title="แชร์ประกาศนี้"
           >
-            {isCopied ? "✅ คัดลอกลิงก์แล้ว" : "📤 แชร์"}
+            {isCopied ? "✅" : "📤 แชร์"}
           </button>
           
-          <div style={{ flex: 1, display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-            {job.announcementUrl && (
+          <div className="modal-footer-actions">
+            {pdfUrls.length > 0 && (
               <button
-                onClick={() => setShowPdf(true)}
-                className="btn btn-outline"
-                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                onClick={() => {
+                  setSelectedPdfIndex(0);
+                  setShowPdf(true);
+                }}
+                className="btn btn-outline modal-btn-action"
               >
-                📄 อ่านประกาศฉบับเต็ม
+                📄 อ่านประกาศ<span className="hide-on-mobile">ฉบับเต็ม</span>
+                {pdfUrls.length > 1 && ` (${pdfUrls.length})`}
               </button>
             )}
             {isNotOpenYet ? (
-              <button className="btn" style={{ background: "var(--gray-400)", color: "white", cursor: "not-allowed", border: "none" }} disabled>
-                ⏳ ยังไม่เปิดรับสมัคร
+              <button className="btn modal-btn-action" style={{ background: "var(--gray-400)", color: "white", cursor: "not-allowed", border: "none" }} disabled>
+                ⏳ ยังไม่เปิด<span className="hide-on-mobile">รับสมัคร</span>
               </button>
             ) : (
               <a 
                 href={job.applyUrl || "#"} 
                 target={job.applyUrl?.startsWith("mailto:") ? undefined : "_blank"} 
                 rel="noreferrer" 
-                className="btn btn-primary" 
-                style={{ textDecoration: "none" }}
+                className="btn btn-primary modal-btn-action" 
               >
-                {job.applyUrl?.startsWith("mailto:") ? "ส่งอีเมลสมัครงาน ✉️" : "สมัครงาน →"}
+                {job.applyUrl?.startsWith("mailto:") ? "ส่งอีเมล ✉️" : "สมัครงาน →"}
               </a>
             )}
           </div>
@@ -500,16 +559,51 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   );
 
   if (showPdf) {
+    const currentPdfUrl = pdfUrls[selectedPdfIndex] || "";
+    const embedUrl = currentPdfUrl.includes("drive.google.com/file/d/") 
+      ? currentPdfUrl.replace(/\/view.*$/, "/preview") 
+      : `${currentPdfUrl}${currentPdfUrl.includes('#') ? '&' : '#'}view=FitH`;
+
     const pdfContent = (
       <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none', height: '100vh', display: 'flex', flexDirection: 'column' } : { maxWidth: 1000, height: '90vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: "16px", borderBottom: "1px solid var(--gray-200)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "white", borderRadius: inline ? 0 : "var(--radius-2xl) var(--radius-2xl) 0 0" }}>
-          <button onClick={() => setShowPdf(false)} className="btn btn-outline" style={{ padding: "6px 12px", fontSize: "0.85rem" }}>⬅ กลับ</button>
+          <button onClick={() => setShowPdf(false)} className="btn btn-outline" style={{ padding: "6px 12px", fontSize: "0.85rem", flexShrink: 0 }}>⬅ กลับ</button>
           <h2 style={{ fontSize: "1rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, textAlign: "center", color: "var(--navy-800)", fontWeight: 700 }}>ประกาศรับสมัคร</h2>
-          {!inline ? (
-            <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "var(--gray-500)", padding: 4 }}>✕</button>
-          ) : <div style={{ width: 62 }} />}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+            <a href={currentPdfUrl} target="_blank" rel="noreferrer" title="เปิดในแท็บใหม่" style={{ padding: "6px 8px", color: "var(--navy-600)", textDecoration: "none", display: "flex", alignItems: "center", background: "var(--gray-100)", borderRadius: "var(--radius-md)", fontSize: "0.75rem", fontWeight: 600, gap: 4 }}>
+              เปิดดู <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+            {!inline ? (
+              <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "var(--gray-500)", padding: 4 }}>✕</button>
+            ) : <div style={{ width: 24 }} />}
+          </div>
         </div>
-        <iframe src={`${job.announcementUrl}${job.announcementUrl.includes('#') ? '&' : '#'}view=FitH`} style={{ flex: 1, width: "100%", border: "none", borderRadius: inline ? 0 : "0 0 var(--radius-2xl) var(--radius-2xl)" }} title="ประกาศรับสมัคร" />
+        {pdfUrls.length > 1 && (
+          <div style={{ padding: "8px 16px", background: "white", borderBottom: "1px solid var(--gray-200)", display: "flex", gap: 8, overflowX: "auto" }}>
+            {pdfUrls.map((url, idx) => (
+              <button 
+                key={idx}
+                onClick={() => setSelectedPdfIndex(idx)}
+                style={{
+                  padding: "4px 12px", borderRadius: "999px", fontSize: "0.8rem", fontWeight: 600, border: "none",
+                  background: selectedPdfIndex === idx ? "var(--navy-600)" : "var(--gray-100)",
+                  color: selectedPdfIndex === idx ? "white" : "var(--gray-700)",
+                  cursor: "pointer", whiteSpace: "nowrap"
+                }}
+              >
+                ไฟล์ประกาศที่ {idx + 1}
+              </button>
+            ))}
+          </div>
+        )}
+        <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative", backgroundColor: "#f3f4f6", borderRadius: inline ? 0 : "0 0 var(--radius-2xl) var(--radius-2xl)" }}>
+          {/* Support scrolling on some mobile browsers using a wrapper, and fallback to direct link if it still stucks */}
+          <iframe 
+            src={embedUrl} 
+            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }} 
+            title={`ประกาศรับสมัครไฟล์ที่ ${selectedPdfIndex + 1}`} 
+          />
+        </div>
       </div>
     );
 

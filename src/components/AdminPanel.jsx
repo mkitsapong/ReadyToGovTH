@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { regions } from "../data/provinces.js";
 
-const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว"];
+const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ"];
 const EDUCATION = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
 
 const allProvinces = regions.flatMap((r) => r.provinces);
 const uniqueProvinces = [...new Set(allProvinces)].sort((a, b) => a.localeCompare(b, "th"));
 
-const CATEGORY_ICONS = { ข้าราชการ: "🏛️", พนักงานราชการ: "📋", รัฐวิสาหกิจ: "🏢", ลูกจ้างชั่วคราว: "📝" };
+const CATEGORY_ICONS = { ข้าราชการ: "🏛️", พนักงานราชการ: "📋", รัฐวิสาหกิจ: "🏢", ลูกจ้างชั่วคราว: "📝", พนักงานหน่วยงานของรัฐ: "🏫" };
 
 const EMPTY_UNIT = { name: "", count: 1, education: ["ปริญญาตรี"], major: "", details: "" };
 const EMPTY_POSITION = { title: "", salary: "", count: 1, education: ["ปริญญาตรี"], details: "", units: [] };
@@ -71,6 +71,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   );
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [expandedPosIndex, setExpandedPosIndex] = useState(0);
   const [logoPreview, setLogoPreview] = useState(isEditMode ? editJob.logoUrl || "" : "");
   const [provinceOpen, setProvinceOpen] = useState(false);
   const provinceRef = useRef(null);
@@ -122,7 +123,11 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     if (errors.positionList) setErrors((prev) => ({ ...prev, positionList: undefined }));
   }
   function addPosition() {
-    setForm((prev) => ({ ...prev, positionList: [...prev.positionList, { ...EMPTY_POSITION }] }));
+    setForm((prev) => {
+      const newList = [...prev.positionList, { ...EMPTY_POSITION }];
+      setExpandedPosIndex(newList.length - 1);
+      return { ...prev, positionList: newList };
+    });
   }
   function removePosition(index) {
     setForm((prev) => ({
@@ -228,7 +233,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
         role="dialog"
         aria-modal="true"
         aria-label={isEditMode ? "แก้ไขประกาศ" : "เพิ่มประกาศรับสมัครงาน"}
-        style={{ maxWidth: 600 }}
+        style={{ maxWidth: 900, width: "95%", maxHeight: "95vh" }}
       >
         {/* Header */}
         <div className="modal-header">
@@ -242,10 +247,10 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <div className="modal-body">
 
-            {/* Logo Upload */}
+            {/* Logo Upload or URL */}
             <div className="form-group">
               <label className="form-label">Logo หน่วยงาน</label>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
                 <div
                   style={{
                     width: 64, height: 64,
@@ -261,21 +266,36 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                     ? <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : <span style={{ fontSize: "1.5rem" }}>{CATEGORY_ICONS[form.categories?.[0]] || "🏛️"}</span>}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <input id="logo-upload-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    style={{ display: "none" }} onChange={handleLogoChange} />
-                  <button type="button" className="btn btn-outline"
-                    style={{ fontSize: "0.8rem", padding: "7px 14px", marginBottom: 6 }}
-                    onClick={() => document.getElementById("logo-upload-input").click()}>
-                    📁 เลือกรูป Logo
-                  </button>
-                  {logoPreview && (
-                    <button type="button" onClick={clearLogo}
-                      style={{ marginLeft: 8, background: "none", border: "none", fontSize: "0.78rem", color: "var(--gray-400)", cursor: "pointer", textDecoration: "underline" }}>
-                      ลบรูป
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <input id="logo-upload-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      style={{ display: "none" }} onChange={handleLogoChange} />
+                    <button type="button" className="btn btn-outline"
+                      style={{ fontSize: "0.8rem", padding: "6px 12px", flexShrink: 0, height: 34 }}
+                      onClick={() => document.getElementById("logo-upload-input").click()}>
+                      📁 อัปโหลดรูป
                     </button>
-                  )}
-                  <p style={{ fontSize: "0.72rem", color: "var(--gray-400)", marginTop: 2 }}>PNG, JPG, WEBP, SVG · ไม่เกิน 2 MB</p>
+                    <span style={{ fontSize: "0.8rem", color: "var(--gray-500)" }}>หรือ</span>
+                    <input 
+                      type="text"
+                      placeholder="ใส่ลิงก์รูปภาพ (URL)"
+                      className="form-input"
+                      style={{ flex: 1, minWidth: 150, padding: "6px 10px", fontSize: "0.8rem", height: 34 }}
+                      value={form.logoUrl || ""}
+                      onChange={(e) => {
+                        const url = e.target.value;
+                        setForm((prev) => ({ ...prev, logoUrl: url }));
+                        setLogoPreview(url);
+                      }}
+                    />
+                    {logoPreview && (
+                      <button type="button" onClick={clearLogo}
+                        style={{ background: "none", border: "none", fontSize: "0.78rem", color: "var(--gray-400)", cursor: "pointer", textDecoration: "underline", flexShrink: 0 }}>
+                        ลบรูป
+                      </button>
+                    )}
+                  </div>
+                  <p style={{ fontSize: "0.72rem", color: "var(--gray-400)", margin: 0 }}>อัปโหลด: PNG, JPG, WEBP, SVG ไม่เกิน 2 MB</p>
                 </div>
               </div>
             </div>
@@ -497,42 +517,55 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
               )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {form.positionList.map((pos, i) => (
+                {form.positionList.map((pos, i) => {
+                  const isExpanded = expandedPosIndex === i;
+                  return (
                   <div key={i} style={{
                     padding: "12px 14px",
                     background: "var(--gray-50)",
-                    border: "1.5px solid var(--gray-200)",
+                    border: isExpanded ? "1.5px solid var(--accent)" : "1.5px solid var(--gray-200)",
                     borderRadius: "var(--radius-lg)",
                     position: "relative",
                   }}>
-                    {/* Row number */}
-                    <div style={{
-                      position: "absolute", top: -10, left: 12,
-                      background: "var(--navy-700)", color: "white",
-                      fontSize: "0.68rem", fontWeight: 700,
-                      padding: "2px 8px", borderRadius: "999px",
-                    }}>
-                      ตำแหน่งที่ {i + 1}
+                    {/* Header (Accordion Toggle) */}
+                    <div 
+                      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: isExpanded ? 12 : 0 }}
+                      onClick={() => setExpandedPosIndex(isExpanded ? -1 : i)}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{
+                          background: "var(--navy-700)", color: "white",
+                          fontSize: "0.68rem", fontWeight: 700,
+                          padding: "2px 8px", borderRadius: "999px",
+                        }}>
+                          ตำแหน่งที่ {i + 1}
+                        </div>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: pos.title ? "var(--navy-800)" : "var(--gray-400)" }}>
+                          {pos.title || "(ยังไม่ได้ระบุชื่อตำแหน่ง)"}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        {form.positionList.length > 1 && (
+                          <button type="button" onClick={(e) => { e.stopPropagation(); removePosition(i); }}
+                            style={{
+                              background: "none", border: "none",
+                              fontSize: "1.1rem", color: "var(--gray-400)",
+                              cursor: "pointer", lineHeight: 1, padding: 4
+                            }}
+                            title="ลบตำแหน่งนี้">✕</button>
+                        )}
+                        <span style={{ fontSize: "0.7rem", color: "var(--gray-500)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
+                      </div>
                     </div>
 
-                    {/* Remove button */}
-                    {form.positionList.length > 1 && (
-                      <button type="button" onClick={() => removePosition(i)}
-                        style={{
-                          position: "absolute", top: 8, right: 10,
-                          background: "none", border: "none",
-                          fontSize: "1rem", color: "var(--gray-400)",
-                          cursor: "pointer", lineHeight: 1,
-                        }}
-                        title="ลบตำแหน่งนี้">✕</button>
-                    )}
-
-                    {/* Title */}
-                    <div className="form-group" style={{ marginBottom: 8 }}>
-                      <label className="form-label" style={{ fontSize: "0.72rem" }}>ชื่อตำแหน่ง *</label>
-                      <input className="form-input"
-                        placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
-                        value={pos.title}
+                    {isExpanded && (
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        {/* Title */}
+                        <div className="form-group" style={{ marginBottom: 8 }}>
+                          <label className="form-label" style={{ fontSize: "0.72rem" }}>ชื่อตำแหน่ง *</label>
+                          <input className="form-input"
+                            placeholder="เช่น นักวิเคราะห์นโยบายและแผน"
+                            value={pos.title}
                         onChange={(e) => handlePositionChange(i, "title", e.target.value)} />
                     </div>
 
@@ -708,7 +741,9 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                       </button>
                     </div>
                   </div>
-                ))}
+                )}
+                </div>
+              )})}
               </div>
             </div>
 

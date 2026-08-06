@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { auth } from "./firebase.js";
 import "./index.css";
 import "./App.css";
@@ -9,6 +9,7 @@ import "./App.css";
 import Header      from "./components/Header.jsx";
 import JobList     from "./components/JobList.jsx";
 import JobDetailPage from "./components/JobDetailPage.jsx";
+import JobDetailModal from "./components/JobDetailModal.jsx";
 import AdminPanel  from "./components/AdminPanel.jsx";
 import AuthModal   from "./components/AuthModal.jsx";
 import Footer      from "./components/Footer.jsx";
@@ -30,21 +31,36 @@ function Toast({ toasts }) {
   );
 }
 
+// Helper to determine active page from pathname
+function getActivePage(pathname) {
+  if (pathname.includes("/category/civil")) return "civil";
+  if (pathname.includes("/category/government")) return "government";
+  if (pathname.includes("/category/state")) return "state";
+  if (pathname.includes("/category/temp")) return "temp";
+  if (pathname.includes("/category/agency")) return "agency";
+  return "home";
+}
+
 // ─── Main Content Wrapper ───────────────────────────────────────────────────
 // This component handles the URL params/search and passes them to JobList
 function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, isBooksError, isAdmin, handleEditJob, userEducation, setUserEducation, handleAddBook, handleUpdateBook, handleDeleteBook, onSelectProvince }) {
   const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Parse activePage from URL path
-  let activePage = "home";
-  if (location.pathname === "/category/civil") activePage = "civil";
-  if (location.pathname === "/category/government") activePage = "government";
-  if (location.pathname === "/category/state") activePage = "state";
-  if (location.pathname === "/category/temp") activePage = "temp";
+  let activePage = getActivePage(location.pathname);
 
   // Parse selectedProvince from query string (?province=xxx)
   const selectedProvince = searchParams.get("province");
+
+  // Deep linking modal logic
+  const jobIdFromUrl = searchParams.get("jobId");
+  const selectedJob = jobIdFromUrl ? jobs.find((j) => String(j.id) === String(jobIdFromUrl)) : null;
+
+  const handleCloseModal = () => {
+    searchParams.delete("jobId");
+    setSearchParams(searchParams);
+  };
 
   // Dynamic SEO based on page and province
   const pageTitles = {
@@ -52,7 +68,8 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
     civil: "งานราชการ",
     government: "งานพนักงานราชการ",
     state: "งานรัฐวิสาหกิจ",
-    temp: "งานลูกจ้างชั่วคราว"
+    temp: "งานลูกจ้างชั่วคราว",
+    agency: "งานพนักงานหน่วยงานของรัฐ"
   };
   
   let seoTitle = pageTitles[activePage] || "หน้าแรก";
@@ -82,6 +99,14 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
         onUpdateBook={handleUpdateBook}
         onDeleteBook={handleDeleteBook}
       />
+      {selectedJob && (
+        <JobDetailModal
+          job={selectedJob}
+          books={books}
+          onClose={handleCloseModal}
+          inline={false}
+        />
+      )}
     </>
   );
 }
@@ -213,11 +238,9 @@ export default function App() {
     setEditingJob(null);
   }
 
-  // Derive activePage and selectedProvince for Header
-  let activePage = "home";
-  if (location.pathname === "/category/civil") activePage = "civil";
-  if (location.pathname === "/category/government") activePage = "government";
-  if (location.pathname === "/category/state") activePage = "state";
+  let activePage = getActivePage(location.pathname);
+
+  console.log("App.jsx render: location.pathname =", location.pathname, " | activePage =", activePage);
 
   const searchParams = new URLSearchParams(location.search);
   const selectedProvince = searchParams.get("province");

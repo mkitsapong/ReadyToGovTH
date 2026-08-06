@@ -273,6 +273,12 @@ ul {
   border: 1px solid rgba(252, 165, 165, 0.4);
 }
 
+.badge-agency {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  color: #4c1d95;
+  border: 1px solid rgba(196, 181, 253, 0.4);
+}
+
 .tag {
   display: inline-flex;
   align-items: center;

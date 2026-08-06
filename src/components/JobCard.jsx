@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 
 const CATEGORY_MAP = {
@@ -6,13 +6,14 @@ const CATEGORY_MAP = {
   พนักงานราชการ: { badge: "badge-government", icon: "📋" },
   รัฐวิสาหกิจ:  { badge: "badge-state",      icon: "🏢" },
   ลูกจ้างชั่วคราว: { badge: "badge-temp",       icon: "📝" },
+  พนักงานหน่วยงานของรัฐ: { badge: "badge-agency", icon: "🏫" },
 };
 
-// Helper: normalize province field
 function getProvinces(job) {
-  if (Array.isArray(job.provinces)) return job.provinces;
-  if (job.province) return [job.province];
-  return [];
+  let list = [];
+  if (Array.isArray(job.provinces)) list = job.provinces;
+  else if (job.province) list = [job.province];
+  return list.filter(p => p !== "ไม่ระบุ");
 }
 
 const EDU_ORDER = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก"];
@@ -21,8 +22,14 @@ function getEduMatchStatus(positionList, userEdu) {
   if (!userEdu || !positionList?.length) return null;
   const matchCount = positionList.filter((p) => {
     const edus = Array.isArray(p.education) ? p.education : (p.education ? [p.education] : []);
-    if (edus.includes("ไม่จำกัดวุฒิ")) return true;
-    return edus.includes(userEdu);           // exact match เท่านั้น
+    let pMatchesEdu = edus.includes("ไม่จำกัดวุฒิ") || edus.includes(userEdu);
+    if (p.units && p.units.length > 0) {
+      pMatchesEdu = p.units.some(u => {
+        const uEdus = Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []);
+        return uEdus.includes("ไม่จำกัดวุฒิ") || uEdus.includes(userEdu);
+      });
+    }
+    return pMatchesEdu;
   }).length;
   if (matchCount === positionList.length) return "all";
   if (matchCount > 0) return "some";
@@ -30,20 +37,30 @@ function getEduMatchStatus(positionList, userEdu) {
 }
 
 function daysLeft(deadline) {
-  return Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
+  const d1 = new Date();
+  d1.setHours(0, 0, 0, 0);
+  const d2 = new Date(deadline);
+  d2.setHours(0, 0, 0, 0);
+  return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
 }
 function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export default function JobCard({ job, books = [], style, isAdmin, onEdit, userEducation }) {
+export default function JobCard({ job, books = [], style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark }) {
+  const [searchParams, setSearchParams] = useSearchParams();
 
-
+  const handleDetailClick = (e) => {
+    e.preventDefault();
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("jobId", job.id);
+    setSearchParams(newParams);
+  };
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
   const mainMeta = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   const days = daysLeft(job.deadline);
-  const urgent = days <= 7 && days > 0;
-  const expired = days <= 0;
+  const urgent = days <= 7 && days >= 0;
+  const expired = days < 0;
   const eduStatus = getEduMatchStatus(job.positionList, userEducation);
   const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
 
@@ -108,7 +125,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
-                paddingRight: isAdmin ? 65 : 0, // prevent overlap with absolute Edit button
+                paddingRight: isAdmin ? 110 : 50, // prevent overlap with absolute Edit & Bookmark buttons
                 flexShrink: 0,
               }}>
                 {job.department}
@@ -164,26 +181,42 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
               </div>
             </div>
 
-            {/* Edit button */}
-            {isAdmin && (
-              <button id={`btn-edit-${job.id}`} onClick={() => onEdit(job)} title="แก้ไขประกาศ"
+            <div style={{ position: "absolute", top: 16, right: 16, display: "flex", gap: 8, zIndex: 10 }}>
+              {/* Bookmark button */}
+              <button onClick={onToggleBookmark} title={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
                 style={{
-                  position: "absolute", top: 18, right: 20,
-                  display: "flex", alignItems: "center", gap: 4,
-                  padding: "4px 10px",
-                  background: "rgba(255,255,255,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 32, height: 32,
+                  background: isBookmarked ? "rgba(255, 255, 255, 0.2)" : "rgba(255,255,255,0.1)",
                   border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "50%",
+                  color: isBookmarked ? "#f87171" : "rgba(255,255,255,0.8)",
+                  fontSize: "1.1rem", cursor: "pointer", transition: "all 0.2s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}>
+                {isBookmarked ? "❤️" : "🤍"}
+              </button>
+
+              {/* Edit button */}
+              {isAdmin && (
+                <button id={`btn-edit-${job.id}`} onClick={() => onEdit(job)} title="แก้ไขประกาศ"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    padding: "4px 10px", height: 32,
+                    background: "rgba(255,255,255,0.1)",
+                    border: "1px solid rgba(255,255,255,0.2)",
                   borderRadius: "var(--radius-sm)",
                   color: "rgba(255,255,255,0.85)",
-                  fontSize: "0.72rem", fontWeight: 600,
                   cursor: "pointer", fontFamily: "var(--font-sans)",
-                  transition: "all 0.15s", whiteSpace: "nowrap", zIndex: 10,
+                  transition: "all 0.15s", whiteSpace: "nowrap",
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
                 ✏️ แก้ไข
               </button>
             )}
+            </div>
           </div>
 
           {/* Deadline strip */}
@@ -252,14 +285,15 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
               let rowMatch = null;
               if (userEducation) {
                 const edus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
-                if (edus.includes("ไม่จำกัดวุฒิ")) rowMatch = true;
-                else {
-                  const have = EDU_ORDER.indexOf(userEducation);
-                  rowMatch = have !== -1 && edus.some(edu => {
-                    const req = EDU_ORDER.indexOf(edu);
-                    return req !== -1 && have >= req;
+                let pMatchesEdu = edus.includes("ไม่จำกัดวุฒิ") || edus.includes(userEducation);
+                
+                if (pos.units && pos.units.length > 0) {
+                  pMatchesEdu = pos.units.some(u => {
+                    const uEdus = Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []);
+                    return uEdus.includes("ไม่จำกัดวุฒิ") || uEdus.includes(userEducation);
                   });
                 }
+                rowMatch = pMatchesEdu;
               }
 
               return (
@@ -309,7 +343,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
           <div className="job-positions">
             🎓 {[...new Set(job.positionList?.flatMap((p) => Array.isArray(p.education) ? p.education : (p.education ? [p.education] : [])))].join(", ")}
           </div>
-          <Link id={`btn-detail-${job.id}`} className="btn-apply" to={`/job/${job.id}`} style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
+          <Link id={`btn-detail-${job.id}`} className="btn-apply" to={`/job/${job.id}`} onClick={handleDetailClick} style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
             รายละเอียด ▸
           </Link>
         </div>

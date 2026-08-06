@@ -12,8 +12,8 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
               </span>
             </div>
             <p>
-              ศูนย์รวมประกาศรับสมัครงานภาครัฐไทย ข้าราชการ พนักงานราชการ
-              รัฐวิสาหกิจ และลูกจ้างชั่วคราว
+              เว็บรวบรวมประกาศรับสมัครงานภาครัฐ ทั้งข้าราชการ พนักงานราชการ
+              รัฐวิสาหกิจ ลูกจ้างชั่วคราว และพนักงานหน่วยงานของรัฐ
               <br />
               อัปเดตข้อมูลตรงจากหน่วยงานภาครัฐ
             </p>
@@ -27,6 +27,7 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
               <li><button onClick={() => onNavigate("government")}>📋 พนักงานราชการ</button></li>
               <li><button onClick={() => onNavigate("state")}>🏢 รัฐวิสาหกิจ</button></li>
               <li><button onClick={() => onNavigate("temp")}>📝 ลูกจ้างชั่วคราว</button></li>
+              <li><button onClick={() => onNavigate("agency")}>🏫 พนักงานหน่วยงานของรัฐ</button></li>
               <li><button onClick={() => onNavigate("home")}>🔍 ประกาศทั้งหมด</button></li>
             </ul>
           </div>

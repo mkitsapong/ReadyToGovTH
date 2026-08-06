@@ -1,11 +1,11 @@
 import { Helmet } from 'react-helmet-async';
 
 export default function SEO({ title, description, url, imageUrl, type = 'website', keywords = '' }) {
-  const siteTitle = title ? `${title} - ReadyToGovTH` : 'ReadyToGovTH - ศูนย์รวมประกาศรับสมัครงานราชการ';
-  const defaultDesc = 'เว็บบอร์ดรวบรวมประกาศรับสมัครงานภาครัฐ ข้าราชการ พนักงานราชการ รัฐวิสาหกิจ และลูกจ้างชั่วคราว อัปเดตล่าสุด';
+  const siteTitle = title ? `${title} - ReadyToGov` : 'ReadyToGov - รวมประกาศรับสมัครงานราชการ';
+  const defaultDesc = 'เว็บบอร์ดรวบรวมประกาศรับสมัครงานภาครัฐ ข้าราชการ พนักงานราชการ รัฐวิสาหกิจ ลูกจ้างชั่วคราว และพนักงานหน่วยงานของรัฐ อัปเดตล่าสุด';
   const siteDesc = description || defaultDesc;
   const siteUrl = url || 'https://readytogov.th'; // เปลี่ยนเป็นโดเมนจริงเมื่อพร้อม
-  const siteKeywords = keywords || 'งานราชการ, สมัครงานราชการ, ข้าราชการ, พนักงานราชการ, รัฐวิสาหกิจ, ลูกจ้างชั่วคราว';
+  const siteKeywords = keywords || 'งานราชการ, สมัครงานราชการ, ข้าราชการ, พนักงานราชการ, รัฐวิสาหกิจ, ลูกจ้างชั่วคราว, พนักงานหน่วยงานของรัฐ, พนักงานมหาวิทยาลัย, พนักงานกองทุน, องค์การมหาชน';
   
   return (
     <Helmet>
