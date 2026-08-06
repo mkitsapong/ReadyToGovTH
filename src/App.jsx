@@ -9,7 +9,6 @@ import "./App.css";
 import Header      from "./components/Header.jsx";
 import JobList     from "./components/JobList.jsx";
 import JobDetailPage from "./components/JobDetailPage.jsx";
-import JobDetailModal from "./components/JobDetailModal.jsx";
 import AdminPanel  from "./components/AdminPanel.jsx";
 import AuthModal   from "./components/AuthModal.jsx";
 import Footer      from "./components/Footer.jsx";
@@ -53,15 +52,6 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
   // Parse selectedProvince from query string (?province=xxx)
   const selectedProvince = searchParams.get("province");
 
-  // Deep linking modal logic
-  const jobIdFromUrl = searchParams.get("jobId");
-  const selectedJob = jobIdFromUrl ? jobs.find((j) => String(j.id) === String(jobIdFromUrl)) : null;
-
-  const handleCloseModal = () => {
-    searchParams.delete("jobId");
-    setSearchParams(searchParams);
-  };
-
   // Dynamic SEO based on page and province
   const pageTitles = {
     home: "หน้าแรก",
@@ -99,14 +89,6 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
         onUpdateBook={handleUpdateBook}
         onDeleteBook={handleDeleteBook}
       />
-      {selectedJob && (
-        <JobDetailModal
-          job={selectedJob}
-          books={books}
-          onClose={handleCloseModal}
-          inline={false}
-        />
-      )}
     </>
   );
 }

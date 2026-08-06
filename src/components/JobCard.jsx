@@ -50,12 +50,6 @@ function formatDate(dateStr) {
 export default function JobCard({ job, books = [], style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const handleDetailClick = (e) => {
-    e.preventDefault();
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("jobId", job.id);
-    setSearchParams(newParams);
-  };
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
   const mainMeta = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   const days = daysLeft(job.deadline);
@@ -343,7 +337,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
           <div className="job-positions">
             🎓 {[...new Set(job.positionList?.flatMap((p) => Array.isArray(p.education) ? p.education : (p.education ? [p.education] : [])))].join(", ")}
           </div>
-          <Link id={`btn-detail-${job.id}`} className="btn-apply" to={`/job/${job.id}`} onClick={handleDetailClick} style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
+          <Link id={`btn-detail-${job.id}`} className="btn-apply" to={`/job/${job.id}`} style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
             รายละเอียด ▸
           </Link>
         </div>
