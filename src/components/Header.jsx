@@ -28,7 +28,7 @@ export default function Header({
         <div className="header-inner">
           {/* Logo */}
           <a className="logo" onClick={() => onNavigate("home")} href="#" style={{ cursor: "pointer" }}>
-            <img src="/favicon.svg" alt="Logo" style={{ width: "40px", height: "40px", objectFit: "contain", flexShrink: 0 }} />
+            <img src="/favicon.svg" alt="Logo" style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0 }} />
             <div className="logo-text">
               <span>ReadyToGovTH</span>
               <span>งานราชการไทย</span>

@@ -13,8 +13,7 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
             </div>
             <p>
               เว็บรวบรวมประกาศรับสมัครงานภาครัฐ ทั้งข้าราชการ พนักงานราชการ
-              รัฐวิสาหกิจ ลูกจ้างชั่วคราว และพนักงานหน่วยงานของรัฐ
-              <br />
+              รัฐวิสาหกิจ  <br />ลูกจ้างชั่วคราว และพนักงานหน่วยงานของรัฐ
               อัปเดตข้อมูลตรงจากหน่วยงานภาครัฐ
             </p>
           </div>
@@ -71,7 +70,7 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.6")}
               >
-                🔐 ระบบจัดการ (Admin)
+                🔐 ระบบจัดการ
               </button>
             )}
           </div>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 /* ===========================
    CSS CUSTOM PROPERTIES
@@ -50,7 +50,7 @@
   --accent-dark: var(--orange-700);
 
   /* Typography */
-  --font-sans: 'Inter', 'Noto Sans Thai', sans-serif;
+  --font-sans: 'Outfit', 'Noto Sans Thai', 'Inter', sans-serif;
 
   /* Spacing */
   --radius-sm: 6px;

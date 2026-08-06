@@ -73,21 +73,32 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             position: "relative", overflow: "hidden",
             borderTopLeftRadius: "var(--radius-2xl)",
             borderTopRightRadius: "var(--radius-2xl)",
-            display: "flex", alignItems: "center", gap: "clamp(12px, 4vw, 20px)",
-            flexWrap: "wrap"
+            display: "flex", flexDirection: "column", alignItems: "stretch", gap: 16,
           }}>
             {/* Glow accents */}
             <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: "radial-gradient(circle, rgba(234,88,12,0.18) 0%, transparent 65%)", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: -20, left: -20, width: 150, height: 150, background: "radial-gradient(circle, rgba(37,99,176,0.2) 0%, transparent 65%)", pointerEvents: "none" }} />
 
             {/* Top Right Actions */}
-            <div style={{ position: "absolute", top: 16, right: 16, display: "flex", gap: 8, zIndex: 10 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, zIndex: 10 }}>
               {/* Share Button */}
-              <button onClick={() => {
+              <button onClick={async () => {
                 const url = `${window.location.origin}/?jobId=${job.id}`;
-                navigator.clipboard.writeText(url);
-                setIsCopied(true);
-                setTimeout(() => setIsCopied(false), 2000);
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: `งานราชการ: ${job.department}`,
+                      text: `ดูประกาศรับสมัครงานของ ${job.department} ได้ที่นี่`,
+                      url: url,
+                    });
+                  } catch (err) {
+                    // user cancelled or error
+                  }
+                } else {
+                  navigator.clipboard.writeText(url);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
+                }
               }}
               title="แชร์ลิงก์งานนี้"
               style={{
@@ -131,24 +142,25 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               )}
             </div>
 
-            {/* Logo */}
-            <div style={{
-              width: "clamp(72px, 20vw, 100px)", height: "clamp(72px, 20vw, 100px)",
-              borderRadius: "var(--radius-xl)",
-              background: job.logoUrl ? "white" : "linear-gradient(135deg, #1e3a8a, #3b82f6)",
-              border: "3px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              overflow: "hidden", flexShrink: 0,
-              zIndex: 10,
-            }}>
-              {job.logoUrl
-                ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }} />
-                : <span style={{ fontSize: "clamp(1.5rem, 5vw, 2.2rem)" }}>{mainMeta.icon}</span>}
-            </div>
+            {/* Main Header Content */}
+            <div style={{ display: "flex", alignItems: "center", gap: "clamp(12px, 4vw, 20px)", zIndex: 10 }}>
+              {/* Logo */}
+              <div style={{
+                width: "clamp(64px, 18vw, 90px)", height: "clamp(64px, 18vw, 90px)",
+                borderRadius: "var(--radius-xl)",
+                background: job.logoUrl ? "white" : "linear-gradient(135deg, #1e3a8a, #3b82f6)",
+                border: "3px solid rgba(255,255,255,0.2)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                overflow: "hidden", flexShrink: 0,
+              }}>
+                {job.logoUrl
+                  ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }} />
+                  : <span style={{ fontSize: "clamp(1.5rem, 5vw, 2.2rem)" }}>{mainMeta.icon}</span>}
+              </div>
 
-            {/* Text details */}
-            <div style={{ flex: 1, zIndex: 10, minWidth: "220px", paddingRight: !inline ? 150 : 0 }}>
+              {/* Text details */}
+              <div style={{ flex: 1, minWidth: 0 }}>
               {/* Category badge */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                 {categories.map((cat, idx) => {
@@ -181,6 +193,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", lineHeight: 1.3, margin: 0 }}>
                 {job.department}
               </h2>
+            </div>
             </div>
           </div>
         </div>
@@ -501,31 +514,6 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
         {/* ── Footer ── */}
         <div className="modal-footer">
-          <button
-            onClick={async () => {
-              const url = `${window.location.origin}/job/${job.id}`;
-              if (navigator.share) {
-                try {
-                  await navigator.share({
-                    title: `งานราชการ: ${job.department}`,
-                    text: `ดูประกาศรับสมัครงานของ ${job.department} ได้ที่นี่`,
-                    url: url,
-                  });
-                } catch (err) {
-                  // user cancelled or error
-                }
-              } else {
-                navigator.clipboard.writeText(url);
-                setIsCopied(true);
-                setTimeout(() => setIsCopied(false), 2000);
-              }
-            }}
-            className="btn btn-outline modal-btn-share"
-            title="แชร์ประกาศนี้"
-          >
-            {isCopied ? "✅" : "📤 แชร์"}
-          </button>
-          
           <div className="modal-footer-actions">
             {pdfUrls.length > 0 && (
               <button
