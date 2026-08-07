@@ -90,7 +90,7 @@ export default function JobList({
       if (regionMatch) {
         result = result.filter((j) => {
           const jobProvinces = getProvinces(j);
-          return jobProvinces.some((p) => regionMatch.provinces.includes(p) || p === "ทุกจังหวัด" || p === "ทั่วประเทศ");
+          return jobProvinces.includes(regionMatch.name) || jobProvinces.some((p) => regionMatch.provinces.includes(p) || p === "ทุกจังหวัด" || p === "ทั่วประเทศ");
         });
       } else {
         result = result.filter((j) => {

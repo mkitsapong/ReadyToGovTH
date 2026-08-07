@@ -95,6 +95,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     if (errors.provinces) setErrors((prev) => ({ ...prev, provinces: undefined }));
   }
 
+
   // ── Logo handlers ──────────────────────────────────────────────────────────
   function handleLogoChange(e) {
     const file = e.target.files?.[0];
@@ -196,7 +197,36 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   async function handleSubmit(e) {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    if (Object.keys(errs).length > 0) { 
+      setErrors(errs); 
+      // alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+      
+      setTimeout(() => {
+        const firstError = Object.keys(errs)[0];
+        let elId = "";
+        if (firstError === "department") elId = "admin-field-department";
+        else if (firstError === "categories") elId = "admin-field-categories";
+        else if (firstError === "provinces") elId = "admin-field-provinces";
+        else if (firstError === "deadline") elId = "admin-field-deadline";
+        else if (firstError === "positionList") elId = "admin-field-positionList";
+        
+        if (elId) {
+          const el = document.getElementById(elId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (el.focus) el.focus();
+            
+            // Add a temporary highlight effect
+            const originalOutline = el.style.outline;
+            el.style.outline = "2px solid var(--accent)";
+            setTimeout(() => {
+              el.style.outline = originalOutline;
+            }, 2000);
+          }
+        }
+      }, 100);
+      return; 
+    }
 
     setLoading(true);
     await new Promise((r) => setTimeout(r, 600));
@@ -313,7 +343,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
             {/* Category + Province */}
             <div className="form-group">
               <div className="form-grid-2">
-                <div className="form-group" style={{ marginBottom: 0 }}>
+                <div id="admin-field-categories" className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">ประเภทงาน <span className="required">*</span></label>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 16px" }}>
                     {CATEGORIES.map((c) => (
@@ -367,6 +397,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                 <div className="form-group" style={{ marginBottom: 0, position: "relative" }} ref={provinceRef}>
                   <label className="form-label">จังหวัด <span className="required">*</span></label>
                   <button
+                    id="admin-field-provinces"
                     type="button"
                     onClick={() => setProvinceOpen((o) => !o)}
                     style={{
@@ -421,16 +452,38 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                     }}>
                       {regions.map((region) => (
                         <div key={region.id}>
-                          <div style={{
-                            padding: "6px 12px",
-                            fontSize: "0.68rem", fontWeight: 700,
-                            color: "var(--navy-500)", textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            background: "var(--navy-50)",
-                            borderBottom: "1px solid var(--gray-100)",
-                            position: "sticky", top: 0,
-                          }}>
-                            {region.name}
+                          <div style={{ position: "sticky", top: 0, zIndex: 1 }}>
+                            <button
+                              type="button"
+                              onClick={() => toggleProvince(region.name)}
+                              style={{
+                                padding: "6px 12px",
+                                background: form.provinces.includes(region.name) ? "var(--navy-100)" : "var(--navy-50)",
+                                borderBottom: "1px solid var(--gray-100)",
+                                borderTop: "none", borderLeft: "none", borderRight: "none",
+                                display: "flex", alignItems: "center", gap: 8,
+                                width: "100%", textAlign: "left", cursor: "pointer",
+                                fontFamily: "var(--font-sans)",
+                              }}
+                            >
+                              <span style={{
+                                width: 16, height: 16, flexShrink: 0,
+                                borderRadius: 4,
+                                border: `2px solid ${form.provinces.includes(region.name) ? "var(--navy-600)" : "var(--gray-300)"}`,
+                                background: form.provinces.includes(region.name) ? "var(--navy-600)" : "var(--white)",
+                                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                fontSize: "0.6rem", color: "white",
+                              }}>
+                                {form.provinces.includes(region.name) ? "✓" : ""}
+                              </span>
+                              <span style={{
+                                fontSize: "0.75rem", fontWeight: 700,
+                                color: form.provinces.includes(region.name) ? "var(--navy-800)" : "var(--navy-600)", textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                              }}>
+                                {region.name}
+                              </span>
+                            </button>
                           </div>
                           {region.provinces.map((prov) => {
                             const selected = form.provinces.includes(prov);
@@ -492,7 +545,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
             </div>
 
             {/* ── Position List ─────────────────────────────────────────── */}
-            <div className="form-group">
+            <div id="admin-field-positionList" className="form-group">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <label className="form-label" style={{ margin: 0 }}>
                   ตำแหน่งที่เปิดรับ <span className="required">*</span>

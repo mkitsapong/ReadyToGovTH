@@ -531,15 +531,22 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               <button className="btn modal-btn-action" style={{ background: "var(--gray-400)", color: "white", cursor: "not-allowed", border: "none" }} disabled>
                 ⏳ ยังไม่เปิด<span className="hide-on-mobile">รับสมัคร</span>
               </button>
-            ) : (
+            ) : job.applyUrl ? (
               <a 
-                href={job.applyUrl || "#"} 
-                target={job.applyUrl?.startsWith("mailto:") ? undefined : "_blank"} 
+                href={job.applyUrl} 
+                target={job.applyUrl.startsWith("mailto:") ? undefined : "_blank"} 
                 rel="noreferrer" 
                 className="btn btn-primary modal-btn-action" 
               >
-                {job.applyUrl?.startsWith("mailto:") ? "ส่งอีเมล ✉️" : "สมัครงาน →"}
+                {job.applyUrl.startsWith("mailto:") ? "ส่งอีเมล ✉️" : "สมัครออนไลน์ →"}
               </a>
+            ) : (
+              <button 
+                className="btn modal-btn-action" 
+                style={{ background: "var(--navy-50)", color: "var(--navy-700)", border: "1px solid var(--navy-200)", cursor: "default", opacity: 0.9 }}
+              >
+                📍 สมัครด้วยตนเอง
+              </button>
             )}
           </div>
         </div>
