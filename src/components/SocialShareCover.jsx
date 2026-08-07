@@ -150,26 +150,44 @@ const SocialShareCover = forwardRef(({ job }, ref) => {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "10px" }}>
-              {job.positionList?.map((pos, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "16px", padding: "6px 24px" }}>
-                  <span style={{ fontSize: "1.8rem", display: "flex", alignItems: "center", marginTop: "2px" }}>🎯</span>
-                  <span style={{ fontSize: "1.8rem", fontWeight: 700, color: "#1e293b", flex: 1, lineHeight: 1.4, wordBreak: "break-word" }}>
-                    {pos.title}
-                  </span>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-                    {pos.salary && (
-                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 800, color: "#15803d", whiteSpace: "nowrap" }}>
-                        {pos.salary}
+              {job.positionList?.map((pos, i) => {
+                const edus = Array.isArray(pos.education) ? [...pos.education] : (pos.education ? [pos.education] : []);
+                if (pos.units && pos.units.length > 0) {
+                  pos.units.forEach(u => {
+                    const uEdus = Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []);
+                    edus.push(...uEdus);
+                  });
+                }
+                const uniqueEdus = [...new Set(edus)];
+
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "16px", padding: "6px 24px" }}>
+                    <span style={{ fontSize: "1.8rem", display: "flex", alignItems: "center", marginTop: "2px" }}>🎯</span>
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <span style={{ fontSize: "1.8rem", fontWeight: 700, color: "#1e293b", lineHeight: 1.4, wordBreak: "break-word" }}>
+                        {pos.title}
                       </span>
-                    )}
-                    {pos.count && Number(pos.count) > 0 && (
-                      <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "#334155", whiteSpace: "nowrap" }}>
-                        {pos.count} อัตรา
-                      </span>
-                    )}
+                      {uniqueEdus.length > 0 && (
+                        <span style={{ fontSize: "1.5rem", fontWeight: 600, color: "#64748b" }}>
+                          🎓 {uniqueEdus.join(", ")}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                      {pos.salary && (
+                        <span style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 800, color: "#15803d", whiteSpace: "nowrap" }}>
+                          {pos.salary}
+                        </span>
+                      )}
+                      {pos.count && Number(pos.count) > 0 && (
+                        <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "#334155", whiteSpace: "nowrap" }}>
+                          {pos.count} อัตรา
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

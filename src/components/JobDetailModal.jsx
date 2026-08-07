@@ -62,9 +62,29 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       });
       
       const image = canvas.toDataURL("image/png");
+      const fileName = `readytogov-${job.department.replace(/\s+/g, "-")}-banner.png`;
+
+      // Try Web Share API for Mobile (allows saving to gallery)
+      try {
+        const response = await fetch(image);
+        const blob = await response.blob();
+        const file = new File([blob], fileName, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: job.department,
+          });
+          return;
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return; // User cancelled the share sheet
+        console.warn("Share failed, falling back to download:", err);
+      }
+
+      // Fallback for Desktop / browsers that don't support file sharing
       const link = document.createElement("a");
       link.href = image;
-      link.download = `readytogov-${job.department.replace(/\s+/g, "-")}-banner.png`;
+      link.download = fileName;
       link.click();
     } catch (err) {
       console.error("Error generating banner:", err);
