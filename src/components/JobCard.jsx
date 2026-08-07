@@ -58,11 +58,11 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
   const eduStatus = getEduMatchStatus(job.positionList, userEducation);
   const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
 
-  const dateText = job.startDate 
-    ? `เปิดรับ ${formatDate(job.startDate)} - ${formatDate(job.deadline)}`
+  const dateText = job.postedDate 
+    ? `เปิดรับ ${formatDate(job.postedDate)} - ${formatDate(job.deadline)}`
     : `ปิดรับ ${formatDate(job.deadline)}`;
-  const dateTextExpired = job.startDate 
-    ? `${formatDate(job.startDate)} - ${formatDate(job.deadline)}`
+  const dateTextExpired = job.postedDate 
+    ? `${formatDate(job.postedDate)} - ${formatDate(job.deadline)}`
     : `ปิดรับ ${formatDate(job.deadline)}`;
 
   return (

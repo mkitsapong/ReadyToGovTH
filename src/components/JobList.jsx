@@ -50,6 +50,7 @@ export default function JobList({
   const [currentPage, setCurrentPage] = useState(1);
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
   
   const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
   const regionDropdownRef = useRef(null);
@@ -64,6 +65,23 @@ export default function JobList({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isRegionDropdownOpen) {
+      setProvinceSearchQuery("");
+    }
+  }, [isRegionDropdownOpen]);
+
+  const filteredRegions = provinceSearchQuery.trim()
+    ? regions.map(r => {
+        const q = provinceSearchQuery.trim().toLowerCase();
+        const pMatch = r.provinces.filter(p => p.toLowerCase().includes(q));
+        const rMatch = r.name.toLowerCase().includes(q);
+        if (rMatch) return r;
+        if (pMatch.length > 0) return { ...r, provinces: pMatch };
+        return null;
+      }).filter(Boolean)
+    : regions;
 
   const categoryFilter = CATEGORY_FILTER[activePage];
   const hero = PAGE_HERO_MAP[activePage] || PAGE_HERO_MAP.home;
@@ -350,8 +368,18 @@ export default function JobList({
                   maxHeight: "350px",
                   overflowY: "auto",
                   zIndex: 100,
-                  padding: "8px 0"
+                  padding: "0" // Changed to 0 so sticky works properly
                 }}>
+                  <div style={{ padding: "8px 12px", position: "sticky", top: 0, background: "var(--white)", borderBottom: "1px solid var(--gray-100)", zIndex: 2 }}>
+                    <input
+                      type="text"
+                      placeholder="ค้นหาจังหวัด..."
+                      value={provinceSearchQuery}
+                      onChange={(e) => setProvinceSearchQuery(e.target.value)}
+                      style={{ width: "100%", padding: "8px 12px", border: "1px solid var(--gray-200)", borderRadius: "var(--radius-sm)", fontSize: "0.85rem", outline: "none" }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
                   <div
                     onClick={() => { onSelectProvince(null); setIsRegionDropdownOpen(false); }}
                     style={{
@@ -367,7 +395,13 @@ export default function JobList({
                     📍 ทุกภูมิภาค
                   </div>
                   
-                  {regions.map(r => (
+                  {filteredRegions.length === 0 && (
+                    <div style={{ padding: "12px 16px", fontSize: "0.85rem", color: "var(--gray-500)", textAlign: "center" }}>
+                      ไม่พบจังหวัดที่ค้นหา
+                    </div>
+                  )}
+
+                  {filteredRegions.map(r => (
                     <div key={r.id}>
                       <div 
                         onClick={() => { onSelectProvince(r.name); setIsRegionDropdownOpen(false); }}

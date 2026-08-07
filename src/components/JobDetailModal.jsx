@@ -59,7 +59,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const provinces  = getProvinces(job);
 
   const today = new Date().toISOString().split("T")[0];
-  const isNotOpenYet = job.startDate && job.startDate > today;
+  const isNotOpenYet = job.postedDate && job.postedDate > today;
 
   const content = (
     <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none', maxHeight: 'none', overflow: 'visible' } : { maxWidth: 660 }} role={inline ? "region" : "dialog"} aria-modal={!inline}>
