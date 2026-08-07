@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ModalExamPrepSection } from "./ExamResources.jsx";
+import SocialShareCover from "./SocialShareCover.jsx";
+import html2canvas from "html2canvas";
 
 const CATEGORY_MAP = {
   ข้าราชการ:    { badge: "badge-civil",      icon: "🏛️" },
@@ -40,12 +42,37 @@ const EDU_COLORS = {
   "ไม่จำกัดวุฒิ": { bg: "#dcfce7", border: "#86efac", color: "#14532d" },
 };
 
-export default function JobDetailModal({ job, books = [], onClose, inline = false }) {
+export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false }) {
   const [isCopied, setIsCopied] = useState(false);
+  const [isGeneratingBanner, setIsGeneratingBanner] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
   const [selectedPdfIndex, setSelectedPdfIndex] = useState(0);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(job?.id);
+  const bannerRef = useRef(null);
+
+  const handleDownloadBanner = async () => {
+    if (!bannerRef.current) return;
+    try {
+      setIsGeneratingBanner(true);
+      const canvas = await html2canvas(bannerRef.current, {
+        scale: 2, // High resolution
+        useCORS: true, // Allow cross-origin images
+        backgroundColor: null,
+      });
+      
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = `readytogov-${job.department.replace(/\s+/g, "-")}-banner.png`;
+      link.click();
+    } catch (err) {
+      console.error("Error generating banner:", err);
+      alert("เกิดข้อผิดพลาดในการสร้างรูปแบนเนอร์");
+    } finally {
+      setIsGeneratingBanner(false);
+    }
+  };
 
   const pdfUrls = job.announcementUrl 
     ? job.announcementUrl.split(/[\s,]+/).filter(url => url.trim().length > 0)
@@ -81,7 +108,23 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             <div style={{ position: "absolute", bottom: -20, left: -20, width: 150, height: 150, background: "radial-gradient(circle, rgba(37,99,176,0.2) 0%, transparent 65%)", pointerEvents: "none" }} />
 
             {/* Top Right Actions */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, zIndex: 10 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, zIndex: 10, flexWrap: "wrap" }}>
+              {/* Generate Banner Button */}
+              {isAdmin && (
+                <button onClick={handleDownloadBanner} disabled={isGeneratingBanner} title="บันทึกรูปแบนเนอร์สำหรับแชร์"
+                  style={{
+                    background: "linear-gradient(135deg, #ea580c, #c2410c)", color: "white", 
+                    border: "none", borderRadius: "var(--radius-sm)",
+                    padding: "4px 10px", fontSize: "0.8rem", cursor: isGeneratingBanner ? "wait" : "pointer",
+                    display: "flex", alignItems: "center", gap: 4, transition: "all 0.2s",
+                    boxShadow: "0 2px 4px rgba(234,88,12,0.3)"
+                  }}
+                  onMouseEnter={e => { if (!isGeneratingBanner) e.currentTarget.style.transform = "scale(1.05)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}>
+                  {isGeneratingBanner ? "⏳ กำลังสร้าง..." : "📷 เซฟรูปแบนเนอร์"}
+                </button>
+              )}
+
               {/* Share Button */}
               <button onClick={async () => {
                 const url = `${window.location.origin}/?jobId=${job.id}`;
@@ -612,12 +655,24 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   }
 
   if (inline) {
-    return content;
+    return (
+      <>
+        {content}
+        {/* Off-screen Banner Container for html2canvas */}
+        <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
+          <SocialShareCover job={job} ref={bannerRef} />
+        </div>
+      </>
+    );
   }
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       {content}
+      {/* Off-screen Banner Container for html2canvas */}
+      <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
+        <SocialShareCover job={job} ref={bannerRef} />
+      </div>
     </div>
   );
 }
