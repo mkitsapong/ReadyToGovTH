@@ -45,12 +45,31 @@ export default function JobList({
   onDeleteBook,
   onSelectProvince,
 }) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("deadline");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState(() => sessionStorage.getItem("searchQuery") || "");
+  const [sortBy, setSortBy] = useState(() => sessionStorage.getItem("sortBy") || "deadline");
+  const [currentPage, setCurrentPage] = useState(() => {
+    const saved = sessionStorage.getItem("currentPage");
+    return saved ? parseInt(saved, 10) : 1;
+  });
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
-  const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(() => sessionStorage.getItem("showBookmarksOnly") === "true");
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
+
+  useEffect(() => {
+    sessionStorage.setItem("searchQuery", searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    sessionStorage.setItem("sortBy", sortBy);
+  }, [sortBy]);
+
+  useEffect(() => {
+    sessionStorage.setItem("currentPage", currentPage);
+  }, [currentPage]);
+
+  useEffect(() => {
+    sessionStorage.setItem("showBookmarksOnly", showBookmarksOnly);
+  }, [showBookmarksOnly]);
   
   const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
   const regionDropdownRef = useRef(null);
@@ -215,7 +234,12 @@ export default function JobList({
   );
 
   // Reset page when filters change
+  const isInitialMount = useRef(true);
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     setCurrentPage(1);
   }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly]);
 
