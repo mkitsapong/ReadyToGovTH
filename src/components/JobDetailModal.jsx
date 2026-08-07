@@ -59,7 +59,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const provinces  = getProvinces(job);
 
   const today = new Date().toISOString().split("T")[0];
-  const isNotOpenYet = job.postedDate && job.postedDate > today;
+  const displayStartDate = job.startDate || job.postedDate;
+  const isNotOpenYet = displayStartDate && displayStartDate > today;
 
   const content = (
     <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none', maxHeight: 'none', overflow: 'visible' } : { maxWidth: 660 }} role={inline ? "region" : "dialog"} aria-modal={!inline}>
@@ -244,7 +245,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             <div style={{ flex: 1, wordBreak: "break-word" }}>
               {days >= 0
                 ? <>
-                    {job.postedDate ? `เปิดรับ ${formatDate(job.postedDate)} - ` : "ปิดรับสมัคร "} 
+                    {displayStartDate ? `เปิดรับ ${formatDate(displayStartDate)} - ` : "ปิดรับสมัคร "} 
                     <strong>{formatDate(job.deadline)}</strong>
                     <span style={{ 
                       color: (days <= 7 && days >= 0) ? "var(--orange-700)" : "var(--gray-500)", 
@@ -255,7 +256,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                       {days === 0 ? "(ปิดรับวันนี้!)" : `(เหลือ ${days} วัน)`}
                     </span>
                   </>
-                : <>หมดเขตรับสมัครแล้ว ({job.postedDate ? `${formatDate(job.postedDate)} - ` : ""}{formatDate(job.deadline)})</>}
+                : <>หมดเขตรับสมัครแล้ว ({displayStartDate ? `${formatDate(displayStartDate)} - ` : ""}{formatDate(job.deadline)})</>}
             </div>
           </div>
 

@@ -58,11 +58,12 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
   const eduStatus = getEduMatchStatus(job.positionList, userEducation);
   const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
 
-  const dateText = job.postedDate 
-    ? `เปิดรับ ${formatDate(job.postedDate)} - ${formatDate(job.deadline)}`
+  const displayStartDate = job.startDate || job.postedDate;
+  const dateText = displayStartDate 
+    ? `เปิดรับ ${formatDate(displayStartDate)} - ${formatDate(job.deadline)}`
     : `ปิดรับ ${formatDate(job.deadline)}`;
-  const dateTextExpired = job.postedDate 
-    ? `${formatDate(job.postedDate)} - ${formatDate(job.deadline)}`
+  const dateTextExpired = displayStartDate 
+    ? `${formatDate(displayStartDate)} - ${formatDate(job.deadline)}`
     : `ปิดรับ ${formatDate(job.deadline)}`;
 
   return (
@@ -226,7 +227,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
               {expired 
                 ? <span style={{ color: "#9ca3af" }}>{dateTextExpired} (หมดเขตแล้ว)</span>
                 : days === 0 
-                  ? <span>{job.postedDate ? `เปิดรับ ${formatDate(job.postedDate)} - วันนี้!` : `ปิดรับวันนี้!`} <span style={{ color: "#dc2626", fontWeight: 700, marginLeft: 4 }}>(รีบเลย!)</span></span>
+                  ? <span>{displayStartDate ? `เปิดรับ ${formatDate(displayStartDate)} - วันนี้!` : `ปิดรับวันนี้!`} <span style={{ color: "#dc2626", fontWeight: 700, marginLeft: 4 }}>(รีบเลย!)</span></span>
                   : <span>
                       {dateText} 
                       <span style={{ 
