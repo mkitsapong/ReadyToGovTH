@@ -104,11 +104,11 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             display: "flex", flexDirection: "column", alignItems: "stretch", gap: 16,
           }}>
             {/* Glow accents */}
-            <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: "radial-gradient(circle, rgba(234,88,12,0.18) 0%, transparent 65%)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: "radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 65%)", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: -20, left: -20, width: 150, height: 150, background: "radial-gradient(circle, rgba(37,99,176,0.2) 0%, transparent 65%)", pointerEvents: "none" }} />
 
             {/* Top Right Actions */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, zIndex: 10, flexWrap: "wrap" }}>
+            <div style={{ position: "absolute", top: "clamp(16px, 5vw, 24px)", right: "clamp(16px, 5vw, 28px)", display: "flex", gap: 8, zIndex: 50, flexWrap: "wrap", justifyContent: "flex-end" }}>
               {/* Generate Banner Button */}
               {isAdmin && (
                 <button onClick={handleDownloadBanner} disabled={isGeneratingBanner} title="บันทึกรูปแบนเนอร์สำหรับแชร์"
@@ -204,7 +204,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               </div>
 
               {/* Text details */}
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: isAdmin ? 160 : 90 }}>
               {/* Category badge */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                 {categories.map((cat, idx) => {
@@ -234,7 +234,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               </div>
 
               {/* Dept name */}
-              <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", lineHeight: 1.3, margin: 0 }}>
+              <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", lineHeight: 1.3, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {job.department}
               </h2>
             </div>
@@ -564,6 +564,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 onClick={() => {
                   setSelectedPdfIndex(0);
                   setShowPdf(true);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className="btn btn-outline modal-btn-action"
               >
@@ -604,17 +605,49 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       : `${currentPdfUrl}${currentPdfUrl.includes('#') ? '&' : '#'}view=FitH`;
 
     const pdfContent = (
-      <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none', height: '100vh', display: 'flex', flexDirection: 'column' } : { maxWidth: 1000, height: '90vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: "16px", borderBottom: "1px solid var(--gray-200)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "white", borderRadius: inline ? 0 : "var(--radius-2xl) var(--radius-2xl) 0 0" }}>
-          <button onClick={() => setShowPdf(false)} className="btn btn-outline" style={{ padding: "6px 12px", fontSize: "0.85rem", flexShrink: 0 }}>⬅ กลับ</button>
-          <h2 style={{ fontSize: "1rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, textAlign: "center", color: "var(--navy-800)", fontWeight: 700 }}>ประกาศรับสมัคร</h2>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-            <a href={currentPdfUrl} target="_blank" rel="noreferrer" title="เปิดในแท็บใหม่" style={{ padding: "6px 8px", color: "var(--navy-600)", textDecoration: "none", display: "flex", alignItems: "center", background: "var(--gray-100)", borderRadius: "var(--radius-md)", fontSize: "0.75rem", fontWeight: 600, gap: 4 }}>
-              เปิดดู <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+      <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: 850, width: "100%", margin: "0 auto", boxShadow: "0 12px 48px rgba(0,0,0,0.15)", height: "100vh", display: 'flex', flexDirection: 'column', borderLeft: "1px solid var(--gray-200)", borderRight: "1px solid var(--gray-200)" } : { maxWidth: 1000, height: '90vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--gray-200)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255, 255, 255, 0.95)", backdropFilter: "blur(8px)", borderRadius: inline ? 0 : "var(--radius-2xl) var(--radius-2xl) 0 0", position: "sticky", top: 0, zIndex: 10 }}>
+          <button onClick={() => setShowPdf(false)} 
+            style={{ 
+              background: "transparent", border: "1px solid var(--gray-200)", display: "flex", alignItems: "center", gap: 6,
+              color: "var(--navy-700)", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer",
+              padding: "6px 14px", borderRadius: "999px", transition: "all 0.2s",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--gray-50)"; e.currentTarget.style.borderColor = "var(--gray-300)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--gray-200)"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            ปิดเอกสาร
+          </button>
+          
+          <h2 style={{ fontSize: "1.05rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, textAlign: "center", color: "var(--navy-900)", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <span style={{ fontSize: "1.2rem", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}>📄</span> เอกสารประกาศรับสมัคร
+          </h2>
+          
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
+            <a href={currentPdfUrl} target="_blank" rel="noreferrer" title="เปิดในแท็บใหม่" 
+              style={{ 
+                padding: "8px 16px", color: "white", textDecoration: "none", 
+                display: "flex", alignItems: "center", 
+                background: "linear-gradient(135deg, var(--navy-600), var(--navy-800))", 
+                borderRadius: "999px", fontSize: "0.85rem", fontWeight: 700, gap: 6,
+                boxShadow: "0 4px 12px rgba(30, 58, 138, 0.2)", transition: "all 0.2s"
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+            >
+              เปิดดูไฟล์เต็ม 
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
             </a>
             {!inline ? (
-              <button onClick={onClose} style={{ background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "var(--gray-500)", padding: 4 }}>✕</button>
-            ) : <div style={{ width: 24 }} />}
+              <button onClick={onClose} style={{ background: "var(--gray-100)", border: "none", width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--gray-600)", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--gray-200)"; e.currentTarget.style.color = "var(--gray-800)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "var(--gray-100)"; e.currentTarget.style.color = "var(--gray-600)"; }}
+              >
+                ✕
+              </button>
+            ) : <div style={{ width: 32 }} />}
           </div>
         </div>
         {pdfUrls.length > 1 && (

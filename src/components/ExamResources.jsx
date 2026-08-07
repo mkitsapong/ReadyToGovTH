@@ -32,13 +32,13 @@ export function ExamPrepBanner({
   return (
     <>
       <div style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+        background: "var(--navy-900)",
         borderRadius: "var(--radius-xl)",
         padding: "24px 28px",
         margin: "0 0 32px 0",
         color: "white",
-        boxShadow: "0 10px 30px rgba(15,23,42,0.25)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        boxShadow: "0 10px 30px rgba(3, 7, 18, 0.25)",
+        border: "1px solid rgba(255,255,255,0.05)",
         position: "relative",
         overflow: "hidden",
       }}>
@@ -49,7 +49,7 @@ export function ExamPrepBanner({
           right: "-40px",
           width: "200px",
           height: "200px",
-          background: "radial-gradient(circle, rgba(234,88,12,0.25) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)",
           pointerEvents: "none",
         }} />
 
@@ -110,23 +110,27 @@ export function ExamPrepBanner({
         }}>
           {books.map((item) => (
             <div key={item.id} style={{
-              background: "rgba(255,255,255,0.06)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "var(--radius-lg)",
-              padding: "16px",
+              background: "rgba(255, 255, 255, 0.85)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255, 255, 255, 0.6)",
+              borderRadius: "var(--radius-xl)",
+              padding: "20px",
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
               position: "relative",
-              transition: "transform 0.2s, background 0.2s",
-            }}>
+              transition: "transform 0.2s, background 0.2s, box-shadow 0.2s",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)"; }}
+            >
               <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <span style={{
                     fontSize: "0.68rem",
                     fontWeight: 700,
-                    padding: "2px 8px",
+                    padding: "4px 10px",
                     borderRadius: "999px",
                     background: item.badgeColor || "#2563eb",
                     color: "white",
@@ -135,20 +139,21 @@ export function ExamPrepBanner({
                   </span>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: "0.72rem", color: "#fef08a", fontWeight: 600 }}>
-                      {item.rating}
+                    <span style={{ fontSize: "0.75rem", color: "var(--orange-500)", fontWeight: 700 }}>
+                      ⭐ {item.rating}
                     </span>
                     {isAdmin && (
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(item)}
                         style={{
-                          background: "rgba(255,255,255,0.15)",
-                          border: "1px solid rgba(255,255,255,0.25)",
-                          color: "white",
+                          background: "var(--gray-100)",
+                          border: "1px solid var(--gray-300)",
+                          color: "var(--navy-700)",
                           borderRadius: "var(--radius-sm)",
-                          padding: "2px 6px",
+                          padding: "4px 8px",
                           fontSize: "0.68rem",
+                          fontWeight: 600,
                           cursor: "pointer",
                         }}
                         title="แก้ไขหนังสือนี้"
@@ -159,10 +164,10 @@ export function ExamPrepBanner({
                   </div>
                 </div>
 
-                <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "white", lineHeight: 1.4, margin: "0 0 6px 0" }}>
+                <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--navy-900)", lineHeight: 1.4, margin: "0 0 8px 0" }}>
                   {item.title}
                 </h4>
-                <p style={{ fontSize: "0.78rem", color: "var(--navy-300)", lineHeight: 1.5, margin: "0 0 14px 0" }}>
+                <p style={{ fontSize: "0.82rem", color: "var(--gray-600)", lineHeight: 1.5, margin: "0 0 16px 0" }}>
                   {item.desc}
                 </p>
               </div>
@@ -225,12 +230,12 @@ export function ModalExamPrepSection({
     <div style={{
       margin: "20px 0",
       padding: "16px",
-      background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-      border: "1.5px dashed #cbd5e1",
+      background: "var(--navy-900)",
+      border: "1px solid rgba(255,255,255,0.1)",
       borderRadius: "var(--radius-lg)",
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--navy-800)", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+        <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "white", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
           📚 เตรียมตัวสอบตำแหน่งนี้ (หนังสือ & คอร์สติวแนะนำ)
         </h4>
         <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--accent)", background: "var(--orange-50)", padding: "2px 8px", borderRadius: "999px", border: "1px solid var(--orange-200)" }}>

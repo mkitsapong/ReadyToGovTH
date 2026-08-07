@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const NAV_ITEMS = [
   { id: "home",       label: "หน้าแรก" },
@@ -19,10 +19,19 @@ export default function Header({
   onLogout,
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <>
-    <header className={`header ${isMobileMenuOpen ? "menu-open" : ""}`}>
+    <header className={`header ${isMobileMenuOpen ? "menu-open" : ""} ${isScrolled ? "scrolled" : ""}`}>
       <div className="container">
         {/* Main nav row */}
         <div className="header-inner">
@@ -100,11 +109,11 @@ export default function Header({
 
             {user && (
               <>
-                <div className={`header-role-badge ${user.role}`}>
+                <div className={`header-role-badge ${user.role}`} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
                   <span>👑</span>
-                  <span>{user.name} (Admin)</span>
+                  <span>{user.name === "Admin" ? "ผู้ดูแลระบบ" : user.name}</span>
                 </div>
-                <button className="header-btn header-btn-logout" onClick={onLogout}>
+                <button className="header-btn header-btn-logout" onClick={onLogout} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
                   ออกจากระบบ
                 </button>
               </>

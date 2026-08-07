@@ -53,6 +53,8 @@ export default function JobList({
   });
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(() => sessionStorage.getItem("showBookmarksOnly") === "true");
+  const [filterNoOCSC, setFilterNoOCSC] = useState(() => sessionStorage.getItem("filterNoOCSC") === "true");
+  const [filterOCSC, setFilterOCSC] = useState(() => sessionStorage.getItem("filterOCSC") === "true");
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
 
   useEffect(() => {
@@ -70,6 +72,14 @@ export default function JobList({
   useEffect(() => {
     sessionStorage.setItem("showBookmarksOnly", showBookmarksOnly);
   }, [showBookmarksOnly]);
+  
+  useEffect(() => {
+    sessionStorage.setItem("filterNoOCSC", filterNoOCSC);
+  }, [filterNoOCSC]);
+
+  useEffect(() => {
+    sessionStorage.setItem("filterOCSC", filterOCSC);
+  }, [filterOCSC]);
   
   const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
   const regionDropdownRef = useRef(null);
@@ -119,6 +129,14 @@ export default function JobList({
     // Bookmarks Filter
     if (showBookmarksOnly) {
       result = result.filter((j) => isBookmarked(j.id));
+    }
+
+    // Quick Filters
+    if (filterNoOCSC) {
+      result = result.filter((j) => j.isNoOCSC);
+    }
+    if (filterOCSC) {
+      result = result.filter((j) => j.isOCSC);
     }
 
     // Province / Region filter
@@ -225,7 +243,7 @@ export default function JobList({
     }
 
     return result;
-  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, bookmarks]);
+  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, bookmarks, filterNoOCSC, filterOCSC]);
 
   // Stats
   const totalPositions = filtered.reduce(
@@ -241,7 +259,7 @@ export default function JobList({
       return;
     }
     setCurrentPage(1);
-  }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly]);
+  }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, filterNoOCSC, filterOCSC]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const currentJobs = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -281,13 +299,13 @@ export default function JobList({
           <div style={{
             flex: "1 1 320px",
             minWidth: "280px",
-            background: "rgba(255,255,255,0.06)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(11, 17, 32, 0.45)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
             borderRadius: "var(--radius-xl)",
             padding: "20px 22px",
-            boxShadow: "0 12px 32px rgba(0,0,0,0.25)",
+            boxShadow: "0 16px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: 6 }}>
@@ -492,6 +510,38 @@ export default function JobList({
                 }}
               >
                 {showBookmarksOnly ? "❤️ ที่บันทึกไว้" : "🤍 ที่บันทึกไว้"}
+              </button>
+              
+              {/* OCSC Quick Filters */}
+              <button
+                onClick={() => { setFilterNoOCSC(!filterNoOCSC); setFilterOCSC(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "0 16px", height: "46px",
+                  borderRadius: "var(--radius-full)",
+                  background: filterNoOCSC ? "rgba(234,88,12,0.15)" : "white",
+                  border: `1px solid ${filterNoOCSC ? "rgba(234,88,12,0.3)" : "var(--gray-200)"}`,
+                  color: filterNoOCSC ? "#ea580c" : "var(--gray-500)",
+                  fontWeight: 600, fontSize: "0.85rem",
+                  cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap"
+                }}
+              >
+                ✨ ไม่ต้องผ่าน ภาค ก
+              </button>
+              <button
+                onClick={() => { setFilterOCSC(!filterOCSC); setFilterNoOCSC(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "0 16px", height: "46px",
+                  borderRadius: "var(--radius-full)",
+                  background: filterOCSC ? "rgba(59,130,246,0.15)" : "white",
+                  border: `1px solid ${filterOCSC ? "rgba(59,130,246,0.3)" : "var(--gray-200)"}`,
+                  color: filterOCSC ? "#2563eb" : "var(--gray-500)",
+                  fontWeight: 600, fontSize: "0.85rem",
+                  cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap"
+                }}
+              >
+                📝 ต้องผ่าน ภาค ก
               </button>
             </div>
 

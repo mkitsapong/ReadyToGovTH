@@ -5,12 +5,18 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(3, 7, 18, 0.92); /* More opaque so the light body doesn't bleed through and turn it grey */
+  background: rgba(3, 7, 18, 1); /* Solid navy-900 at the top to blend with hero */
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.header.scrolled {
+  background: rgba(3, 7, 18, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
 }
 
 .header-inner {
@@ -366,8 +372,8 @@
    HERO / PAGE HEADER
    =========================== */
 .page-hero {
-  background: radial-gradient(circle at 10% 10%, rgba(37, 99, 176, 0.5) 0%, transparent 60%),
-    radial-gradient(circle at 90% 90%, rgba(249, 115, 22, 0.3) 0%, transparent 60%),
+  background: radial-gradient(circle at 20% 0%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(37, 99, 176, 0.2) 0%, transparent 50%),
     linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
   padding: 80px 0 72px;
   position: relative;
@@ -378,11 +384,11 @@
 .page-hero::before {
   content: '';
   position: absolute;
-  top: -40%;
+  top: -30%;
   right: -5%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
   pointer-events: none;
   animation: pulse-dot 8s ease-in-out infinite alternate;
 }
@@ -394,7 +400,7 @@
   left: -10%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(37, 99, 176, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(37, 99, 176, 0.15) 0%, transparent 70%);
   pointer-events: none;
   animation: pulse-dot 10s ease-in-out infinite alternate-reverse;
 }
@@ -458,13 +464,8 @@
    =========================== */
 .filter-bar {
   position: relative;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  padding: 16px 0;
   z-index: 90;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  margin-top: -42px;
 }
 
 .filter-bar-inner {
@@ -472,6 +473,13 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: var(--radius-xl);
+  padding: 16px 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 .filter-search {
@@ -545,7 +553,7 @@
    JOB LIST & CARDS
    =========================== */
 .jobs-section {
-  padding: 32px 0 64px;
+  padding: 48px 0 64px;
 }
 
 .jobs-grid {
@@ -599,8 +607,8 @@
 
 .job-card-header {
   padding: 20px 20px 14px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8), rgba(255, 255, 255, 0.4));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--navy-900);
 }
 
 .job-card-top {
@@ -628,7 +636,7 @@
 .job-dept-name {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--navy-800);
+  color: var(--white);
   line-height: 1.3;
   letter-spacing: -0.01em;
 }
@@ -637,7 +645,7 @@
 .job-card-title {
   font-size: 0.82rem;
   font-weight: 400;
-  color: var(--gray-500);
+  color: var(--navy-200);
   line-height: 1.45;
   margin-top: 3px;
 }
@@ -1019,57 +1027,51 @@
 .footer {
   background: var(--navy-900);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 40px 0 24px;
+  padding: 24px 0 16px;
 }
 
-.footer-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 40px;
-  margin-bottom: 32px;
+.footer-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
-.footer-brand p {
-  font-size: 0.82rem;
-  color: var(--navy-400);
-  line-height: 1.7;
-  margin-top: 10px;
+.footer-brand-compact p {
+  /* Inline styled */
 }
 
-.footer-col h4 {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--navy-200);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 12px;
+.footer-links-compact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.footer-col ul li {
-  margin-bottom: 7px;
-}
-
-.footer-col ul li a,
-.footer-col ul li button {
-  font-size: 0.82rem;
-  color: var(--navy-400);
+.footer-links-compact button {
   background: none;
   border: none;
-  cursor: pointer;
+  color: var(--navy-300);
+  font-size: 0.8rem;
   font-family: var(--font-sans);
+  cursor: pointer;
   padding: 0;
   transition: color var(--transition-fast);
 }
 
-.footer-col ul li a:hover,
-.footer-col ul li button:hover {
+.footer-links-compact button:hover {
   color: var(--orange-400);
+}
+
+.footer-links-compact .dot {
+  color: var(--navy-600);
+  font-size: 0.7rem;
 }
 
 .footer-divider {
   border: none;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 20px;
 }
 
 .footer-bottom {
@@ -1374,9 +1376,10 @@
   }
 
   /* Footer */
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
+  .footer-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
 
   .footer-bottom {

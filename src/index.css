@@ -241,42 +241,37 @@ ul {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.03em;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
 }
 
 .badge-civil {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1e4d8c;
-  border: 1px solid rgba(147, 197, 253, 0.4);
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
 }
 
 .badge-government {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-  color: #9a3412;
-  border: 1px solid rgba(253, 186, 116, 0.4);
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
 }
 
 .badge-state {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  color: #166534;
-  border: 1px solid rgba(134, 239, 172, 0.4);
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
 }
 
 .badge-temp {
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  color: #991b1b;
-  border: 1px solid rgba(252, 165, 165, 0.4);
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
 }
 
 .badge-agency {
-  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-  color: #4c1d95;
-  border: 1px solid rgba(196, 181, 253, 0.4);
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
 }
 
 .tag {

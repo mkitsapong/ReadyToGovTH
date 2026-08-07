@@ -75,7 +75,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
           {/* Top banner: logo + dept info */}
           <div style={{
             display: "flex", alignItems: "stretch", gap: 0,
-            background: "linear-gradient(135deg, var(--navy-800) 0%, var(--navy-700) 100%)",
+            background: "var(--navy-900)",
             padding: "18px 20px 14px",
             position: "relative", overflow: "hidden",
             minHeight: 148, // Changed from fixed height to minHeight to prevent overlap
@@ -84,7 +84,7 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
             <div style={{
               position: "absolute", top: -30, right: -30,
               width: 120, height: 120,
-              background: "radial-gradient(circle, rgba(234,88,12,0.2) 0%, transparent 70%)",
+              background: "radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)",
               pointerEvents: "none",
             }} />
 
@@ -111,41 +111,46 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
             {/* Right: dept name + badges */}
             <div style={{ 
               flex: 1, minWidth: 0, paddingTop: 2,
-              display: "flex", flexDirection: "column", justifyContent: "space-between" 
+              display: "flex", flexDirection: "column", gap: 10 
             }}>
-              <div style={{
-                fontSize: "0.98rem", fontWeight: 700,
+              <div 
+                title={job.department}
+                style={{
+                fontSize: "0.9rem", fontWeight: 700,
                 color: "white", lineHeight: 1.35,
-                overflow: "hidden",
+                minHeight: "2.4em", // Force minimum 2 lines height
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
+                overflow: "hidden",
                 paddingRight: isAdmin ? 110 : 50, // prevent overlap with absolute Edit & Bookmark buttons
                 flexShrink: 0,
               }}>
                 {job.department}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: "auto", flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
                 {categories.map((cat, idx) => {
                   const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
                   return <span key={idx} className={`badge ${catMeta.badge}`}>{cat}</span>;
                 })}
                 {job.isNoOCSC && (
                   <span style={{
-                    padding: "2px 8px", background: "rgba(234,88,12,0.15)",
-                    border: "1px solid rgba(234,88,12,0.3)", borderRadius: "999px",
-                    fontSize: "0.68rem", fontWeight: 700, color: "#fed7aa",
-                    whiteSpace: "nowrap"
+                    padding: "4px 10px", background: "rgba(234,88,12,0.15)",
+                    borderRadius: "999px",
+                    fontSize: "0.72rem", fontWeight: 700, color: "#fed7aa",
+                    whiteSpace: "nowrap",
+                    display: "flex", alignItems: "center", gap: 4
                   }}>
                     ✨ ไม่ต้องผ่าน ภาค ก
                   </span>
                 )}
                 {job.isOCSC && (
                   <span style={{
-                    padding: "2px 8px", background: "rgba(59,130,212,0.2)",
-                    border: "1px solid rgba(59,130,212,0.4)", borderRadius: "999px",
-                    fontSize: "0.68rem", fontWeight: 700, color: "#bfdbfe",
-                    whiteSpace: "nowrap"
+                    padding: "4px 10px", background: "rgba(59,130,212,0.15)",
+                    borderRadius: "999px",
+                    fontSize: "0.72rem", fontWeight: 700, color: "#bfdbfe",
+                    whiteSpace: "nowrap",
+                    display: "flex", alignItems: "center", gap: 4
                   }}>
                     📝 ต้องผ่าน ภาค ก
                   </span>

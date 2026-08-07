@@ -17,8 +17,13 @@ export const fetchJobs = async () => {
       const deadlineDate = new Date(job.deadline);
       if (deadlineDate < today) {
         isValid = false;
-        // Delete expired job from Firestore
-        await deleteDoc(doc(db, "jobs_live", job.id));
+        // Delete expired job from Firestore (Only works if user is Admin / has permissions)
+        try {
+          await deleteDoc(doc(db, "jobs_live", job.id));
+        } catch (error) {
+          // Ignore permission errors for normal users, just filter it out from UI
+          console.warn(`Job ${job.id} is expired. Failed to delete from DB (likely due to permissions).`);
+        }
       }
     }
     if (isValid) {
