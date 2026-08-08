@@ -90,7 +90,7 @@ export default function JobDetailPage({ jobs, books, isAdmin, onEditJob }) {
         <article className="job-detail-page">
            {/* Re-use JobDetailModal content logic but render it directly on the page instead of a modal */}
            {/* For simplicity, we can just render the modal component directly inline, but modify it slightly or we just render it full width */}
-           <JobDetailModal job={job} books={books} inline={true} isAdmin={isAdmin} />
+           <JobDetailModal job={job} books={books} inline={true} isAdmin={isAdmin} onEdit={onEditJob} />
         </article>
       </div>
     </>

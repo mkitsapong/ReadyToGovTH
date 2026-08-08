@@ -42,7 +42,7 @@ const EDU_COLORS = {
   "ไม่จำกัดวุฒิ": { bg: "#dcfce7", border: "#86efac", color: "#14532d" },
 };
 
-export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false }) {
+export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit }) {
   const [isCopied, setIsCopied] = useState(false);
   const [isGeneratingBanner, setIsGeneratingBanner] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
@@ -133,6 +133,22 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
             {/* Top Right Actions */}
             <div style={{ position: "absolute", top: "clamp(16px, 5vw, 24px)", right: "clamp(16px, 5vw, 28px)", display: "flex", gap: 8, zIndex: 50, flexWrap: "wrap", justifyContent: "flex-end" }}>
+              {/* Edit Button */}
+              {isAdmin && onEdit && (
+                <button onClick={() => onEdit(job)} title="แก้ไขประกาศ"
+                  style={{
+                    background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.85)", 
+                    border: "1px solid rgba(255,255,255,0.2)", borderRadius: "var(--radius-sm)",
+                    padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 4, transition: "all 0.15s",
+                    whiteSpace: "nowrap"
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+                  ✏️ แก้ไข
+                </button>
+              )}
+
               {/* Generate Banner Button */}
               {isAdmin && (
                 <button onClick={handleDownloadBanner} disabled={isGeneratingBanner} title="บันทึกรูปแบนเนอร์สำหรับแชร์"
@@ -597,9 +613,21 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               </button>
             )}
             {isNotOpenYet ? (
-              <button className="btn modal-btn-action" style={{ background: "var(--gray-400)", color: "white", cursor: "not-allowed", border: "none" }} disabled>
-                ⏳ ยังไม่เปิด<span className="hide-on-mobile">รับสมัคร</span>
-              </button>
+              job.applyUrl ? (
+                <a 
+                  href={job.applyUrl} 
+                  target={job.applyUrl.startsWith("mailto:") ? undefined : "_blank"} 
+                  rel="noreferrer" 
+                  className="btn modal-btn-action" 
+                  style={{ background: "var(--gray-400)", color: "white", border: "none" }}
+                >
+                  ⏳ ยังไม่เปิด<span className="hide-on-mobile">รับสมัคร</span>
+                </a>
+              ) : (
+                <button className="btn modal-btn-action" style={{ background: "var(--gray-400)", color: "white", border: "none" }}>
+                  ⏳ ยังไม่เปิด<span className="hide-on-mobile">รับสมัคร</span>
+                </button>
+              )
             ) : job.applyUrl ? (
               <a 
                 href={job.applyUrl} 

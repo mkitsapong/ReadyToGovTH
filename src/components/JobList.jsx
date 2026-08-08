@@ -252,13 +252,27 @@ export default function JobList({
   );
 
   // Reset page when filters change
-  const isInitialMount = useRef(true);
+  const prevFiltersRef = useRef({
+    categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, filterNoOCSC, filterOCSC
+  });
+  
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
+    const prev = prevFiltersRef.current;
+    if (
+      prev.categoryFilter !== categoryFilter ||
+      prev.selectedProvince !== selectedProvince ||
+      prev.userEducation !== userEducation ||
+      prev.searchQuery !== searchQuery ||
+      prev.sortBy !== sortBy ||
+      prev.showBookmarksOnly !== showBookmarksOnly ||
+      prev.filterNoOCSC !== filterNoOCSC ||
+      prev.filterOCSC !== filterOCSC
+    ) {
+      setCurrentPage(1);
+      prevFiltersRef.current = {
+        categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, filterNoOCSC, filterOCSC
+      };
     }
-    setCurrentPage(1);
   }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, filterNoOCSC, filterOCSC]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
