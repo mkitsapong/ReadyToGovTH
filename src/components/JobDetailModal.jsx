@@ -64,21 +64,25 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       const image = canvas.toDataURL("image/png");
       const fileName = `readytogov-${job.department.replace(/\s+/g, "-")}-banner.png`;
 
-      // Try Web Share API for Mobile (allows saving to gallery)
-      try {
-        const response = await fetch(image);
-        const blob = await response.blob();
-        const file = new File([blob], fileName, { type: "image/png" });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: job.department,
-          });
-          return;
+      // Check if it's a mobile device. If it is, use Web Share API, otherwise skip to download.
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        try {
+          const response = await fetch(image);
+          const blob = await response.blob();
+          const file = new File([blob], fileName, { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: job.department,
+            });
+            return;
+          }
+        } catch (err) {
+          if (err.name === 'AbortError') return; // User cancelled the share sheet
+          console.warn("Share failed, falling back to download:", err);
         }
-      } catch (err) {
-        if (err.name === 'AbortError') return; // User cancelled the share sheet
-        console.warn("Share failed, falling back to download:", err);
       }
 
       // Fallback for Desktop / browsers that don't support file sharing
