@@ -617,7 +617,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 <a 
                   href={job.applyUrl} 
                   target={job.applyUrl.startsWith("mailto:") ? undefined : "_blank"} 
-                  rel="noreferrer" 
+                  rel="noopener noreferrer" 
                   className="btn modal-btn-action" 
                   style={{ background: "var(--gray-400)", color: "white", border: "none" }}
                 >
@@ -632,7 +632,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               <a 
                 href={job.applyUrl} 
                 target={job.applyUrl.startsWith("mailto:") ? undefined : "_blank"} 
-                rel="noreferrer" 
+                rel="noopener noreferrer" 
                 className="btn btn-primary modal-btn-action" 
               >
                 {job.applyUrl.startsWith("mailto:") ? "ส่งอีเมล ✉️" : "สมัครออนไลน์ →"}
@@ -678,7 +678,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           </h2>
           
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
-            <a href={currentPdfUrl} target="_blank" rel="noreferrer" title="เปิดในแท็บใหม่" 
+            <a href={currentPdfUrl} target="_blank" rel="noopener noreferrer" title="เปิดในแท็บใหม่" 
               style={{ 
                 padding: "8px 16px", color: "white", textDecoration: "none", 
                 display: "flex", alignItems: "center", 

@@ -175,7 +175,7 @@ export function ExamPrepBanner({
               <a
                 href={item.link || "#"}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -268,7 +268,7 @@ export function ModalExamPrepSection({
           <a
             href={customBookUrl.trim()}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             style={{
               padding: "8px 16px",
               background: "linear-gradient(135deg, var(--accent), var(--orange-600))",
@@ -308,7 +308,7 @@ export function ModalExamPrepSection({
               <a
                 href={b.link || "#"}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 style={{
                   fontSize: "0.72rem",
                   fontWeight: 700,
