@@ -310,7 +310,7 @@ export default function JobList({
           </div>
 
           {/* Right Column: Quick Edu Filter Card */}
-          <div style={{
+          <div className="hero-edu-card" style={{
             flex: "1 1 320px",
             minWidth: "280px",
             background: "rgba(11, 17, 32, 0.45)",
@@ -351,6 +351,7 @@ export default function JobList({
                   <button
                     key={edu}
                     onClick={() => onChangeUserEducation(isActive ? null : edu)}
+                    className="hero-edu-pill"
                     style={{
                       padding: "6px 14px",
                       borderRadius: "999px",
@@ -508,57 +509,6 @@ export default function JobList({
               )}
             </div>
 
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <button
-                onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
-                className={`btn-favorite-filter ${showBookmarksOnly ? 'active' : ''}`}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "0 16px", height: "46px",
-                  borderRadius: "var(--radius-full)",
-                  background: showBookmarksOnly ? "#fee2e2" : "white",
-                  border: `1px solid ${showBookmarksOnly ? "#fca5a5" : "var(--gray-200)"}`,
-                  color: showBookmarksOnly ? "#ef4444" : "var(--gray-500)",
-                  fontWeight: 600, fontSize: "0.9rem",
-                  cursor: "pointer", transition: "all 0.2s"
-                }}
-              >
-                {showBookmarksOnly ? "❤️ ที่บันทึกไว้" : "🤍 ที่บันทึกไว้"}
-              </button>
-              
-              {/* OCSC Quick Filters */}
-              <button
-                onClick={() => { setFilterNoOCSC(!filterNoOCSC); setFilterOCSC(false); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "0 16px", height: "46px",
-                  borderRadius: "var(--radius-full)",
-                  background: filterNoOCSC ? "rgba(234,88,12,0.15)" : "white",
-                  border: `1px solid ${filterNoOCSC ? "rgba(234,88,12,0.3)" : "var(--gray-200)"}`,
-                  color: filterNoOCSC ? "#ea580c" : "var(--gray-500)",
-                  fontWeight: 600, fontSize: "0.85rem",
-                  cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap"
-                }}
-              >
-                ✨ ไม่ต้องผ่าน ภาค ก
-              </button>
-              <button
-                onClick={() => { setFilterOCSC(!filterOCSC); setFilterNoOCSC(false); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "0 16px", height: "46px",
-                  borderRadius: "var(--radius-full)",
-                  background: filterOCSC ? "rgba(59,130,246,0.15)" : "white",
-                  border: `1px solid ${filterOCSC ? "rgba(59,130,246,0.3)" : "var(--gray-200)"}`,
-                  color: filterOCSC ? "#2563eb" : "var(--gray-500)",
-                  fontWeight: 600, fontSize: "0.85rem",
-                  cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap"
-                }}
-              >
-                📝 ต้องผ่าน ภาค ก
-              </button>
-            </div>
-
             {/* Search */}
             <div className="filter-search" style={{ position: "relative", flex: 1 }}>
               <span className="filter-search-icon">🔍</span>
@@ -614,6 +564,61 @@ export default function JobList({
             <span className="filter-count">
               พบ <strong>{filtered.length}</strong> ประกาศ
             </span>
+
+            {/* Quick Filter Buttons (bookmark, OCSC) — always on new row via flex-wrap */}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", width: "100%", order: 10 }}>
+              <button
+                onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
+                className={`btn-favorite-filter filter-quick-btn ${showBookmarksOnly ? 'active' : ''}`}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "0 16px", height: "40px",
+                  borderRadius: "var(--radius-full)",
+                  background: showBookmarksOnly ? "#fee2e2" : "white",
+                  border: `1px solid ${showBookmarksOnly ? "#fca5a5" : "var(--gray-200)"}`,
+                  color: showBookmarksOnly ? "#ef4444" : "var(--gray-500)",
+                  fontWeight: 600, fontSize: "0.85rem",
+                  cursor: "pointer", transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {showBookmarksOnly ? "❤️ ที่บันทึกไว้" : "🤍 ที่บันทึกไว้"}
+              </button>
+              
+              {/* OCSC Quick Filters */}
+              <button
+                onClick={() => { setFilterNoOCSC(!filterNoOCSC); setFilterOCSC(false); }}
+                className="filter-quick-btn"
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "0 16px", height: "40px",
+                  borderRadius: "var(--radius-full)",
+                  background: filterNoOCSC ? "rgba(234,88,12,0.15)" : "white",
+                  border: `1px solid ${filterNoOCSC ? "rgba(234,88,12,0.3)" : "var(--gray-200)"}`,
+                  color: filterNoOCSC ? "#ea580c" : "var(--gray-500)",
+                  fontWeight: 600, fontSize: "0.85rem",
+                  cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap"
+                }}
+              >
+                ✨ ไม่ต้องผ่าน ภาค ก
+              </button>
+              <button
+                onClick={() => { setFilterOCSC(!filterOCSC); setFilterNoOCSC(false); }}
+                className="filter-quick-btn"
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "0 16px", height: "40px",
+                  borderRadius: "var(--radius-full)",
+                  background: filterOCSC ? "rgba(59,130,246,0.15)" : "white",
+                  border: `1px solid ${filterOCSC ? "rgba(59,130,246,0.3)" : "var(--gray-200)"}`,
+                  color: filterOCSC ? "#2563eb" : "var(--gray-500)",
+                  fontWeight: 600, fontSize: "0.85rem",
+                  cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap"
+                }}
+              >
+                📝 ต้องผ่าน ภาค ก
+              </button>
+            </div>
           </div>
         </div>
       </div>

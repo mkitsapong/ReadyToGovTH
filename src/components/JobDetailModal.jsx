@@ -132,7 +132,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             <div style={{ position: "absolute", bottom: -20, left: -20, width: 150, height: 150, background: "radial-gradient(circle, rgba(37,99,176,0.2) 0%, transparent 65%)", pointerEvents: "none" }} />
 
             {/* Top Right Actions */}
-            <div style={{ position: "absolute", top: "clamp(16px, 5vw, 24px)", right: "clamp(16px, 5vw, 28px)", display: "flex", gap: 8, zIndex: 50, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <div className="modal-header-actions" style={{ position: "absolute", top: "clamp(12px, 4vw, 24px)", right: "clamp(12px, 4vw, 28px)", display: "flex", gap: 6, zIndex: 50, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "60%" }}>
               {/* Edit Button */}
               {isAdmin && onEdit && (
                 <button onClick={() => onEdit(job)} title="แก้ไขประกาศ"
@@ -244,7 +244,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               </div>
 
               {/* Text details */}
-              <div style={{ flex: 1, minWidth: 0, paddingRight: isAdmin ? 160 : 90 }}>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: "clamp(80px, 35vw, 180px)" }}>
               {/* Category badge */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
                 {categories.map((cat, idx) => {

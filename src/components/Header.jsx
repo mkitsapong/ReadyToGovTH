@@ -83,7 +83,7 @@ export default function Header({
           {/* Auth or Live badge & Date */}
           <div className="header-actions" style={{ marginLeft: 16, display: "flex", alignItems: "center", gap: 10 }}>
             {/* Today Thai Date */}
-            <div style={{
+            <div className="header-date-badge" style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 6,

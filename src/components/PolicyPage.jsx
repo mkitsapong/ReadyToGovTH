@@ -96,7 +96,7 @@ export default function PolicyPage() {
     <>
       <SEO title={`${title} | ReadyToGovTH`} description={title} />
 
-      <div className="container" style={{ padding: "40px 24px", minHeight: "60vh" }}>
+      <div className="container" style={{ padding: "clamp(16px, 5vw, 40px) 24px", minHeight: "60vh" }}>
         <Link to="/" style={{
           display: "inline-flex", alignItems: "center", gap: 8,
           color: "var(--navy-300)", textDecoration: "none", marginBottom: 24, fontWeight: 500
@@ -104,11 +104,11 @@ export default function PolicyPage() {
           <span>←</span> กลับหน้าแรก
         </Link>
 
-        <div style={{
-          background: "white", padding: 40, borderRadius: "var(--radius-xl)",
+        <div className="policy-page-box" style={{
+          background: "white", padding: "clamp(20px, 5vw, 40px)", borderRadius: "var(--radius-xl)",
           boxShadow: "0 10px 40px rgba(0,0,0,0.05)", maxWidth: 800, margin: "0 auto"
         }}>
-          <h1 style={{ color: "var(--navy-800)", marginBottom: 24, fontSize: "1.8rem" }}>{title}</h1>
+          <h1 style={{ color: "var(--navy-800)", marginBottom: 24, fontSize: "clamp(1.2rem, 4vw, 1.8rem)" }}>{title}</h1>
           <div className="policy-content" style={{ lineHeight: 1.7, color: "var(--navy-600)" }}>
             {content}
           </div>
