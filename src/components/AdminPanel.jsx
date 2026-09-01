@@ -4,9 +4,6 @@ import { regions } from "../data/provinces.js";
 const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ"];
 const EDUCATION = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
 
-const allProvinces = regions.flatMap((r) => r.provinces);
-const uniqueProvinces = [...new Set(allProvinces)].sort((a, b) => a.localeCompare(b, "th"));
-
 const CATEGORY_ICONS = { ข้าราชการ: "🏛️", พนักงานราชการ: "📋", รัฐวิสาหกิจ: "🏢", ลูกจ้างชั่วคราว: "📝", พนักงานหน่วยงานของรัฐ: "🏫" };
 
 const EMPTY_UNIT = { name: "", count: 1, education: ["ปริญญาตรี"], major: "", details: "" };

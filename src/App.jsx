@@ -44,7 +44,7 @@ function getActivePage(pathname) {
 // This component handles the URL params/search and passes them to JobList
 function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, isBooksError, isAdmin, handleEditJob, userEducation, setUserEducation, handleAddBook, handleUpdateBook, handleDeleteBook, onSelectProvince }) {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   
   // Parse activePage from URL path
   let activePage = getActivePage(location.pathname);
@@ -222,8 +222,6 @@ export default function App() {
 
   let activePage = getActivePage(location.pathname);
 
-  console.log("App.jsx render: location.pathname =", location.pathname, " | activePage =", activePage);
-
   const searchParams = new URLSearchParams(location.search);
   const selectedProvince = searchParams.get("province");
 
@@ -256,10 +254,7 @@ export default function App() {
       <Header
         activePage={activePage}
         onNavigate={handleNavigate}
-        selectedProvince={selectedProvince}
-        onSelectProvince={handleSelectProvince}
         user={user}
-        onLoginClick={() => setShowAuth(true)}
         onLogout={handleLogout}
       />
 

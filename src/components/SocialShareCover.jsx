@@ -1,21 +1,10 @@
-import React, { forwardRef, useState } from 'react';
+import { forwardRef, useState } from 'react';
 import iconImage from '../assets/icon.png';
-
-const CATEGORY_MAP = {
-  ข้าราชการ: { bg: "#e0f2fe", color: "#0369a1" },
-  พนักงานราชการ: { bg: "#f3f4f6", color: "#374151" },
-  รัฐวิสาหกิจ: { bg: "#ffedd5", color: "#c2410c" },
-  ลูกจ้างชั่วคราว: { bg: "#fef9c3", color: "#a16207" },
-  พนักงานหน่วยงานของรัฐ: { bg: "#fce7f3", color: "#be185d" },
-};
 
 const SocialShareCover = forwardRef(({ job }, ref) => {
   const [imgError, setImgError] = useState(false);
 
   if (!job) return null;
-  const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
-  const mainCat = categories[0] || "งานราชการ";
-  const catStyle = CATEGORY_MAP[mainCat] || { bg: "#f8fafc", color: "#475569" };
 
   const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
 
@@ -24,14 +13,11 @@ const SocialShareCover = forwardRef(({ job }, ref) => {
     return new Date(dateStr).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
   };
 
-  let dateText = "";
-  if (job.startDate && job.deadline) {
-    dateText = `เปิดรับสมัคร ${formatShortDate(job.startDate)} - ${formatShortDate(job.deadline)}`;
-  } else if (job.deadline) {
-    dateText = `ปิดรับสมัคร ${formatShortDate(job.deadline)}`;
-  } else {
-    dateText = "เปิดรับสมัครด่วน";
-  }
+  const dateText = (job.startDate && job.deadline)
+    ? `เปิดรับสมัคร ${formatShortDate(job.startDate)} - ${formatShortDate(job.deadline)}`
+    : job.deadline
+      ? `ปิดรับสมัคร ${formatShortDate(job.deadline)}`
+      : "เปิดรับสมัครด่วน";
 
   return (
     <div
@@ -195,5 +181,7 @@ const SocialShareCover = forwardRef(({ job }, ref) => {
     </div>
   );
 });
+
+SocialShareCover.displayName = "SocialShareCover";
 
 export default SocialShareCover;

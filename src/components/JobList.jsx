@@ -3,6 +3,7 @@ import JobCard from "./JobCard.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
+import { getProvinces } from "../utils/helpers.js";
 
 const CATEGORY_FILTER = {
   home: null,
@@ -22,12 +23,6 @@ const PAGE_HERO_MAP = {
   agency: { title: "พนักงานหน่วยงานของรัฐ", subtitle: "ตำแหน่งในหน่วยงานของรัฐ กองทุน มหาวิทยาลัย และองค์การมหาชน" },
 };
 
-// Helper: normalize province field — รองรับทั้ง string เก่าและ array ใหม่
-function getProvinces(job) {
-  if (Array.isArray(job.provinces)) return job.provinces;
-  if (job.province) return [job.province];
-  return [];
-}
 
 export default function JobList({
   jobs,
@@ -81,25 +76,24 @@ export default function JobList({
     sessionStorage.setItem("filterOCSC", filterOCSC);
   }, [filterOCSC]);
   
-  const { bookmarks, toggleBookmark, isBookmarked } = useBookmarks();
+  const { toggleBookmark, isBookmarked } = useBookmarks();
   const regionDropdownRef = useRef(null);
   const ITEMS_PER_PAGE = 9;
+
+  const closeRegionDropdown = () => {
+    setIsRegionDropdownOpen(false);
+    setProvinceSearchQuery("");
+  };
 
   useEffect(() => {
     function handleClickOutside(e) {
       if (regionDropdownRef.current && !regionDropdownRef.current.contains(e.target)) {
-        setIsRegionDropdownOpen(false);
+        closeRegionDropdown();
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (!isRegionDropdownOpen) {
-      setProvinceSearchQuery("");
-    }
-  }, [isRegionDropdownOpen]);
 
   const filteredRegions = provinceSearchQuery.trim()
     ? regions.map(r => {
@@ -243,7 +237,7 @@ export default function JobList({
     }
 
     return result;
-  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, bookmarks, filterNoOCSC, filterOCSC]);
+  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, isBookmarked, filterNoOCSC, filterOCSC]);
 
   // Stats
   const totalPositions = filtered.reduce(
@@ -438,7 +432,7 @@ export default function JobList({
                     />
                   </div>
                   <div
-                    onClick={() => { onSelectProvince(null); setIsRegionDropdownOpen(false); }}
+                    onClick={() => { onSelectProvince(null); closeRegionDropdown(); }}
                     style={{
                       padding: "10px 16px",
                       cursor: "pointer",
@@ -461,7 +455,7 @@ export default function JobList({
                   {filteredRegions.map(r => (
                     <div key={r.id}>
                       <div 
-                        onClick={() => { onSelectProvince(r.name); setIsRegionDropdownOpen(false); }}
+                        onClick={() => { onSelectProvince(r.name); closeRegionDropdown(); }}
                         style={{
                           padding: "10px 16px",
                           fontSize: "0.85rem",
@@ -485,7 +479,7 @@ export default function JobList({
                         return (
                           <div
                             key={p}
-                            onClick={() => { onSelectProvince(p); setIsRegionDropdownOpen(false); }}
+                            onClick={() => { onSelectProvince(p); closeRegionDropdown(); }}
                             style={{
                               padding: "8px 16px 8px 24px",
                               cursor: "pointer",
@@ -671,7 +665,6 @@ export default function JobList({
                   <JobCard
                     key={job.id}
                     job={job}
-                    books={books}
                     style={{ animationDelay: `${i * 0.05}s` }}
                     isAdmin={isAdmin}
                     onEdit={onEditJob}

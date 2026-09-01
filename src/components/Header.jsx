@@ -12,10 +12,7 @@ const NAV_ITEMS = [
 export default function Header({
   activePage,
   onNavigate,
-  selectedProvince,
-  onSelectProvince,
   user,
-  onLoginClick,
   onLogout,
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,7 +33,7 @@ export default function Header({
         {/* Main nav row */}
         <div className="header-inner">
           {/* Logo */}
-          <a className="logo" onClick={() => onNavigate("home")} href="#" style={{ cursor: "pointer" }}>
+          <a className="logo" onClick={(e) => { e.preventDefault(); onNavigate("home"); }} href="/" style={{ cursor: "pointer" }}>
             <img src="/favicon.svg" alt="Logo" style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0 }} />
             <div className="logo-text">
               <span>ReadyToGovTH</span>

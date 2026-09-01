@@ -4,8 +4,8 @@ import SEO from "./SEO.jsx";
 export default function PolicyPage() {
   const { policyId } = useParams();
 
-  let title = "";
-  let content = null;
+  let title;
+  let content;
 
   if (policyId === "privacy") {
     title = "นโยบายความเป็นส่วนตัว (Privacy Policy)";

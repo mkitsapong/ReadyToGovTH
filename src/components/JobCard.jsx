@@ -1,56 +1,11 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { CATEGORY_MAP } from "../utils/constants.js";
+import { getDisplayProvinces, getEduMatchStatus, daysLeft, formatDate } from "../utils/helpers.js";
 
-
-const CATEGORY_MAP = {
-  ข้าราชการ: { badge: "badge-civil", icon: "🏛️" },
-  พนักงานราชการ: { badge: "badge-government", icon: "📋" },
-  รัฐวิสาหกิจ:  { badge: "badge-state",      icon: "🏢" },
-  ลูกจ้างชั่วคราว: { badge: "badge-temp",       icon: "📝" },
-  พนักงานหน่วยงานของรัฐ: { badge: "badge-agency", icon: "🏫" },
-};
-
-function getProvinces(job) {
-  let list = [];
-  if (Array.isArray(job.provinces)) list = job.provinces;
-  else if (job.province) list = [job.province];
-  return list.filter(p => p !== "ไม่ระบุ");
-}
-
-const EDU_ORDER = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก"];
-
-function getEduMatchStatus(positionList, userEdu) {
-  if (!userEdu || !positionList?.length) return null;
-  const matchCount = positionList.filter((p) => {
-    const edus = Array.isArray(p.education) ? p.education : (p.education ? [p.education] : []);
-    let pMatchesEdu = edus.includes("ไม่จำกัดวุฒิ") || edus.includes(userEdu);
-    if (p.units && p.units.length > 0) {
-      pMatchesEdu = p.units.some(u => {
-        const uEdus = Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []);
-        return uEdus.includes("ไม่จำกัดวุฒิ") || uEdus.includes(userEdu);
-      });
-    }
-    return pMatchesEdu;
-  }).length;
-  if (matchCount === positionList.length) return "all";
-  if (matchCount > 0) return "some";
-  return "none";
-}
-
-function daysLeft(deadline) {
-  const d1 = new Date();
-  d1.setHours(0, 0, 0, 0);
-  const d2 = new Date(deadline);
-  d2.setHours(0, 0, 0, 0);
-  return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
-}
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
-}
-
-export default function JobCard({ job, books = [], style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark }) {
-  const [searchParams, setSearchParams] = useSearchParams();
+export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark }) {
 
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const provinces = getDisplayProvinces(job);
   const mainMeta = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   const days = daysLeft(job.deadline);
   const urgent = days <= 7 && days >= 0;
@@ -155,11 +110,11 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                     📝 ต้องผ่าน ภาค ก
                   </span>
                 )}
-                {getProvinces(job).length === 1 ? (
+                {provinces.length === 1 ? (
                   <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 3 }}>
-                    📍 {getProvinces(job)[0]}
+                    📍 {provinces[0]}
                   </span>
-                ) : getProvinces(job).length > 1 ? (
+                ) : provinces.length > 1 ? (
                   <span style={{
                     display: "inline-flex", alignItems: "center", gap: 4,
                     padding: "2px 8px",
@@ -170,12 +125,12 @@ export default function JobCard({ job, books = [], style, isAdmin, onEdit, userE
                     color: "rgba(255,255,255,0.85)",
                     whiteSpace: "nowrap",
                   }}>
-                    📍 {getProvinces(job)[0]}
+                    📍 {provinces[0]}
                     <span style={{
                       background: "rgba(255,255,255,0.25)", color: "white",
                       borderRadius: "999px", padding: "0px 5px",
                       fontSize: "0.6rem", fontWeight: 700,
-                    }}>+{getProvinces(job).length - 1}</span>
+                    }}>+{provinces.length - 1}</span>
                   </span>
                 ) : null}
               </div>

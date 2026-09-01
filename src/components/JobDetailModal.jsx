@@ -3,44 +3,8 @@ import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ModalExamPrepSection } from "./ExamResources.jsx";
 import SocialShareCover from "./SocialShareCover.jsx";
 import html2canvas from "html2canvas";
-
-const CATEGORY_MAP = {
-  ข้าราชการ:    { badge: "badge-civil",      icon: "🏛️" },
-  พนักงานราชการ: { badge: "badge-government", icon: "📋" },
-  รัฐวิสาหกิจ:  { badge: "badge-state",      icon: "🏢" },
-  ลูกจ้างชั่วคราว: { badge: "badge-temp",       icon: "📝" },
-  พนักงานหน่วยงานของรัฐ: { badge: "badge-agency", icon: "🏫" },
-};
-
-function formatDate(dateStr) {
-  if (!dateStr) return "-";
-  return new Date(dateStr).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
-}
-function daysLeft(deadline) {
-  const d1 = new Date();
-  d1.setHours(0, 0, 0, 0);
-  const d2 = new Date(deadline);
-  d2.setHours(0, 0, 0, 0);
-  return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
-}
-function getProvinces(job) {
-  let list = [];
-  if (Array.isArray(job.provinces)) list = job.provinces;
-  else if (job.province) list = [job.province];
-  return list.filter(p => p !== "ไม่ระบุ");
-}
-
-// Education badge color map
-const EDU_COLORS = {
-  "ม.3":        { bg: "#f3f4f6", border: "#d1d5db", color: "#374151" },
-  "ม.6":        { bg: "#e0f2fe", border: "#bae6fd", color: "#0369a1" },
-  "ปวช.":       { bg: "#fef9c3", border: "#fde047", color: "#713f12" },
-  "ปวส.":       { bg: "#ffedd5", border: "#fdba74", color: "#7c2d12" },
-  "ปริญญาตรี":  { bg: "#dbeafe", border: "#93c5fd", color: "#1e3a8a" },
-  "ปริญญาโท":   { bg: "#ede9fe", border: "#a78bfa", color: "#4c1d95" },
-  "ปริญญาเอก":  { bg: "#fce7f3", border: "#f9a8d4", color: "#831843" },
-  "ไม่จำกัดวุฒิ": { bg: "#dcfce7", border: "#86efac", color: "#14532d" },
-};
+import { CATEGORY_MAP, EDU_COLORS } from "../utils/constants.js";
+import { formatDate, daysLeft, getDisplayProvinces } from "../utils/helpers.js";
 
 export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit }) {
   const [isCopied, setIsCopied] = useState(false);
@@ -50,6 +14,9 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(job?.id);
   const bannerRef = useRef(null);
+
+  // Guard clause: must be before any job property access
+  if (!job) return null;
 
   const handleDownloadBanner = async () => {
     if (!bannerRef.current) return;
@@ -101,13 +68,11 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const pdfUrls = job.announcementUrl 
     ? job.announcementUrl.split(/[\s,]+/).filter(url => url.trim().length > 0)
     : [];
-
-  if (!job) return null;
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
   const mainMeta   = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   const days       = daysLeft(job.deadline);
   const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
-  const provinces  = getProvinces(job);
+  const provinces  = getDisplayProvinces(job);
 
   const today = new Date().toISOString().split("T")[0];
   const displayStartDate = job.startDate || job.postedDate;
@@ -167,7 +132,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
               {/* Share Button */}
               <button onClick={async () => {
-                const url = `${window.location.origin}/?jobId=${job.id}`;
+                const url = `${window.location.origin}/job/${job.id}`;
                 if (navigator.share) {
                   try {
                     await navigator.share({
@@ -175,7 +140,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                       text: `ดูประกาศรับสมัครงานของ ${job.department} ได้ที่นี่`,
                       url: url,
                     });
-                  } catch (err) {
+                  } catch {
                     // user cancelled or error
                   }
                 } else {
