@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { regions } from "../data/provinces.js";
+import AdminAIExtractor from "./AdminAIExtractor.jsx";
 
 const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ"];
 const EDUCATION = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
@@ -90,6 +91,25 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
       return { ...prev, provinces: list };
     });
     if (errors.provinces) setErrors((prev) => ({ ...prev, provinces: undefined }));
+  }
+
+  function handleAIExtracted(extractedData) {
+    setForm((prev) => ({
+      ...prev,
+      department: extractedData.department || prev.department,
+      categories: extractedData.categories?.length ? extractedData.categories : prev.categories,
+      provinces: extractedData.provinces?.length ? extractedData.provinces : prev.provinces,
+      startDate: extractedData.startDate || prev.startDate,
+      deadline: extractedData.deadline || prev.deadline,
+      postedDate: extractedData.postedDate || prev.postedDate,
+      isNoOCSC: typeof extractedData.isNoOCSC === "boolean" ? extractedData.isNoOCSC : prev.isNoOCSC,
+      isOCSC: typeof extractedData.isOCSC === "boolean" ? extractedData.isOCSC : prev.isOCSC,
+      applyUrl: extractedData.applyUrl || prev.applyUrl,
+      announcementUrl: extractedData.announcementUrl || prev.announcementUrl,
+      description: extractedData.description || prev.description,
+      positionList: extractedData.positionList?.length ? extractedData.positionList : prev.positionList,
+    }));
+    setErrors({});
   }
 
 
@@ -273,6 +293,9 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
         {/* Body */}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           <div className="modal-body">
+
+            {/* AI Extractor Component */}
+            <AdminAIExtractor onExtracted={handleAIExtracted} />
 
             {/* Logo Upload or URL */}
             <div className="form-group">
