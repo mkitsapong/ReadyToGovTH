@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { regions } from "../data/provinces.js";
 import AdminAIExtractor from "./AdminAIExtractor.jsx";
+import { findOfficialGovLogo } from "../utils/logoHelper.js";
 
 const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ"];
 const EDUCATION = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
@@ -94,9 +95,14 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   }
 
   function handleAIExtracted(extractedData) {
+    const resolvedLogo = extractedData.logoUrl || (extractedData.department ? findOfficialGovLogo(extractedData.department) : "");
+    if (resolvedLogo) {
+      setLogoPreview(resolvedLogo);
+    }
     setForm((prev) => ({
       ...prev,
       department: extractedData.department || prev.department,
+      logoUrl: resolvedLogo || prev.logoUrl,
       categories: extractedData.categories?.length ? extractedData.categories : prev.categories,
       provinces: extractedData.provinces?.length ? extractedData.provinces : prev.provinces,
       startDate: extractedData.startDate || prev.startDate,
@@ -110,6 +116,16 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
       positionList: extractedData.positionList?.length ? extractedData.positionList : prev.positionList,
     }));
     setErrors({});
+  }
+
+  function handleAutoDetectLogo() {
+    if (!form.department || !form.department.trim()) {
+      alert("กรุณาระบุชื่อหน่วยงานก่อนค้นหาโลโก้");
+      return;
+    }
+    const foundLogo = findOfficialGovLogo(form.department);
+    setForm((prev) => ({ ...prev, logoUrl: foundLogo }));
+    setLogoPreview(foundLogo);
   }
 
 
@@ -338,6 +354,28 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                         setLogoPreview(url);
                       }}
                     />
+                    <button
+                      type="button"
+                      onClick={handleAutoDetectLogo}
+                      title="ค้นหาโลโก้ทางการจากชื่อหน่วยงาน"
+                      style={{
+                        background: "rgba(234,88,12,0.1)",
+                        border: "1px solid rgba(234,88,12,0.3)",
+                        color: "#ea580c",
+                        borderRadius: "var(--radius-sm)",
+                        padding: "6px 10px",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        height: 34,
+                        whiteSpace: "nowrap",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4
+                      }}
+                    >
+                      ✨ หาโลโก้
+                    </button>
                     {logoPreview && (
                       <button type="button" onClick={clearLogo}
                         style={{ background: "none", border: "none", fontSize: "0.78rem", color: "var(--gray-400)", cursor: "pointer", textDecoration: "underline", flexShrink: 0 }}>

@@ -36,9 +36,55 @@ export default function AdminAIExtractor({ onExtracted }) {
     setFile(selectedFile);
   }
 
+  const [progress, setProgress] = useState(0);
+  const [progressStep, setProgressStep] = useState("");
+  const progressIntervalRef = useRef(null);
+
+  const PROGRESS_STEPS = [
+    { threshold: 25, text: "📂 กำลังอ่านและประมวลผลไฟล์เอกสาร..." },
+    { threshold: 50, text: "🔍 AI กำลังสแกนเนื้อหาประกาศและตรวจจับข้อความ..." },
+    { threshold: 75, text: "📋 กำลังแกะชื่อหน่วยงาน, ตำแหน่ง, เงินเดือน และวุฒิ..." },
+    { threshold: 92, text: "✨ กำลังตรวจสอบเงื่อนไข ภาค ก และจัดโครงสร้างข้อมูล..." },
+  ];
+
+  function startProgress() {
+    setProgress(5);
+    setProgressStep(PROGRESS_STEPS[0].text);
+    
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    
+    progressIntervalRef.current = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 92) return 92; // Wait for real response at 92%
+        const inc = Math.random() * 8 + 4;
+        const next = Math.min(92, prev + inc);
+        
+        const matched = PROGRESS_STEPS.slice().reverse().find(s => next >= s.threshold);
+        if (matched) setProgressStep(matched.text);
+        
+        return Math.round(next);
+      });
+    }, 400);
+  }
+
+  function stopProgress(success = true) {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    if (success) {
+      setProgress(100);
+      setProgressStep("✅ วิเคราะห์ข้อมูลสำเร็จแล้ว!");
+    } else {
+      setProgress(0);
+      setProgressStep("");
+    }
+  }
+
   async function handleExtract() {
     setError("");
     setIsLoading(true);
+    startProgress();
 
     try {
       const extracted = await extractJobDataWithAI({
@@ -47,12 +93,18 @@ export default function AdminAIExtractor({ onExtracted }) {
         apiKey: apiKey.trim(),
       });
 
+      stopProgress(true);
+      await new Promise(r => setTimeout(r, 600)); // Show 100% briefly
+
       onExtracted(extracted);
       setIsOpen(false);
       setFile(null);
       setRawText("");
+      setProgress(0);
+      setProgressStep("");
     } catch (err) {
       console.error(err);
+      stopProgress(false);
       setError(err.message || "เกิดข้อผิดพลาดในการวิเคราะห์เอกสาร");
     } finally {
       setIsLoading(false);
@@ -329,6 +381,61 @@ export default function AdminAIExtractor({ onExtracted }) {
             </div>
           )}
 
+          {/* Real-time Progress Bar & Status */}
+          {isLoading && (
+            <div style={{
+              marginTop: 14,
+              padding: "16px 18px",
+              background: "linear-gradient(135deg, rgba(234,88,12,0.06), rgba(59,130,246,0.06))",
+              border: "1px solid rgba(234,88,12,0.25)",
+              borderRadius: "var(--radius-lg)",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", fontWeight: 700, color: "var(--navy-900)" }}>
+                  <span style={{ display: "inline-block", animation: "spin 1.5s linear infinite" }}>⚙️</span>
+                  <span>{progressStep || "กำลังประมวลผล..."}</span>
+                </div>
+                <span style={{
+                  fontSize: "0.85rem",
+                  fontWeight: 800,
+                  color: "#ea580c",
+                  background: "white",
+                  padding: "2px 10px",
+                  borderRadius: "999px",
+                  boxShadow: "0 2px 6px rgba(234,88,12,0.15)",
+                }}>
+                  {progress}%
+                </span>
+              </div>
+
+              {/* Progress track */}
+              <div style={{
+                width: "100%",
+                height: "10px",
+                background: "rgba(0,0,0,0.06)",
+                borderRadius: "999px",
+                overflow: "hidden",
+                position: "relative",
+              }}>
+                <div style={{
+                  width: `${progress}%`,
+                  height: "100%",
+                  background: "linear-gradient(90deg, #ea580c 0%, #f97316 50%, #3b82f6 100%)",
+                  borderRadius: "999px",
+                  transition: "width 0.35s ease",
+                  boxShadow: "0 0 12px rgba(234,88,12,0.5)",
+                }} />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", color: "var(--navy-500)", marginTop: 8 }}>
+                <span>1. อ่านเอกสาร</span>
+                <span>2. สแกนเนื้อหา</span>
+                <span>3. แกะตำแหน่ง & วุฒิ</span>
+                <span>4. กรอกลงฟอร์ม</span>
+              </div>
+            </div>
+          )}
+
           {/* Error display */}
           {error && (
             <div style={{
@@ -352,19 +459,20 @@ export default function AdminAIExtractor({ onExtracted }) {
               disabled={isLoading || (activeTab === "file" && !file) || (activeTab === "text" && !rawText.trim())}
               className="btn btn-primary"
               style={{
-                background: "linear-gradient(135deg, var(--accent), var(--orange-600))",
+                background: isLoading ? "var(--gray-400)" : "linear-gradient(135deg, var(--accent), var(--orange-600))",
                 padding: "9px 20px",
                 fontSize: "0.88rem",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                boxShadow: "0 4px 12px rgba(234, 88, 12, 0.3)"
+                boxShadow: isLoading ? "none" : "0 4px 12px rgba(234, 88, 12, 0.3)",
+                cursor: isLoading ? "wait" : "pointer",
               }}
             >
               {isLoading ? (
                 <>
                   <span className="spinner" style={{ width: 14, height: 14, border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "spin 1s linear infinite" }} />
-                  🤖 AI กำลังอ่านเอกสารและแกะข้อมูล...
+                  ⏳ กำลังวิเคราะห์ ({progress}%)...
                 </>
               ) : (
                 <>
