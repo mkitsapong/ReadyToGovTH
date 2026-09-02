@@ -43,6 +43,28 @@ export function daysLeft(deadline) {
 }
 
 /**
+ * Calculate the count for a single position (handles unit sums if present)
+ */
+export function getPositionCount(pos) {
+  if (!pos) return 0;
+  if (pos.units && pos.units.length > 0) {
+    return pos.units.reduce((sum, u) => sum + (Number(u.count) || 1), 0);
+  }
+  return Number(pos.count) || 0;
+}
+
+/**
+ * Calculate total positions count across all positions in a job
+ */
+export function getTotalJobPositions(job) {
+  if (!job) return 0;
+  if (job.positionList && job.positionList.length > 0) {
+    return job.positionList.reduce((sum, p) => sum + getPositionCount(p), 0);
+  }
+  return Number(job.positions) || 0;
+}
+
+/**
  * Get education-match status for a job's position list against user's education.
  * Returns "all", "some", or "none".
  */

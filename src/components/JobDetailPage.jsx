@@ -5,15 +5,18 @@ import SEO from "./SEO.jsx";
 
 // Function to generate JSON-LD script for Google
 function generateJobPostingSchema(job) {
+  const categoryName = (job.categories && job.categories.length > 0) ? job.categories[0] : (job.category || "งานราชการ");
+  const provinceName = (job.provinces && job.provinces.length > 0) ? job.provinces[0] : (job.province || "Thailand");
+
   const schema = {
     "@context": "https://schema.org/",
     "@type": "JobPosting",
     "title": job.department,
-    "description": job.description || `ประกาศรับสมัครงานราชการ ${job.department} หมวดหมู่ ${job.category}`,
+    "description": job.description || `ประกาศรับสมัครงานราชการ ${job.department} หมวดหมู่ ${categoryName}`,
     "identifier": {
       "@type": "PropertyValue",
       "name": job.department,
-      "value": job.id
+      "value": String(job.id)
     },
     "datePosted": job.postedDate || new Date().toISOString(),
     "validThrough": job.deadline ? new Date(job.deadline).toISOString() : undefined,
@@ -28,7 +31,7 @@ function generateJobPostingSchema(job) {
       "address": {
         "@type": "PostalAddress",
         "addressCountry": "TH",
-        "addressRegion": job.province || "Thailand"
+        "addressRegion": provinceName
       }
     }
   };

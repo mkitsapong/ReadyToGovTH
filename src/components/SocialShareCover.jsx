@@ -1,12 +1,13 @@
 import { forwardRef, useState } from 'react';
 import iconImage from '../assets/icon.png';
+import { getTotalJobPositions, getPositionCount } from '../utils/helpers.js';
 
 const SocialShareCover = forwardRef(({ job }, ref) => {
   const [imgError, setImgError] = useState(false);
 
   if (!job) return null;
 
-  const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
+  const totalCount = getTotalJobPositions(job);
 
   const formatShortDate = (dateStr) => {
     if (!dateStr) return "";
@@ -111,7 +112,8 @@ const SocialShareCover = forwardRef(({ job }, ref) => {
               lineHeight: 1.3,
               marginBottom: "20px",
               textAlign: "center",
-              whiteSpace: "nowrap",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
               width: "100%",
               padding: "0 10px",
               boxSizing: "border-box",
@@ -146,6 +148,7 @@ const SocialShareCover = forwardRef(({ job }, ref) => {
                   });
                 }
                 const uniqueEdus = [...new Set(edus)];
+                const posCount = getPositionCount(pos);
 
                 return (
                   <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "16px", padding: "6px 24px" }}>
@@ -166,9 +169,9 @@ const SocialShareCover = forwardRef(({ job }, ref) => {
                           {pos.salary}
                         </span>
                       )}
-                      {pos.count && Number(pos.count) > 0 && (
+                      {posCount > 0 && (
                         <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "#334155", whiteSpace: "nowrap" }}>
-                          {pos.count} อัตรา
+                          {posCount} อัตรา
                         </span>
                       )}
                     </div>

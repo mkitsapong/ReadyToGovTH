@@ -33,7 +33,7 @@ export default function Header({
         {/* Main nav row */}
         <div className="header-inner">
           {/* Logo */}
-          <a className="logo" onClick={(e) => { e.preventDefault(); onNavigate("home"); }} href="/" style={{ cursor: "pointer" }}>
+          <a className="logo" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); onNavigate("home"); }} href="/" style={{ cursor: "pointer" }}>
             <img src="/favicon.svg" alt="Logo" style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0 }} />
             <div className="logo-text">
               <span>ReadyToGovTH</span>
@@ -69,7 +69,10 @@ export default function Header({
               <button
                 key={item.id}
                 className={`nav-link${activePage === item.id ? " active" : ""}`}
-                onClick={() => onNavigate(item.id)}
+                onClick={() => {
+                  onNavigate(item.id);
+                  setIsMobileMenuOpen(false);
+                }}
               >
                 {activePage === item.id && <span className="nav-dot" />}
                 {item.label}

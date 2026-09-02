@@ -3,7 +3,7 @@ import JobCard from "./JobCard.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
-import { getProvinces } from "../utils/helpers.js";
+import { getProvinces, getTotalJobPositions } from "../utils/helpers.js";
 
 const CATEGORY_FILTER = {
   home: null,
@@ -230,8 +230,8 @@ export default function JobList({
       result.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
     } else if (sortBy === "positions") {
       result.sort((a, b) => {
-        const countA = a.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
-        const countB = b.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
+        const countA = getTotalJobPositions(a);
+        const countB = getTotalJobPositions(b);
         return countB - countA;
       });
     }
@@ -241,7 +241,7 @@ export default function JobList({
 
   // Stats
   const totalPositions = filtered.reduce(
-    (sum, j) => sum + (j.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0),
+    (sum, j) => sum + getTotalJobPositions(j),
     0
   );
 

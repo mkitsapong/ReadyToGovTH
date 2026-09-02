@@ -4,7 +4,7 @@ import { ModalExamPrepSection } from "./ExamResources.jsx";
 import SocialShareCover from "./SocialShareCover.jsx";
 import html2canvas from "html2canvas";
 import { CATEGORY_MAP, EDU_COLORS } from "../utils/constants.js";
-import { formatDate, daysLeft, getDisplayProvinces } from "../utils/helpers.js";
+import { formatDate, daysLeft, getDisplayProvinces, getTotalJobPositions } from "../utils/helpers.js";
 
 export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit }) {
   const [isCopied, setIsCopied] = useState(false);
@@ -71,7 +71,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
   const mainMeta   = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   const days       = daysLeft(job.deadline);
-  const totalCount = job.positionList?.reduce((s, p) => s + (Number(p.count) || 0), 0) ?? 0;
+  const totalCount = getTotalJobPositions(job);
   const provinces  = getDisplayProvinces(job);
 
   const today = new Date().toISOString().split("T")[0];

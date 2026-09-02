@@ -75,14 +75,27 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   const [provinceOpen, setProvinceOpen] = useState(false);
   const provinceRef = useRef(null);
 
-  // Close province dropdown on outside click
+  // Close province dropdown on outside click or ESC
   useEffect(() => {
-    function handle(e) {
+    function handleMouseDown(e) {
       if (provinceRef.current && !provinceRef.current.contains(e.target)) setProvinceOpen(false);
     }
-    document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
-  }, []);
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        if (provinceOpen) {
+          setProvinceOpen(false);
+        } else {
+          onClose();
+        }
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [provinceOpen, onClose]);
 
   function toggleProvince(prov) {
     setForm((prev) => {
@@ -265,11 +278,18 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     await new Promise((r) => setTimeout(r, 600));
 
     const positionList = form.positionList.map((p) => {
-      let updatedP = { ...p, count: Number(p.count) || 1 };
-      if (updatedP.units && updatedP.units.length > 0) {
-        updatedP.units = updatedP.units.map(u => ({ ...u, count: Number(u.count) || 1 }));
-      }
-      return updatedP;
+      const units = p.units && p.units.length > 0
+        ? p.units.map((u) => ({ ...u, count: Number(u.count) || 1 }))
+        : [];
+      const count = units.length > 0
+        ? units.reduce((s, u) => s + (Number(u.count) || 1), 0)
+        : (Number(p.count) || 1);
+
+      return {
+        ...p,
+        count,
+        units
+      };
     });
 
     if (isEditMode) {
