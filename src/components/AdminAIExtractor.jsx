@@ -158,7 +158,7 @@ export default function AdminAIExtractor({ onExtracted }) {
                 padding: "2px 8px",
                 borderRadius: "999px"
               }}>
-                Gemini 1.5 Flash
+                Gemini Flash AI
               </span>
             </div>
             <div style={{ fontSize: "0.75rem", color: "var(--navy-500)", marginTop: 2 }}>

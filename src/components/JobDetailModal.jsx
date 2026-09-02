@@ -204,7 +204,16 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 overflow: "hidden", flexShrink: 0,
               }}>
                 {job.logoUrl
-                  ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }} />
+                  ? <img
+                      src={job.logoUrl}
+                      alt={job.department}
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.style.display = 'none';
+                      }}
+                      style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }}
+                    />
                   : <span style={{ fontSize: "clamp(1.5rem, 5vw, 2.2rem)" }}>{mainMeta.icon}</span>}
               </div>
 

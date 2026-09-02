@@ -59,7 +59,16 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
               marginRight: 16,
             }}>
               {job.logoUrl
-                ? <img src={job.logoUrl} alt={job.department} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }} />
+                ? <img
+                    src={job.logoUrl}
+                    alt={job.department}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }}
+                  />
                 : <span style={{ fontSize: "1.8rem" }}>{mainMeta.icon}</span>}
             </div>
 

@@ -329,7 +329,16 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                   onClick={() => document.getElementById("logo-upload-input").click()}
                 >
                   {logoPreview
-                    ? <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ? <img
+                        src={logoPreview}
+                        alt="logo"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+                      />
                     : <span style={{ fontSize: "1.5rem" }}>{CATEGORY_ICONS[form.categories?.[0]] || "🏛️"}</span>}
                 </div>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>

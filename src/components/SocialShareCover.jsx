@@ -86,6 +86,7 @@ const SocialShareCover = forwardRef(({ job }, ref) => {
                   alt="Logo"
                   style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectFit: "contain", filter: "drop-shadow(0 12px 20px rgba(0,0,0,0.08))" }}
                   crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
                   onError={() => setImgError(true)}
                 />
                 : <div style={{ width: 180, height: 180, borderRadius: "50%", background: "linear-gradient(135deg, #1e3a8a, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 25px rgba(0,0,0,0.15)" }}>
