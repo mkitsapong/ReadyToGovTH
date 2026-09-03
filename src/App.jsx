@@ -279,7 +279,7 @@ export default function App() {
             handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
             onSelectProvince={handleSelectProvince}
           />} />
-          <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isAdmin={isAdmin} onEditJob={handleEditJob} />} />
+          <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} />} />
           <Route path="/policy/:policyId" element={<PolicyPage />} />
         </Routes>
       </main>

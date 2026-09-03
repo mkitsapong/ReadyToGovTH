@@ -4,6 +4,7 @@ import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
 import { getProvinces, getTotalJobPositions } from "../utils/helpers.js";
+import { JobCardSkeleton } from "./LoadingSkeleton.jsx";
 
 const CATEGORY_FILTER = {
   home: null,
@@ -76,7 +77,7 @@ export default function JobList({
     sessionStorage.setItem("filterOCSC", filterOCSC);
   }, [filterOCSC]);
   
-  const { toggleBookmark, isBookmarked } = useBookmarks();
+  const { bookmarks = [], toggleBookmark, isBookmarked } = useBookmarks();
   const regionDropdownRef = useRef(null);
   const ITEMS_PER_PAGE = 9;
 
@@ -304,72 +305,66 @@ export default function JobList({
           </div>
 
           {/* Right Column: Quick Edu Filter Card */}
-          <div className="hero-edu-card" style={{
-            flex: "1 1 320px",
-            minWidth: "280px",
-            background: "rgba(11, 17, 32, 0.45)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "var(--radius-xl)",
-            padding: "20px 22px",
-            boxShadow: "0 16px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "white", display: "flex", alignItems: "center", gap: 6 }}>
-                🎓 กรองงานตามวุฒิการศึกษา
-              </span>
+          <div className="hero-edu-card">
+            <div className="hero-edu-card-top">
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span className="hero-edu-card-title">
+                  🎓 กรองงานตามวุฒิการศึกษา
+                </span>
+                {userEducation && (
+                  <span className="hero-edu-badge">
+                    ✓ {userEducation}
+                  </span>
+                )}
+              </div>
               {userEducation && (
                 <button
+                  type="button"
                   onClick={() => onChangeUserEducation(null)}
-                  style={{
-                    background: "rgba(255,255,255,0.1)",
-                    border: "none",
-                    color: "var(--orange-300)",
-                    fontSize: "0.72rem",
-                    fontWeight: 600,
-                    padding: "2px 8px",
-                    borderRadius: "999px",
-                    cursor: "pointer",
-                  }}
+                  className="hero-edu-clear-btn"
+                  title="ล้างการเลือกวุฒิ"
                 >
                   ✕ ล้างวุฒิ
                 </button>
               )}
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก"].map((edu) => {
-                const isActive = userEducation === edu;
-                return (
-                  <button
-                    key={edu}
-                    onClick={() => onChangeUserEducation(isActive ? null : edu)}
-                    className="hero-edu-pill"
-                    style={{
-                      padding: "6px 14px",
-                      borderRadius: "999px",
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: "var(--font-sans)",
-                      transition: "all 0.2s ease",
-                      background: isActive
-                        ? "linear-gradient(135deg, var(--accent), var(--orange-600))"
-                        : "rgba(255,255,255,0.08)",
-                      color: "white",
-                      border: isActive
-                        ? "1px solid var(--orange-400)"
-                        : "1px solid rgba(255,255,255,0.12)",
-                      boxShadow: isActive ? "0 4px 12px rgba(234,88,12,0.35)" : "none",
-                    }}
-                  >
-                    {isActive ? "✓ " : ""}{edu}
-                  </button>
-                );
-              })}
+            <div className="hero-edu-pills">
+              {/* แถวที่ 1: ม.3, ม.6, ปวช., ปวส. */}
+              <div className="hero-edu-row">
+                {["ม.3", "ม.6", "ปวช.", "ปวส."].map((edu) => {
+                  const isActive = userEducation === edu;
+                  return (
+                    <button
+                      key={edu}
+                      type="button"
+                      onClick={() => onChangeUserEducation(isActive ? null : edu)}
+                      className={`hero-edu-pill ${isActive ? "active" : ""}`}
+                    >
+                      {isActive ? "✓ " : ""}{edu}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* แถวที่ 2: ปริญญาตรี, ปริญญาโท, ปริญญาเอก */}
+              <div className="hero-edu-row">
+                {["ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก"].map((edu) => {
+                  const isActive = userEducation === edu;
+                  return (
+                    <button
+                      key={edu}
+                      type="button"
+                      onClick={() => onChangeUserEducation(isActive ? null : edu)}
+                      className={`hero-edu-pill ${isActive ? "active" : ""}`}
+                    >
+                      {isActive ? "✓ " : ""}{edu}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <p style={{ fontSize: "0.72rem", color: "var(--navy-200)", marginTop: 10, margin: "10px 0 0 0" }}>
+            <p className="hero-edu-subtitle">
               💡 เลือกระดับวุฒิเพื่อกรองเฉพาะตำแหน่งที่วุฒิตรงกัน
             </p>
           </div>
@@ -380,238 +375,155 @@ export default function JobList({
       <div className="filter-bar">
         <div className="container">
           <div className="filter-bar-inner">
-            {/* Region Dropdown */}
-            <div className="custom-region-dropdown" ref={regionDropdownRef} style={{ position: "relative" }}>
-              <button
-                className="filter-sort"
-                onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
-                style={{
-                  border: "1.5px solid var(--gray-200)",
-                  borderRadius: "var(--radius-md)",
-                  padding: "9px 14px",
-                  background: "var(--gray-50)",
-                  fontSize: "0.875rem",
-                  cursor: "pointer",
-                  minWidth: "160px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  color: "var(--navy-900)",
-                  fontWeight: 500,
-                  height: "100%"
-                }}
-              >
-                <span>{selectedProvince ? `📍 ${selectedProvince}` : "📍 ทุกภูมิภาค"}</span>
-                <span style={{ fontSize: "0.7rem", opacity: 0.6 }}>▼</span>
-              </button>
-
-              {isRegionDropdownOpen && (
-                <div style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  marginTop: "8px",
-                  background: "var(--white)",
-                  border: "1px solid var(--gray-200)",
-                  borderRadius: "var(--radius-md)",
-                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                  width: "280px",
-                  maxHeight: "350px",
-                  overflowY: "auto",
-                  zIndex: 100,
-                  padding: "0" // Changed to 0 so sticky works properly
-                }}>
-                  <div style={{ padding: "8px 12px", position: "sticky", top: 0, background: "var(--white)", borderBottom: "1px solid var(--gray-100)", zIndex: 2 }}>
-                    <input
-                      type="text"
-                      placeholder="ค้นหาจังหวัด..."
-                      value={provinceSearchQuery}
-                      onChange={(e) => setProvinceSearchQuery(e.target.value)}
-                      style={{ width: "100%", padding: "8px 12px", border: "1px solid var(--gray-200)", borderRadius: "var(--radius-sm)", fontSize: "0.85rem", outline: "none" }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                  <div
-                    onClick={() => { onSelectProvince(null); closeRegionDropdown(); }}
-                    style={{
-                      padding: "10px 16px",
-                      cursor: "pointer",
-                      fontSize: "0.9rem",
-                      fontWeight: !selectedProvince ? 600 : 400,
-                      color: !selectedProvince ? "var(--accent)" : "var(--navy-900)",
-                      background: !selectedProvince ? "var(--gray-50)" : "transparent",
-                      borderBottom: "1px solid var(--gray-100)"
-                    }}
+            {/* Main Controls Row (Search + Region + Sort) */}
+            <div className="filter-main-row">
+              {/* Search Box */}
+              <div className="filter-search-wrap">
+                <span className="filter-search-icon">🔍</span>
+                <input
+                  id="job-search-input"
+                  type="text"
+                  placeholder="ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="filter-search-input"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="filter-search-clear"
+                    title="ล้างคำค้นหา"
                   >
-                    📍 ทุกภูมิภาค
-                  </div>
-                  
-                  {filteredRegions.length === 0 && (
-                    <div style={{ padding: "12px 16px", fontSize: "0.85rem", color: "var(--gray-500)", textAlign: "center" }}>
-                      ไม่พบจังหวัดที่ค้นหา
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Selects Row: Region + Sort */}
+              <div className="filter-selects-row">
+                {/* Region Dropdown */}
+                <div className="custom-region-dropdown" ref={regionDropdownRef}>
+                  <button
+                    type="button"
+                    className={`filter-select-btn ${selectedProvince ? "active" : ""}`}
+                    onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
+                    title={selectedProvince ? `จังหวัด: ${selectedProvince}` : "เลือกจังหวัด/ภูมิภาค"}
+                  >
+                    <span className="filter-select-text">
+                      {selectedProvince ? `📍 ${selectedProvince}` : "📍 ทุกภูมิภาค"}
+                    </span>
+                    <span className="filter-select-arrow">▼</span>
+                  </button>
+
+                  {isRegionDropdownOpen && (
+                    <div className="region-dropdown-panel">
+                      <div className="region-search-box">
+                        <input
+                          type="text"
+                          placeholder="ค้นหาจังหวัด..."
+                          value={provinceSearchQuery}
+                          onChange={(e) => setProvinceSearchQuery(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      <div
+                        onClick={() => { onSelectProvince(null); closeRegionDropdown(); }}
+                        className={`region-option-all ${!selectedProvince ? "active" : ""}`}
+                      >
+                        📍 ทุกภูมิภาค
+                      </div>
+                      
+                      {filteredRegions.length === 0 && (
+                        <div className="region-empty-notice">
+                          ไม่พบจังหวัดที่ค้นหา
+                        </div>
+                      )}
+
+                      {filteredRegions.map(r => (
+                        <div key={r.id}>
+                          <div 
+                            onClick={() => { onSelectProvince(r.name); closeRegionDropdown(); }}
+                            className={`region-group-header ${selectedProvince === r.name ? "active" : ""}`}
+                          >
+                            <span>📍 {r.name} (ทั้งหมด)</span>
+                            {selectedProvince === r.name && <span style={{ fontSize: "0.8rem" }}>✓</span>}
+                          </div>
+                          {r.provinces.map(p => {
+                            const isSelected = selectedProvince === p;
+                            return (
+                              <div
+                                key={p}
+                                onClick={() => { onSelectProvince(p); closeRegionDropdown(); }}
+                                className={`region-option-item ${isSelected ? "active" : ""}`}
+                              >
+                                <span>{p}</span>
+                                {isSelected && <span style={{ fontSize: "0.75rem" }}>✓</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
                     </div>
                   )}
-
-                  {filteredRegions.map(r => (
-                    <div key={r.id}>
-                      <div 
-                        onClick={() => { onSelectProvince(r.name); closeRegionDropdown(); }}
-                        style={{
-                          padding: "10px 16px",
-                          fontSize: "0.85rem",
-                          fontWeight: selectedProvince === r.name ? 700 : 600,
-                          color: selectedProvince === r.name ? "var(--accent)" : "var(--navy-800)",
-                          background: selectedProvince === r.name ? "rgba(234, 88, 12, 0.08)" : "var(--gray-50)",
-                          cursor: "pointer",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginTop: "4px",
-                          borderTop: "1px solid var(--gray-100)",
-                          borderBottom: "1px solid var(--gray-100)"
-                        }}
-                      >
-                        <span>📍 {r.name} (ทั้งหมด)</span>
-                        {selectedProvince === r.name && <span style={{ fontSize: "0.8rem" }}>✓</span>}
-                      </div>
-                      {r.provinces.map(p => {
-                        const isSelected = selectedProvince === p;
-                        return (
-                          <div
-                            key={p}
-                            onClick={() => { onSelectProvince(p); closeRegionDropdown(); }}
-                            style={{
-                              padding: "8px 16px 8px 24px",
-                              cursor: "pointer",
-                              fontSize: "0.875rem",
-                              color: isSelected ? "var(--accent)" : "var(--navy-700)",
-                              fontWeight: isSelected ? 600 : 400,
-                              background: isSelected ? "rgba(234, 88, 12, 0.05)" : "transparent",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between"
-                            }}
-                          >
-                            <span>{p}</span>
-                            {isSelected && <span style={{ fontSize: "0.75rem" }}>✓</span>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
                 </div>
-              )}
+
+                {/* Sort Dropdown */}
+                <div className="filter-sort-wrap">
+                  <select
+                    id="job-sort-select"
+                    className="filter-sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="newest">⚡ ล่าสุดก่อน</option>
+                    <option value="deadline">⏳ ใกล้ปิดรับก่อน</option>
+                    <option value="positions">👥 อัตราว่างมากก่อน</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
-            {/* Search */}
-            <div className="filter-search" style={{ position: "relative", flex: 1 }}>
-              <span className="filter-search-icon">🔍</span>
-              <input
-                id="job-search-input"
-                type="text"
-                placeholder="ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: "100%", paddingRight: searchQuery ? "32px" : "16px" }}
-              />
-              {searchQuery && (
+            {/* Quick Filter Chips & Count Row */}
+            <div className="filter-chips-row">
+              <div className="filter-chips-scroll">
+                {/* Bookmarks Filter */}
                 <button
-                  onClick={() => setSearchQuery("")}
-                  style={{
-                    position: "absolute",
-                    right: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "transparent",
-                    border: "none",
-                    color: "var(--gray-400)",
-                    cursor: "pointer",
-                    fontSize: "1rem",
-                    padding: "4px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "50%",
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = "var(--gray-600)"}
-                  onMouseLeave={(e) => e.currentTarget.style.color = "var(--gray-400)"}
-                  title="ล้างคำค้นหา"
+                  type="button"
+                  onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
+                  className={`filter-chip-btn ${showBookmarksOnly ? 'active-bookmark' : ''}`}
                 >
-                  ✕
+                  <span className="chip-icon">{showBookmarksOnly ? "❤️" : "🤍"}</span>
+                  <span>ที่บันทึกไว้</span>
+                  {bookmarks.length > 0 && (
+                    <span className="chip-counter">{bookmarks.length}</span>
+                  )}
                 </button>
-              )}
-            </div>
+                
+                {/* OCSC Quick Filters */}
+                <button
+                  type="button"
+                  onClick={() => { setFilterNoOCSC(!filterNoOCSC); setFilterOCSC(false); }}
+                  className={`filter-chip-btn ${filterNoOCSC ? 'active-orange' : ''}`}
+                >
+                  <span className="chip-icon">✨</span>
+                  <span>ไม่ต้องผ่าน ภาค ก</span>
+                </button>
 
-            {/* Sort */}
-            <select
-              id="job-sort-select"
-              className="filter-sort"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              style={{ border: "1.5px solid var(--gray-200)", borderRadius: "var(--radius-md)", padding: "9px 14px", background: "var(--gray-50)", fontSize: "0.875rem", cursor: "pointer" }}
-            >
-              <option value="newest">ล่าสุดก่อน</option>
-              <option value="deadline">ใกล้ปิดรับก่อน</option>
-              <option value="positions">อัตราว่างมากก่อน</option>
-            </select>
+                <button
+                  type="button"
+                  onClick={() => { setFilterOCSC(!filterOCSC); setFilterNoOCSC(false); }}
+                  className={`filter-chip-btn ${filterOCSC ? 'active-blue' : ''}`}
+                >
+                  <span className="chip-icon">📝</span>
+                  <span>ต้องผ่าน ภาค ก</span>
+                </button>
+              </div>
 
-            <span className="filter-count">
-              พบ <strong>{filtered.length}</strong> ประกาศ
-            </span>
-
-            {/* Quick Filter Buttons (bookmark, OCSC) — always on new row via flex-wrap */}
-            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", width: "100%", order: 10 }}>
-              <button
-                onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
-                className={`btn-favorite-filter filter-quick-btn ${showBookmarksOnly ? 'active' : ''}`}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "0 16px", height: "40px",
-                  borderRadius: "var(--radius-full)",
-                  background: showBookmarksOnly ? "#fee2e2" : "white",
-                  border: `1px solid ${showBookmarksOnly ? "#fca5a5" : "var(--gray-200)"}`,
-                  color: showBookmarksOnly ? "#ef4444" : "var(--gray-500)",
-                  fontWeight: 600, fontSize: "0.85rem",
-                  cursor: "pointer", transition: "all 0.2s",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {showBookmarksOnly ? "❤️ ที่บันทึกไว้" : "🤍 ที่บันทึกไว้"}
-              </button>
-              
-              {/* OCSC Quick Filters */}
-              <button
-                onClick={() => { setFilterNoOCSC(!filterNoOCSC); setFilterOCSC(false); }}
-                className="filter-quick-btn"
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "0 16px", height: "40px",
-                  borderRadius: "var(--radius-full)",
-                  background: filterNoOCSC ? "rgba(234,88,12,0.15)" : "white",
-                  border: `1px solid ${filterNoOCSC ? "rgba(234,88,12,0.3)" : "var(--gray-200)"}`,
-                  color: filterNoOCSC ? "#ea580c" : "var(--gray-500)",
-                  fontWeight: 600, fontSize: "0.85rem",
-                  cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap"
-                }}
-              >
-                ✨ ไม่ต้องผ่าน ภาค ก
-              </button>
-              <button
-                onClick={() => { setFilterOCSC(!filterOCSC); setFilterNoOCSC(false); }}
-                className="filter-quick-btn"
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "0 16px", height: "40px",
-                  borderRadius: "var(--radius-full)",
-                  background: filterOCSC ? "rgba(59,130,246,0.15)" : "white",
-                  border: `1px solid ${filterOCSC ? "rgba(59,130,246,0.3)" : "var(--gray-200)"}`,
-                  color: filterOCSC ? "#2563eb" : "var(--gray-500)",
-                  fontWeight: 600, fontSize: "0.85rem",
-                  cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap"
-                }}
-              >
-                📝 ต้องผ่าน ภาค ก
-              </button>
+              {/* Result Count Badge */}
+              <div className="filter-count-badge">
+                พบ <strong>{filtered.length}</strong> ประกาศ
+              </div>
             </div>
           </div>
         </div>
@@ -623,23 +535,9 @@ export default function JobList({
 
           <div className="jobs-grid">
             {isLoading ? (
-              <>
-                <style>{`
-                  @keyframes skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-                  .skeleton-pulse { animation: skeleton-pulse 1.5s ease-in-out infinite; }
-                `}</style>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="job-card" style={{ pointerEvents: "none", opacity: 0.8 }}>
-                    <div style={{ height: 28, width: "60%", background: "var(--gray-200)", borderRadius: "var(--radius-sm)", marginBottom: 16 }} className="skeleton-pulse"></div>
-                    <div style={{ height: 16, width: "100%", background: "var(--gray-100)", borderRadius: "var(--radius-sm)", marginBottom: 8 }} className="skeleton-pulse"></div>
-                    <div style={{ height: 16, width: "80%", background: "var(--gray-100)", borderRadius: "var(--radius-sm)", marginBottom: 24 }} className="skeleton-pulse"></div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <div style={{ height: 32, width: 80, background: "var(--gray-100)", borderRadius: 999 }} className="skeleton-pulse"></div>
-                      <div style={{ height: 32, width: 60, background: "var(--gray-100)", borderRadius: 999 }} className="skeleton-pulse"></div>
-                    </div>
-                  </div>
-                ))}
-              </>
+              Array.from({ length: 6 }).map((_, i) => (
+                <JobCardSkeleton key={i} />
+              ))
             ) : isError ? (
               <div className="empty-state">
                 <div className="empty-state-icon" style={{ color: "#ef4444" }}>⚠️</div>

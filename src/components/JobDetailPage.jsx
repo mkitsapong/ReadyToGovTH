@@ -3,6 +3,8 @@ import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import JobDetailModal from "./JobDetailModal.jsx";
 import SEO from "./SEO.jsx";
 
+import { JobDetailSkeleton } from "./LoadingSkeleton.jsx";
+
 // Function to generate JSON-LD script for Google
 function generateJobPostingSchema(job) {
   const categoryName = (job.categories && job.categories.length > 0) ? job.categories[0] : (job.category || "งานราชการ");
@@ -38,13 +40,13 @@ function generateJobPostingSchema(job) {
   return JSON.stringify(schema);
 }
 
-export default function JobDetailPage({ jobs, books, isAdmin, onEditJob }) {
+export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin, onEditJob }) {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleBack = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     // ถ้ามีประวัติการเข้าชม (ไม่ได้เข้าลิงก์นี้โดยตรง) ให้กด Back เพื่อให้จำตำแหน่ง Scroll
     if (location.key !== "default") {
       navigate(-1);
@@ -57,19 +59,68 @@ export default function JobDetailPage({ jobs, books, isAdmin, onEditJob }) {
     window.scrollTo(0, 0);
   }, [jobId]);
   
-  if (!jobs || jobs.length === 0) {
-    return <div className="container" style={{ paddingTop: "40px", paddingBottom: "40px", textAlign: "center" }}>กำลังโหลดข้อมูล...</div>;
+  // Loading state (either query is loading or jobs array is still empty during load)
+  if (isLoading || !jobs || (Array.isArray(jobs) && jobs.length === 0 && isLoading !== false)) {
+    return <JobDetailSkeleton onBack={handleBack} />;
+  }
+
+  // If loading finished but database returned 0 jobs
+  if (Array.isArray(jobs) && jobs.length === 0) {
+    return (
+      <div className="container" style={{ paddingTop: "60px", paddingBottom: "60px", textAlign: "center" }}>
+        <div
+          style={{
+            maxWidth: 480,
+            margin: "0 auto",
+            padding: "48px 24px",
+            background: "var(--white)",
+            borderRadius: "var(--radius-2xl)",
+            border: "1px solid var(--gray-200)",
+            boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.06)",
+          }}
+        >
+          <div style={{ fontSize: "3.2rem", marginBottom: 16 }}>📭</div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--navy-800)", marginBottom: 8 }}>
+            ยังไม่มีข้อมูลประกาศงานในขณะนี้
+          </h2>
+          <p style={{ color: "var(--navy-400)", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 24 }}>
+            ระบบไม่พบประกาศงานในฐานข้อมูล โปรดลองใหม่อีกครั้งในภายหลัง
+          </p>
+          <Link to="/" className="btn btn-primary" style={{ padding: "10px 24px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            ← กลับหน้าหลัก
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const job = jobs.find((j) => String(j.id) === String(jobId));
 
   if (!job) {
     return (
-      <div className="container" style={{ paddingTop: "40px", paddingBottom: "40px", textAlign: "center" }}>
-        <h2>ไม่พบประกาศงานนี้</h2>
-        <Link to="/" className="btn-primary" style={{ padding: "10px 24px", display: "inline-block", marginTop: "20px" }}>
-          กลับหน้าหลัก
-        </Link>
+      <div className="container" style={{ paddingTop: "60px", paddingBottom: "60px", textAlign: "center" }}>
+        <div
+          style={{
+            maxWidth: 480,
+            margin: "0 auto",
+            padding: "48px 24px",
+            background: "var(--white)",
+            borderRadius: "var(--radius-2xl)",
+            border: "1px solid var(--gray-200)",
+            boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.06)",
+          }}
+        >
+          <div style={{ fontSize: "3.2rem", marginBottom: 16 }}>🔍</div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--navy-800)", marginBottom: 8 }}>
+            ไม่พบประกาศงานนี้
+          </h2>
+          <p style={{ color: "var(--navy-400)", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 24 }}>
+            ประกาศรับสมัครงานนี้อาจถูกปิดรับสมัคร ลบออก หรือไม่พบในระบบ
+          </p>
+          <Link to="/" className="btn btn-primary" style={{ padding: "10px 24px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            ← กลับหน้าหลัก
+          </Link>
+        </div>
       </div>
     );
   }

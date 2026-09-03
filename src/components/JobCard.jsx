@@ -15,305 +15,226 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
 
   const displayStartDate = job.startDate || job.postedDate;
   const dateText = displayStartDate 
-    ? `เปิดรับ ${formatDate(displayStartDate)} - ${formatDate(job.deadline)}`
+    ? `เปิดรับ ${formatDate(displayStartDate)} – ${formatDate(job.deadline)}`
     : `ปิดรับ ${formatDate(job.deadline)}`;
   const dateTextExpired = displayStartDate 
-    ? `${formatDate(displayStartDate)} - ${formatDate(job.deadline)}`
+    ? `${formatDate(displayStartDate)} – ${formatDate(job.deadline)}`
     : `ปิดรับ ${formatDate(job.deadline)}`;
 
+  const uniqueEdus = [...new Set(job.positionList?.flatMap((p) => Array.isArray(p.education) ? p.education : (p.education ? [p.education] : [])))];
+
+  // Derive clean unified salary text
+  const rawSalaries = job.positionList?.map(p => p.salary?.trim()).filter(Boolean) || [];
+  let displaySalary = null;
+  if (rawSalaries.length > 0) {
+    const nums = rawSalaries
+      .flatMap(s => s.match(/[\d,]+/g) || [])
+      .map(n => parseInt(n.replace(/,/g, ''), 10))
+      .filter(n => n >= 3000);
+
+    if (nums.length > 0) {
+      const minSalary = Math.min(...nums);
+      const maxSalary = Math.max(...nums);
+      displaySalary = minSalary === maxSalary 
+        ? `${minSalary.toLocaleString()} บาท`
+        : `${minSalary.toLocaleString()} – ${maxSalary.toLocaleString()} บาท`;
+    } else {
+      displaySalary = rawSalaries[0];
+    }
+  } else if (job.salary) {
+    displaySalary = job.salary;
+  }
+
   return (
-    <>
-      <div className="job-card" style={style}>
-        {/* ── Card Header ── */}
-        <div className="job-card-header" style={{ padding: 0 }}>
+    <div className="job-card" style={style}>
+      {/* ── Card Header ── */}
+      <div className="job-card-header-modern">
+        {/* Subtle decorative glow */}
+        <div className="job-header-glow" />
 
-          {/* Top banner: logo + dept info */}
-          <div style={{
-            display: "flex", alignItems: "stretch", gap: 0,
-            background: "var(--navy-900)",
-            padding: "18px 20px 14px",
-            position: "relative", overflow: "hidden",
-            minHeight: 148, // Changed from fixed height to minHeight to prevent overlap
-          }}>
-            {/* BG glow accent */}
-            <div style={{
-              position: "absolute", top: -30, right: -30,
-              width: 120, height: 120,
-              background: "radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)",
-              pointerEvents: "none",
-            }} />
-
-            {/* Logo — prominent */}
-            <div style={{
-              width: 96, height: 96, flexShrink: 0,
-              borderRadius: "var(--radius-xl)",
-              background: job.logoUrl
-                ? "white"
-                : "linear-gradient(135deg, #1e40af, #3b82f6)",
-              border: job.logoUrl
-                ? "3px solid rgba(255,255,255,0.9)"
-                : "3px solid rgba(255,255,255,0.25)",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              overflow: "hidden",
-              marginRight: 16,
-            }}>
-              {job.logoUrl
-                ? <img
-                    src={job.logoUrl}
-                    alt={job.department}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.style.display = 'none';
-                    }}
-                    style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }}
-                  />
-                : <span style={{ fontSize: "1.8rem" }}>{mainMeta.icon}</span>}
-            </div>
-
-            {/* Right: dept name + badges */}
-            <div style={{ 
-              flex: 1, minWidth: 0, paddingTop: 2,
-              display: "flex", flexDirection: "column", gap: 10 
-            }}>
-              <div 
-                title={job.department}
-                style={{
-                fontSize: "0.9rem", fontWeight: 700,
-                color: "white", lineHeight: 1.35,
-                minHeight: "2.4em", // Force minimum 2 lines height
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                paddingRight: isAdmin ? 110 : 50, // prevent overlap with absolute Edit & Bookmark buttons
-                flexShrink: 0,
-              }}>
-                {job.department}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", flexShrink: 0 }}>
-                {categories.map((cat, idx) => {
-                  const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
-                  return <span key={idx} className={`badge ${catMeta.badge}`}>{cat}</span>;
-                })}
-                {job.isNoOCSC && (
-                  <span style={{
-                    padding: "4px 10px", background: "rgba(234,88,12,0.15)",
-                    borderRadius: "999px",
-                    fontSize: "0.72rem", fontWeight: 700, color: "#fed7aa",
-                    whiteSpace: "nowrap",
-                    display: "flex", alignItems: "center", gap: 4
-                  }}>
-                    ✨ ไม่ต้องผ่าน ภาค ก
-                  </span>
-                )}
-                {job.isOCSC && (
-                  <span style={{
-                    padding: "4px 10px", background: "rgba(59,130,212,0.15)",
-                    borderRadius: "999px",
-                    fontSize: "0.72rem", fontWeight: 700, color: "#bfdbfe",
-                    whiteSpace: "nowrap",
-                    display: "flex", alignItems: "center", gap: 4
-                  }}>
-                    📝 ต้องผ่าน ภาค ก
-                  </span>
-                )}
-                {provinces.length === 1 ? (
-                  <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 3 }}>
-                    📍 {provinces[0]}
-                  </span>
-                ) : provinces.length > 1 ? (
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 4,
-                    padding: "2px 8px",
-                    background: "rgba(255,255,255,0.12)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    borderRadius: "999px",
-                    fontSize: "0.68rem", fontWeight: 700,
-                    color: "rgba(255,255,255,0.85)",
-                    whiteSpace: "nowrap",
-                  }}>
-                    📍 {provinces[0]}
-                    <span style={{
-                      background: "rgba(255,255,255,0.25)", color: "white",
-                      borderRadius: "999px", padding: "0px 5px",
-                      fontSize: "0.6rem", fontWeight: 700,
-                    }}>+{provinces.length - 1}</span>
-                  </span>
-                ) : null}
-              </div>
-            </div>
-
-            <div style={{ position: "absolute", top: 16, right: 16, display: "flex", gap: 8, zIndex: 10 }}>
-              {/* Bookmark button */}
-              <button onClick={onToggleBookmark} title={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 32, height: 32,
-                  background: isBookmarked ? "rgba(255, 255, 255, 0.2)" : "rgba(255,255,255,0.1)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: "50%",
-                  color: isBookmarked ? "#f87171" : "rgba(255,255,255,0.8)",
-                  fontSize: "1.1rem", cursor: "pointer", transition: "all 0.2s",
+        <div className="job-header-top-row">
+          {/* Logo */}
+          <div className="job-logo-box">
+            {job.logoUrl ? (
+              <img
+                src={job.logoUrl}
+                alt={job.department}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.style.display = 'none';
                 }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.1)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}>
-                {isBookmarked ? "❤️" : "🤍"}
-              </button>
+                className="job-logo-img"
+              />
+            ) : (
+              <span className="job-logo-fallback">{mainMeta.icon}</span>
+            )}
+          </div>
 
-              {/* Edit button */}
-              {isAdmin && (
-                <button id={`btn-edit-${job.id}`} onClick={() => onEdit(job)} title="แก้ไขประกาศ"
-                  style={{
-                    display: "flex", alignItems: "center", gap: 4,
-                    padding: "4px 10px", height: 32,
-                    background: "rgba(255,255,255,0.1)",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: "var(--radius-sm)",
-                  color: "rgba(255,255,255,0.85)",
-                  cursor: "pointer", fontFamily: "var(--font-sans)",
-                  transition: "all 0.15s", whiteSpace: "nowrap",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+          {/* Department Name & Badges */}
+          <div className="job-dept-content">
+            <h3 className="job-dept-name-title" title={job.department}>
+              {job.department}
+            </h3>
+
+            {/* Badges Row */}
+            <div className="job-header-badges">
+              {categories.map((cat, idx) => {
+                const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
+                return (
+                  <span key={idx} className={`job-badge-pill ${catMeta.badge}`}>
+                    {cat}
+                  </span>
+                );
+              })}
+
+              {provinces.length === 1 ? (
+                <span className="job-badge-pill badge-location">
+                  📍 {provinces[0]}
+                </span>
+              ) : provinces.length > 1 ? (
+                <span className="job-badge-pill badge-location" title={provinces.join(", ")}>
+                  📍 {provinces[0]}
+                  <span className="badge-more-count">+{provinces.length - 1}</span>
+                </span>
+              ) : null}
+
+              {job.isNoOCSC && (
+                <span className="job-badge-pill badge-no-ocsc">
+                  ✨ ไม่ต้องผ่าน ภาค ก
+                </span>
+              )}
+              {job.isOCSC && (
+                <span className="job-badge-pill badge-ocsc">
+                  📝 ต้องผ่าน ภาค ก
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Header Action Buttons (Bookmark & Admin Edit) */}
+          <div className="job-header-actions">
+            <button
+              type="button"
+              onClick={onToggleBookmark}
+              title={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+              className={`job-btn-bookmark ${isBookmarked ? 'bookmarked' : ''}`}
+            >
+              {isBookmarked ? "❤️" : "🤍"}
+            </button>
+
+            {isAdmin && (
+              <button
+                type="button"
+                id={`btn-edit-${job.id}`}
+                onClick={() => onEdit(job)}
+                title="แก้ไขประกาศ"
+                className="job-btn-edit"
+              >
                 ✏️ แก้ไข
               </button>
             )}
-            </div>
           </div>
-
-          {/* Deadline strip */}
-          <div className="job-deadline" style={{
-            margin: "0", borderRadius: 0,
-            background: urgent ? "#fff7ed" : expired ? "#fef2f2" : "var(--gray-50)",
-            border: "none",
-            borderBottom: `1px solid ${urgent ? "#fed7aa" : expired ? "#fecaca" : "var(--gray-100)"}`,
-            padding: "7px 20px",
-          }}>
-            <span className="icon">{urgent ? "🔥" : expired ? "⚠️" : "📅"}</span>
-            <span>
-              {expired 
-                ? <span style={{ color: "#9ca3af" }}>{dateTextExpired} (หมดเขตแล้ว)</span>
-                : days === 0 
-                  ? <span>{displayStartDate ? `เปิดรับ ${formatDate(displayStartDate)} - วันนี้!` : `ปิดรับวันนี้!`} <span style={{ color: "#dc2626", fontWeight: 700, marginLeft: 4 }}>(รีบเลย!)</span></span>
-                  : <span>
-                      {dateText} 
-                      <span style={{ 
-                        color: urgent ? "var(--orange-600)" : "var(--gray-500)", 
-                        fontWeight: urgent ? 700 : 500, 
-                        marginLeft: 6 
-                      }}>
-                        (เหลือ {days} วัน)
-                      </span>
-                    </span>
-              }
-            </span>
-          </div>
-        </div>
-
-        {/* ── Position List ── */}
-        <div style={{ padding: "12px 20px 0", flex: 1 }}>
-          {/* Section header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--gray-500)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              ตำแหน่งที่เปิดรับ
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {/* Education match badge */}
-              {eduStatus === "all" && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 8px", background: "#dcfce7", border: "1px solid #86efac", borderRadius: "999px", fontSize: "0.68rem", fontWeight: 700, color: "#15803d" }}>
-                  ✓ วุฒิตรงทุกตำแหน่ง
-                </span>
-              )}
-              {eduStatus === "some" && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 8px", background: "#fef9c3", border: "1px solid #fde047", borderRadius: "999px", fontSize: "0.68rem", fontWeight: 700, color: "#854d0e" }}>
-                  ◑ วุฒิตรงบางตำแหน่ง
-                </span>
-              )}
-              {eduStatus === "none" && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 8px", background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "999px", fontSize: "0.68rem", fontWeight: 700, color: "#b91c1c" }}>
-                  ✗ วุฒิไม่ตรง
-                </span>
-              )}
-              <span style={{ fontSize: "0.72rem", color: "var(--gray-400)", fontWeight: 600 }}>
-                รวม {totalCount} อัตรา
-              </span>
-            </div>
-          </div>
-
-          {/* Rows */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 1, borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--gray-200)" }}>
-            {job.positionList?.slice(0, 3).map((pos, i) => {
-              // per-position edu match
-              let rowMatch = null;
-              if (userEducation) {
-                const edus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
-                let pMatchesEdu = edus.includes("ไม่จำกัดวุฒิ") || edus.includes(userEducation);
-                
-                if (pos.units && pos.units.length > 0) {
-                  pMatchesEdu = pos.units.some(u => {
-                    const uEdus = Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []);
-                    return uEdus.includes("ไม่จำกัดวุฒิ") || uEdus.includes(userEducation);
-                  });
-                }
-                rowMatch = pMatchesEdu;
-              }
-
-              return (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center",
-                  padding: "8px 12px",
-                  background: i % 2 === 0 ? "var(--white)" : "var(--gray-50)",
-                  gap: 8,
-                  minHeight: 38,
-                }}>
-                  {/* Match dot */}
-                  {rowMatch !== null && (
-                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: rowMatch ? "#22c55e" : "#ef4444", flexShrink: 0 }} title={rowMatch ? "วุฒิตรง" : "วุฒิไม่ตรง"} />
-                  )}
-                  {/* Title */}
-                  <span style={{ flex: 1, fontSize: "0.82rem", fontWeight: 600, color: "var(--navy-800)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {pos.title}
-                  </span>
-                  {/* Salary */}
-                  <span style={{ fontSize: "0.75rem", color: "var(--navy-600)", fontWeight: 600, whiteSpace: "nowrap" }}>
-                    {pos.salary}
-                  </span>
-                  {/* Count */}
-                  <span style={{ fontSize: "0.72rem", color: "var(--gray-500)", whiteSpace: "nowrap", minWidth: 36, textAlign: "right" }}>
-                    {pos.count} อัตรา
-                  </span>
-                </div>
-              );
-            })}
-            
-            {/* If more than 3 positions */}
-            {job.positionList?.length > 3 && (
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                padding: "8px 12px", background: "var(--gray-50)",
-                fontSize: "0.75rem", fontWeight: 600, color: "var(--navy-500)",
-                borderTop: "1px dashed var(--gray-200)"
-              }}>
-                และอีก {job.positionList.length - 3} ตำแหน่ง... (กดดูรายละเอียด)
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Card Footer ── */}
-        <div className="job-card-footer" style={{ marginTop: 12 }}>
-          <div className="job-positions">
-            🎓 {[...new Set(job.positionList?.flatMap((p) => Array.isArray(p.education) ? p.education : (p.education ? [p.education] : [])))].join(", ")}
-          </div>
-          <Link id={`btn-detail-${job.id}`} className="btn-apply" to={`/job/${job.id}`} style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
-            รายละเอียด ▸
-          </Link>
         </div>
       </div>
 
+      {/* ── Deadline & Countdown Ribbon ── */}
+      <div className={`job-countdown-strip ${urgent ? 'status-urgent' : expired ? 'status-expired' : 'status-normal'}`}>
+        <div className="job-countdown-date">
+          <span className="countdown-icon">{urgent ? "🔥" : expired ? "⚠️" : "📅"}</span>
+          <span className="countdown-date-text">
+            {expired ? dateTextExpired : dateText}
+          </span>
+        </div>
 
-    </>
+        <div className="job-countdown-pill-wrap">
+          {expired ? (
+            <span className="pill-badge pill-expired">⚠️ หมดเขต</span>
+          ) : days === 0 ? (
+            <span className="pill-badge pill-today">🚨 ปิดรับวันนี้!</span>
+          ) : urgent ? (
+            <span className="pill-badge pill-urgent">🔥 เหลือ {days} วัน</span>
+          ) : (
+            <span className="pill-badge pill-normal">⏳ เหลือ {days} วัน</span>
+          )}
+        </div>
+      </div>
+
+      {/* ── Positions Body (Clean Minimalist) ── */}
+      <div className="job-card-body-modern">
+        {/* Salary & Quota Summary Highlight Bar */}
+        <div className="job-salary-summary-bar">
+          <div className="salary-highlight">
+            <span className="salary-icon">💰</span>
+            <span className="salary-amount">{displaySalary || "ตามระเบียบกำหนด"}</span>
+          </div>
+          <div className="quota-highlight">
+            รวม <strong>{totalCount}</strong> อัตรา
+          </div>
+        </div>
+
+        {/* Clean Minimal Positions List */}
+        <div className="job-positions-clean-list">
+          {job.positionList?.slice(0, 3).map((pos, i) => {
+            let rowMatch = null;
+            if (userEducation) {
+              const edus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
+              let pMatchesEdu = edus.includes("ไม่จำกัดวุฒิ") || edus.includes(userEducation);
+              if (pos.units && pos.units.length > 0) {
+                pMatchesEdu = pos.units.some(u => {
+                  const uEdus = Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []);
+                  return uEdus.includes("ไม่จำกัดวุฒิ") || uEdus.includes(userEducation);
+                });
+              }
+              rowMatch = pMatchesEdu;
+            }
+
+            return (
+              <div key={i} className="clean-position-item">
+                <div className="clean-position-left">
+                  {rowMatch !== null ? (
+                    <span
+                      className={`match-indicator-dot ${rowMatch ? 'matched' : 'unmatched'}`}
+                      title={rowMatch ? "วุฒิตรงกับคุณ" : "วุฒิไม่ตรง"}
+                    />
+                  ) : (
+                    <span className="clean-position-bullet">•</span>
+                  )}
+                  <span className="clean-position-name" title={pos.title}>
+                    {pos.title}
+                  </span>
+                </div>
+                <div className="clean-position-right">
+                  <span className="clean-position-count">
+                    {pos.count} อัตรา
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+
+        </div>
+
+      </div>
+
+      {/* ── Card Footer ── */}
+      <div className="job-card-footer-modern">
+        <div className="footer-edu-summary">
+          <span className="footer-edu-icon">🎓</span>
+          <span className="footer-edu-text" title={uniqueEdus.join(", ")}>
+            {uniqueEdus.length > 0 ? uniqueEdus.join(", ") : "ไม่ระบุวุฒิ"}
+          </span>
+        </div>
+
+        <Link
+          id={`btn-detail-${job.id}`}
+          to={`/job/${job.id}`}
+          className="btn-detail-modern"
+        >
+          <span>รายละเอียด</span>
+          <span className="btn-detail-arrow">▸</span>
+        </Link>
+      </div>
+    </div>
   );
 }
