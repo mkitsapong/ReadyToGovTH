@@ -30,7 +30,7 @@ const SYSTEM_INSTRUCTION = `
 10. postedDate: วันที่ลงประกาศ หรือวันที่ปัจจุบันในรูปแบบ YYYY-MM-DD
 11. isNoOCSC: true หากระบุว่า "ไม่ต้องผ่าน ภาค ก" หรือ "ไม่ต้องมีหนังสือรับรองผลการสอบภาค ก ของ ก.พ."
 12. isOCSC: true หากระบุว่า "ต้องผ่าน ภาค ก" หรือ "ต้องมีหนังสือรับรองผลการสอบภาค ก ของ ก.พ."
-13. applyUrl: ลิงก์สำหรับสมัครออนไลน์ (ถ้ามีในเอกสาร เช่น http://lopburi.dole.go.th/nfelop/) หรือ ""
+13. applyUrl: ลิงก์สำหรับสมัครออนไลน์ (เช่น https://...) หรือหากระบุให้ส่งใบสมัครทางอีเมล ให้ใส่ในรูปแบบ "mailto:อีเมล" (เช่น mailto:qas.pcd2025@gmail.com) หรือถ้าไม่มีให้ใส่ ""
 14. announcementUrl: ลิงก์เอกสารประกาศ (ถ้ามี) หรือ ""
 15. description: สรุปวิธีการรับสมัครและสถานที่รับสมัครสั้นๆ 1-3 ย่อหน้า
 16. provinces: array ของชื่อจังหวัดที่ปฏิบัติงาน เช่น ["ลพบุรี"] หากทั่วประเทศให้ใส่ ["ทุกจังหวัด"]
@@ -59,15 +59,17 @@ async function fileToBase64(file) {
 }
 
 /**
- * Candidate models prioritized by quality and availability
+ * Candidate models prioritized by quality, latency, and availability
  */
 const CANDIDATE_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-2.5-pro",
-  "gemini-1.5-pro",
+  "gemini-3.5-flash-lite",
+  "gemini-3.6-flash",
+  "gemini-flash-lite-latest",
+  "gemini-3.5-flash",
+  "gemini-3.7-flash",
+  "gemini-3.8-flash",
+  "gemini-flash-latest",
+  "gemini-3.1-flash-lite",
 ];
 
 /**
@@ -180,7 +182,18 @@ export async function extractJobDataWithAI({ file, text, apiKey }) {
     }
 
     const parsed = JSON.parse(cleanedJson);
-    return sanitizeExtractedData(parsed, text);
+    let dataObj = parsed;
+    if (Array.isArray(parsed)) {
+      dataObj = parsed[0] || {};
+    } else if (parsed && typeof parsed === "object") {
+      if (Array.isArray(parsed.jobs) && parsed.jobs.length > 0) {
+        dataObj = parsed.jobs[0];
+      } else if (parsed.result && typeof parsed.result === "object") {
+        dataObj = parsed.result;
+      }
+    }
+
+    return sanitizeExtractedData(dataObj, text);
   } catch (err) {
     console.error("JSON parse error from Gemini output:", rawText, err);
     throw new Error("รูปแบบข้อมูลที่ AI ส่งกลับมาไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง", { cause: err });
@@ -240,19 +253,34 @@ function sanitizeExtractedData(data, originalRawText = "") {
     description: data.description,
   });
 
-  return {
-    department: dept,
-    logoUrl,
-    categories,
-    provinces: Array.isArray(data.provinces) ? data.provinces : [],
-    startDate: resolvedDates.startDate || "",
-    deadline: resolvedDates.deadline || "",
-    postedDate: convertThaiNumeralsToArab(data.postedDate || new Date().toISOString().split("T")[0]),
-    isNoOCSC: Boolean(data.isNoOCSC),
-    isOCSC: Boolean(data.isOCSC),
-    applyUrl: data.applyUrl || "",
-    announcementUrl: data.announcementUrl || "",
-    description: data.description || "",
-    positionList
-  };
+    // Resolve and format applyUrl (detect email and add mailto: if appropriate)
+    let finalApplyUrl = (data.applyUrl || "").trim();
+    if (finalApplyUrl && !finalApplyUrl.startsWith("http://") && !finalApplyUrl.startsWith("https://") && !finalApplyUrl.startsWith("mailto:")) {
+      if (finalApplyUrl.includes("@")) {
+        finalApplyUrl = `mailto:${finalApplyUrl}`;
+      }
+    }
+    if (!finalApplyUrl && (data.description || originalRawText)) {
+      const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i;
+      const match = (data.description || "").match(emailRegex) || (originalRawText || "").match(emailRegex);
+      if (match) {
+        finalApplyUrl = `mailto:${match[1]}`;
+      }
+    }
+
+    return {
+      department: dept,
+      logoUrl,
+      categories,
+      provinces: Array.isArray(data.provinces) ? data.provinces : [],
+      startDate: resolvedDates.startDate || "",
+      deadline: resolvedDates.deadline || "",
+      postedDate: convertThaiNumeralsToArab(data.postedDate || new Date().toISOString().split("T")[0]),
+      isNoOCSC: Boolean(data.isNoOCSC),
+      isOCSC: Boolean(data.isOCSC),
+      applyUrl: finalApplyUrl,
+      announcementUrl: data.announcementUrl || "",
+      description: data.description || "",
+      positionList
+    };
 }

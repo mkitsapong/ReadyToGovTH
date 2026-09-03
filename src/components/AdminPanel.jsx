@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { regions } from "../data/provinces.js";
 import AdminAIExtractor from "./AdminAIExtractor.jsx";
 import { findOfficialGovLogo } from "../utils/logoHelper.js";
+import { convertExternalImageToBase64 } from "../utils/imageHelper.js";
 
 const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ"];
 const EDUCATION = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
@@ -72,8 +73,30 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   const [loading, setLoading] = useState(false);
   const [expandedPosIndex, setExpandedPosIndex] = useState(0);
   const [logoPreview, setLogoPreview] = useState(isEditMode ? editJob.logoUrl || "" : "");
+  const [logoLoading, setLogoLoading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const [provinceOpen, setProvinceOpen] = useState(false);
   const provinceRef = useRef(null);
+  const logoConvertTimerRef = useRef(null);
+
+  // Auto-convert external logo URL to base64 for reliable preview
+  const tryConvertLogo = useCallback(async (url) => {
+    if (!url || url.startsWith("data:") || url.startsWith("blob:")) return;
+    setLogoLoading(true);
+    setLogoError(false);
+    try {
+      const base64 = await convertExternalImageToBase64(url, 8000);
+      setLogoPreview(base64);
+      if (base64 && base64.startsWith("data:")) {
+        setForm((prev) => ({ ...prev, logoUrl: base64 }));
+      }
+      setLogoError(false);
+    } catch {
+      setLogoError(true);
+    } finally {
+      setLogoLoading(false);
+    }
+  }, []);
 
   // Close province dropdown on outside click or ESC
   useEffect(() => {
@@ -139,6 +162,9 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     const foundLogo = findOfficialGovLogo(form.department);
     setForm((prev) => ({ ...prev, logoUrl: foundLogo }));
     setLogoPreview(foundLogo);
+    if (foundLogo && !foundLogo.startsWith("data:")) {
+      tryConvertLogo(foundLogo);
+    }
   }
 
 
@@ -341,25 +367,34 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                   style={{
                     width: 64, height: 64,
                     borderRadius: "var(--radius-md)",
-                    background: logoPreview ? "var(--gray-100)" : "linear-gradient(135deg, var(--navy-700), var(--navy-500))",
+                    background: logoPreview && !logoError ? "var(--gray-100)" : "linear-gradient(135deg, var(--navy-700), var(--navy-500))",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden", border: "2px dashed var(--gray-300)",
+                    overflow: "hidden", border: `2px dashed ${logoError ? '#ef4444' : 'var(--gray-300)'}`,
                     flexShrink: 0, cursor: "pointer",
+                    position: "relative",
                   }}
                   onClick={() => document.getElementById("logo-upload-input").click()}
                 >
-                  {logoPreview
-                    ? <img
-                        src={logoPreview}
-                        alt="logo"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.style.display = 'none';
-                        }}
-                        style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
-                      />
-                    : <span style={{ fontSize: "1.5rem" }}>{CATEGORY_ICONS[form.categories?.[0]] || "🏛️"}</span>}
+                  {logoLoading ? (
+                    <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.8)", textAlign: "center", lineHeight: 1.3 }}>⏳<br/>โหลด...</span>
+                  ) : logoPreview && !logoError ? (
+                    <img
+                      src={logoPreview}
+                      alt="logo"
+                      referrerPolicy="no-referrer"
+                      onError={() => {
+                        // If the preview fails (CORS), try converting via proxy
+                        if (form.logoUrl && !form.logoUrl.startsWith("data:")) {
+                          tryConvertLogo(form.logoUrl);
+                        } else {
+                          setLogoError(true);
+                        }
+                      }}
+                      style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: "1.5rem" }}>{CATEGORY_ICONS[form.categories?.[0]] || "🏛️"}</span>
+                  )}
                 </div>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -381,6 +416,12 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                         const url = e.target.value;
                         setForm((prev) => ({ ...prev, logoUrl: url }));
                         setLogoPreview(url);
+                        setLogoError(false);
+                        // Debounce: auto-convert after user stops typing
+                        clearTimeout(logoConvertTimerRef.current);
+                        if (url && url.startsWith("http")) {
+                          logoConvertTimerRef.current = setTimeout(() => tryConvertLogo(url), 800);
+                        }
                       }}
                     />
                     <button
@@ -906,11 +947,23 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
               <p style={{ fontSize: "0.72rem", color: "var(--gray-400)", marginTop: 4 }}>เมื่อกรอกแล้ว จะแสดงปุ่ม "ประกาศรับสมัคร" ในหน้ารายละเอียด</p>
             </div>
             <div className="form-group">
-              <label className="form-label">🔗 ลิงก์สมัครงาน</label>
+              <label className="form-label">🔗 ลิงก์สมัครงาน / อีเมลรับสมัคร</label>
               <input id="admin-field-apply-url" className="form-input"
-                placeholder="วาง URL สำหรับสมัครงานออนไลน์ เช่น https://..."
+                placeholder="วาง URL เว็บไซต์สมัครงาน หรือกรอกอีเมล เช่น qas.pcd2025@gmail.com"
                 value={form.applyUrl || ""}
-                onChange={(e) => handleChange("applyUrl", e.target.value)} />
+                onChange={(e) => handleChange("applyUrl", e.target.value)}
+                onBlur={(e) => {
+                  let val = e.target.value.trim();
+                  if (val && !val.startsWith("http://") && !val.startsWith("https://") && !val.startsWith("mailto:")) {
+                    if (val.includes("@")) {
+                      handleChange("applyUrl", `mailto:${val}`);
+                    }
+                  }
+                }}
+              />
+              <p style={{ fontSize: "0.72rem", color: "var(--navy-500)", marginTop: 4 }}>
+                💡 หากรับสมัครทางอีเมล สามารถกรอกอีเมลได้ทันที (ระบบจะแปลงเป็น <code>mailto:</code> และแสดงปุ่มส่งอีเมลให้อัตโนมัติ)
+              </p>
             </div>
 
             {/* Toggle showBooks & Custom Book URL */}
