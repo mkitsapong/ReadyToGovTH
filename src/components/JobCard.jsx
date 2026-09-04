@@ -52,7 +52,36 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
         {/* Subtle decorative glow */}
         <div className="job-header-glow" />
 
-        <div className="job-header-top-row">
+        {/* 1. Slim Top Status Bar */}
+        <div className="job-card-top-bar">
+          <div className="top-bar-left">
+            {job.isNoOCSC ? (
+              <span className="top-bar-badge badge-no-ocsc">
+                <span className="badge-icon">✨</span>
+                <span>ไม่ต้องผ่าน ภาค ก</span>
+              </span>
+            ) : job.isOCSC ? (
+              <span className="top-bar-badge badge-ocsc">
+                <span className="badge-icon">📝</span>
+                <span>ต้องผ่าน ภาค ก</span>
+              </span>
+            ) : null}
+          </div>
+
+          <div className="top-bar-right">
+            <button
+              type="button"
+              onClick={onToggleBookmark}
+              title={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+              className={`job-btn-bookmark ${isBookmarked ? 'bookmarked' : ''}`}
+            >
+              {isBookmarked ? "❤️" : "🤍"}
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Main Header Content (Logo + Dept Info + Admin Edit) */}
+        <div className="job-header-main-row">
           {/* Logo */}
           <div className="job-logo-box">
             {job.logoUrl ? (
@@ -77,7 +106,7 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
               {job.department}
             </h3>
 
-            {/* Badges Row */}
+            {/* Badges Row (Categories only + Inline Admin Edit) */}
             <div className="job-header-badges">
               {categories.map((cat, idx) => {
                 const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
@@ -88,52 +117,18 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
                 );
               })}
 
-              {provinces.length === 1 ? (
-                <span className="job-badge-pill badge-location">
-                  📍 {provinces[0]}
-                </span>
-              ) : provinces.length > 1 ? (
-                <span className="job-badge-pill badge-location" title={provinces.join(", ")}>
-                  📍 {provinces[0]}
-                  <span className="badge-more-count">+{provinces.length - 1}</span>
-                </span>
-              ) : null}
-
-              {job.isNoOCSC && (
-                <span className="job-badge-pill badge-no-ocsc">
-                  ✨ ไม่ต้องผ่าน ภาค ก
-                </span>
-              )}
-              {job.isOCSC && (
-                <span className="job-badge-pill badge-ocsc">
-                  📝 ต้องผ่าน ภาค ก
-                </span>
+              {isAdmin && (
+                <button
+                  type="button"
+                  id={`btn-edit-${job.id}`}
+                  onClick={() => onEdit(job)}
+                  title="แก้ไขประกาศ"
+                  className="job-btn-edit-inline"
+                >
+                  ✏️ แก้ไข
+                </button>
               )}
             </div>
-          </div>
-
-          {/* Header Action Buttons (Bookmark & Admin Edit) */}
-          <div className="job-header-actions">
-            <button
-              type="button"
-              onClick={onToggleBookmark}
-              title={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
-              className={`job-btn-bookmark ${isBookmarked ? 'bookmarked' : ''}`}
-            >
-              {isBookmarked ? "❤️" : "🤍"}
-            </button>
-
-            {isAdmin && (
-              <button
-                type="button"
-                id={`btn-edit-${job.id}`}
-                onClick={() => onEdit(job)}
-                title="แก้ไขประกาศ"
-                className="job-btn-edit"
-              >
-                ✏️ แก้ไข
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -219,11 +214,25 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
 
       {/* ── Card Footer ── */}
       <div className="job-card-footer-modern">
-        <div className="footer-edu-summary">
-          <span className="footer-edu-icon">🎓</span>
-          <span className="footer-edu-text" title={uniqueEdus.join(", ")}>
-            {uniqueEdus.length > 0 ? uniqueEdus.join(", ") : "ไม่ระบุวุฒิ"}
-          </span>
+        <div className="footer-meta-summary">
+          {provinces.length > 0 && (
+            <div className="footer-meta-item footer-meta-location" title={provinces.join(", ")}>
+              <span className="footer-meta-icon">📍</span>
+              <span className="footer-meta-text">
+                {provinces[0]}
+                {provinces.length > 1 && (
+                  <span className="footer-more-count">+{provinces.length - 1}</span>
+                )}
+              </span>
+            </div>
+          )}
+
+          <div className="footer-meta-item footer-meta-edu" title={uniqueEdus.join(", ")}>
+            <span className="footer-meta-icon">🎓</span>
+            <span className="footer-meta-text">
+              {uniqueEdus.length > 0 ? uniqueEdus.join(", ") : "ไม่ระบุวุฒิ"}
+            </span>
+          </div>
         </div>
 
         <Link
