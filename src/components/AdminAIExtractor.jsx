@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
 import { extractJobDataWithAI } from "../services/aiJobExtractor.js";
 
-export default function AdminAIExtractor({ onExtracted }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [activeTab, setActiveTab] = useState("file"); // "file" | "text"
   const [file, setFile] = useState(null);
   const [rawText, setRawText] = useState("");

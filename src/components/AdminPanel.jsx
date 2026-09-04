@@ -357,7 +357,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
           <div className="modal-body">
 
             {/* AI Extractor Component */}
-            <AdminAIExtractor onExtracted={handleAIExtracted} />
+            <AdminAIExtractor onExtracted={handleAIExtracted} defaultOpen={!isEditMode} />
 
             {/* Logo Upload or URL */}
             <div className="form-group">

@@ -49,8 +49,9 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
     <div className="job-card" style={style}>
       {/* ── Card Header ── */}
       <div className="job-card-header-modern">
-        {/* Subtle decorative glow */}
+        {/* Subtle decorative glow & ambient lights */}
         <div className="job-header-glow" />
+        <div className="job-header-glow-left" />
 
         {/* 1. Slim Top Status Bar */}
         <div className="job-card-top-bar">

@@ -90,7 +90,7 @@ export function JobCardSkeleton() {
           style={{
             width: 76,
             height: 76,
-            borderRadius: 14,
+            borderRadius: "50%",
             flexShrink: 0,
             marginRight: 14,
             border: "2px solid rgba(255,255,255,0.1)",
@@ -227,7 +227,7 @@ export function JobDetailSkeleton({ onBack }) {
                 style={{
                   width: "clamp(72px, 18vw, 96px)",
                   height: "clamp(72px, 18vw, 96px)",
-                  borderRadius: "var(--radius-xl)",
+                  borderRadius: "50%",
                   flexShrink: 0,
                   border: "3px solid rgba(255,255,255,0.15)",
                 }}
