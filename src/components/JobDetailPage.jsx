@@ -5,10 +5,13 @@ import SEO from "./SEO.jsx";
 
 import { JobDetailSkeleton } from "./LoadingSkeleton.jsx";
 
+import { getDisplayProvinces } from "../utils/helpers.js";
+
 // Function to generate JSON-LD script for Google
 function generateJobPostingSchema(job) {
   const categoryName = (job.categories && job.categories.length > 0) ? job.categories[0] : (job.category || "งานราชการ");
-  const provinceName = (job.provinces && job.provinces.length > 0) ? job.provinces[0] : (job.province || "Thailand");
+  const displayProvs = getDisplayProvinces(job);
+  const provinceName = displayProvs.length > 0 ? displayProvs[0] : "Thailand";
 
   const schema = {
     "@context": "https://schema.org/",
@@ -125,6 +128,16 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
     );
   }
 
+  const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const primaryCategory = categories[0] || "งานราชการ";
+  const categoryLink = {
+    "ข้าราชการ": "/category/civil",
+    "พนักงานราชการ": "/category/government",
+    "รัฐวิสาหกิจ": "/category/state",
+    "ลูกจ้างชั่วคราว": "/category/temp",
+    "พนักงานหน่วยงานของรัฐ": "/category/agency"
+  }[primaryCategory];
+
   return (
     <>
       <SEO 
@@ -137,13 +150,26 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
       {/* Inject Structured Data */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: generateJobPostingSchema(job) }} />
 
-      <div className="container" style={{ paddingTop: "24px", paddingBottom: "40px" }}>
-        <a href="/" onClick={handleBack} style={{ color: "var(--navy-600)", fontWeight: "600", display: "inline-block", marginBottom: "20px", textDecoration: "none" }}>
-          ← กลับหน้าแรก
-        </a>
-        <article className="job-detail-page">
+      <div className="container detail-page-container">
+        <div className="detail-top-nav">
+          <button type="button" onClick={handleBack} className="btn-detail-back" title="กลับไปหน้ารายการงาน">
+            <span className="btn-back-arrow">←</span>
+            <span>กลับไปค้นหาตำแหน่งงาน</span>
+          </button>
+          <nav className="detail-breadcrumbs" aria-label="breadcrumb">
+            <Link to="/" className="detail-crumb-link">หน้าแรก</Link>
+            <span className="detail-crumb-sep">/</span>
+            {categoryLink ? (
+              <Link to={categoryLink} className="detail-crumb-link">{primaryCategory}</Link>
+            ) : (
+              <span className="detail-crumb-link">{primaryCategory}</span>
+            )}
+            <span className="detail-crumb-sep">/</span>
+            <span className="detail-crumb-current" title={job.department}>{job.department}</span>
+          </nav>
+        </div>
+        <article className="job-detail-page-card">
            {/* Re-use JobDetailModal content logic but render it directly on the page instead of a modal */}
-           {/* For simplicity, we can just render the modal component directly inline, but modify it slightly or we just render it full width */}
            <JobDetailModal job={job} books={books} inline={true} isAdmin={isAdmin} onEdit={onEditJob} />
         </article>
       </div>

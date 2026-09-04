@@ -12,10 +12,10 @@ export function getProvinces(job) {
 }
 
 /**
- * Get provinces for display purposes (filters out "ไม่ระบุ").
+ * Get provinces for display purposes (filters out "ไม่ระบุ" and "ไม่ระบุจังหวัด").
  */
 export function getDisplayProvinces(job) {
-  return getProvinces(job).filter(p => p !== "ไม่ระบุ");
+  return getProvinces(job).filter(p => p && p !== "ไม่ระบุ" && p !== "ไม่ระบุจังหวัด" && !p.includes("ไม่ระบุ"));
 }
 
 /**

@@ -103,349 +103,308 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
     ? (job.applyUrl?.startsWith("mailto:") ? job.applyUrl : `mailto:${detectedEmail}?subject=${encodeURIComponent(emailSubject)}`)
     : job.applyUrl;
 
+  // Derive clean unified salary text
+  const rawSalaries = job.positionList?.map(p => p.salary?.trim()).filter(Boolean) || [];
+  let displaySalary = null;
+  if (rawSalaries.length > 0) {
+    const nums = rawSalaries
+      .flatMap(s => s.match(/[\d,]+/g) || [])
+      .map(n => parseInt(n.replace(/,/g, ''), 10))
+      .filter(n => n >= 3000);
+
+    if (nums.length > 0) {
+      const minSalary = Math.min(...nums);
+      const maxSalary = Math.max(...nums);
+      displaySalary = minSalary === maxSalary 
+        ? `${minSalary.toLocaleString()} บาท`
+        : `${minSalary.toLocaleString()} – ${maxSalary.toLocaleString()} บาท`;
+    } else {
+      displaySalary = rawSalaries[0];
+    }
+  } else if (job.salary) {
+    displaySalary = job.salary;
+  }
+
   const content = (
-    <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none', maxHeight: 'none', overflow: 'visible' } : { maxWidth: 660 }} role={inline ? "region" : "dialog"} aria-modal={!inline}>
+    <div className={`modal animate-fade-up detail-modal-wrapper ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none', maxHeight: 'none', overflow: 'visible' } : { maxWidth: 680 }} role={inline ? "region" : "dialog"} aria-modal={!inline}>
 
-      {/* ── Header ── */}
-      <div style={{ position: "relative" }}>
-        {/* Dark gradient banner */}
-        <div style={{
-          background: "linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 100%)",
-          padding: "clamp(16px, 5vw, 24px) clamp(16px, 5vw, 28px)",
-          position: "relative", overflow: "hidden",
-          borderTopLeftRadius: "var(--radius-2xl)",
-          borderTopRightRadius: "var(--radius-2xl)",
-          display: "flex", flexDirection: "column", alignItems: "stretch", gap: 16,
-        }}>
-          {/* Glow accents */}
-          <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, background: "radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 65%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: -20, left: -20, width: 150, height: 150, background: "radial-gradient(circle, rgba(37,99,176,0.2) 0%, transparent 65%)", pointerEvents: "none" }} />
+      {/* ── 1. Modern Executive Header ── */}
+      <div className="detail-header-card">
+        {/* Ambient Glows */}
+        <div className="detail-header-glow detail-glow-tr" />
+        <div className="detail-header-glow detail-glow-bl" />
 
-          {/* Top Right Actions */}
-          <div className="modal-header-actions" style={{ position: "absolute", top: "clamp(12px, 4vw, 24px)", right: "clamp(12px, 4vw, 28px)", display: "flex", gap: 6, zIndex: 50, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "60%" }}>
-            {/* Edit Button */}
+        {/* Top Slim Utility Bar: Badges + Action Buttons */}
+        <div className="detail-header-top-bar">
+          <div className="detail-header-badges">
+            {categories.map((cat, idx) => {
+              const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
+              return (
+                <span key={idx} className={`detail-cat-badge ${catMeta.badge}`}>
+                  <span>{cat}</span>
+                </span>
+              );
+            })}
+            {job.isNoOCSC ? (
+              <span className="top-bar-badge badge-no-ocsc detail-badge-ocsc">
+                <span className="badge-icon">✨</span>
+                <span>ไม่ต้องผ่าน ภาค ก</span>
+              </span>
+            ) : job.isOCSC ? (
+              <span className="top-bar-badge badge-ocsc detail-badge-ocsc">
+                <span className="badge-icon">📝</span>
+                <span>ต้องผ่าน ภาค ก</span>
+              </span>
+            ) : null}
+            {days >= 0 && days <= 5 && (
+              <span className="detail-badge-urgent">
+                🔥 {days === 0 ? "ปิดรับวันนี้!" : `ด่วน! เหลืออีก ${days} วัน`}
+              </span>
+            )}
+          </div>
+
+          <div className="detail-header-actions">
             {isAdmin && onEdit && (
-              <button onClick={() => onEdit(job)} title="แก้ไขประกาศ"
-                style={{
-                  background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.85)",
-                  border: "1px solid rgba(255,255,255,0.2)", borderRadius: "var(--radius-sm)",
-                  padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: 4, transition: "all 0.15s",
-                  whiteSpace: "nowrap"
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+              <button
+                type="button"
+                onClick={() => onEdit(job)}
+                title="แก้ไขประกาศนี้"
+                className="btn-header-action btn-header-edit"
+              >
                 ✏️ แก้ไข
               </button>
             )}
 
-            {/* Generate Banner Button */}
             {isAdmin && (
-              <button onClick={handleDownloadBanner} disabled={isGeneratingBanner} title="บันทึกรูปแบนเนอร์สำหรับแชร์"
-                style={{
-                  background: "linear-gradient(135deg, #ea580c, #c2410c)", color: "white",
-                  border: "none", borderRadius: "var(--radius-sm)",
-                  padding: "4px 10px", fontSize: "0.8rem", cursor: isGeneratingBanner ? "wait" : "pointer",
-                  display: "flex", alignItems: "center", gap: 4, transition: "all 0.2s",
-                  boxShadow: "0 2px 4px rgba(234,88,12,0.3)"
-                }}
-                onMouseEnter={e => { if (!isGeneratingBanner) e.currentTarget.style.transform = "scale(1.05)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}>
+              <button
+                type="button"
+                onClick={handleDownloadBanner}
+                disabled={isGeneratingBanner}
+                title="สร้างรูปแบนเนอร์สรุปสำหรับแชร์"
+                className="btn-header-action btn-header-banner"
+              >
                 {isGeneratingBanner ? "⏳ กำลังสร้าง..." : "📷 เซฟรูปแบนเนอร์"}
               </button>
             )}
 
-            {/* Share Button */}
-            <button onClick={async () => {
-              const url = `${window.location.origin}/job/${job.id}`;
-              if (navigator.share) {
-                try {
-                  await navigator.share({
-                    title: `งานราชการ: ${job.department}`,
-                    text: `ดูประกาศรับสมัครงานของ ${job.department} ได้ที่นี่`,
-                    url: url,
-                  });
-                } catch {
-                  // user cancelled or error
+            <button
+              type="button"
+              onClick={async () => {
+                const url = `${window.location.origin}/job/${job.id}`;
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: `งานราชการ: ${job.department}`,
+                      text: `ดูประกาศรับสมัครงานของ ${job.department} ได้ที่นี่`,
+                      url: url,
+                    });
+                  } catch {
+                    // user cancelled or error
+                  }
+                } else {
+                  navigator.clipboard.writeText(url);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
                 }
-              } else {
-                navigator.clipboard.writeText(url);
-                setIsCopied(true);
-                setTimeout(() => setIsCopied(false), 2000);
-              }
-            }}
-              title="แชร์ลิงก์งานนี้"
-              style={{
-                background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.9)",
-                border: "1px solid rgba(255,255,255,0.15)", borderRadius: "var(--radius-sm)",
-                padding: "4px 10px", fontSize: "0.8rem", cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 4, transition: "all 0.2s"
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
+              title="แชร์ลิงก์งานนี้"
+              className="btn-header-action btn-header-glass"
+            >
               {isCopied ? "✅ คัดลอกแล้ว" : "🔗 แชร์"}
             </button>
 
-            {/* Bookmark Button */}
-            <button onClick={() => toggleBookmark(job.id)} title={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 28, height: 28,
-                background: bookmarked ? "rgba(255, 255, 255, 0.2)" : "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: "50%",
-                color: bookmarked ? "#f87171" : "rgba(255,255,255,0.8)",
-                fontSize: "1rem", cursor: "pointer", transition: "all 0.2s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.1)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}>
+            <button
+              type="button"
+              onClick={() => toggleBookmark(job.id)}
+              title={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+              className={`btn-header-bookmark ${bookmarked ? "bookmarked" : ""}`}
+            >
               {bookmarked ? "❤️" : "🤍"}
             </button>
 
-            {/* Close button */}
             {!inline && (
-              <button className="modal-close" onClick={onClose} aria-label="ปิด"
-                style={{
-                  background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
-                  borderRadius: "50%", cursor: "pointer"
-                }}>
+              <button
+                type="button"
+                className="btn-header-close"
+                onClick={onClose}
+                aria-label="ปิด"
+              >
                 ✕
               </button>
             )}
           </div>
+        </div>
 
-          {/* Main Header Content */}
-          <div style={{ display: "flex", alignItems: "center", gap: "clamp(12px, 4vw, 20px)", zIndex: 10 }}>
-            {/* Logo */}
-            <div style={{
-              width: "clamp(64px, 18vw, 90px)", height: "clamp(64px, 18vw, 90px)",
-              borderRadius: "var(--radius-xl)",
-              background: job.logoUrl ? "white" : "linear-gradient(135deg, #1e3a8a, #3b82f6)",
-              border: "3px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              overflow: "hidden", flexShrink: 0,
-            }}>
-              {job.logoUrl
-                ? <img
-                  src={job.logoUrl}
-                  alt={job.department}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.style.display = 'none';
-                  }}
-                  style={{ width: "100%", height: "100%", objectFit: "contain", padding: 2 }}
-                />
-                : <span style={{ fontSize: "clamp(1.5rem, 5vw, 2.2rem)" }}>{mainMeta.icon}</span>}
-            </div>
+        {/* Main Identity: Logo + Department Title + Meta Subline */}
+        <div className="detail-header-main">
+          <div className="detail-logo-wrapper">
+            {job.logoUrl ? (
+              <img
+                src={job.logoUrl}
+                alt={job.department}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.style.display = "none";
+                }}
+                className="detail-logo-img"
+              />
+            ) : (
+              <span className="detail-logo-fallback">{mainMeta.icon}</span>
+            )}
+          </div>
 
-            {/* Text details */}
-            <div style={{ flex: 1, minWidth: 0, paddingRight: "clamp(80px, 35vw, 180px)" }}>
-              {/* Category badge */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-                {categories.map((cat, idx) => {
-                  const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
-                  return <span key={idx} className={`badge ${catMeta.badge}`}>{cat}</span>;
-                })}
-                {job.isNoOCSC && (
-                  <span style={{
-                    padding: "2px 8px", background: "rgba(234,88,12,0.2)",
-                    border: "1px solid rgba(234,88,12,0.4)", borderRadius: "999px",
-                    fontSize: "0.72rem", fontWeight: 700, color: "#fed7aa",
-                    whiteSpace: "nowrap"
-                  }}>
-                    ✨ ไม่ต้องผ่าน ภาค ก
-                  </span>
-                )}
-                {job.isOCSC && (
-                  <span style={{
-                    padding: "2px 8px", background: "rgba(59,130,212,0.25)",
-                    border: "1px solid rgba(59,130,212,0.5)", borderRadius: "999px",
-                    fontSize: "0.72rem", fontWeight: 700, color: "#bfdbfe",
-                    whiteSpace: "nowrap"
-                  }}>
-                    📝 ต้องผ่าน ภาค ก
-                  </span>
-                )}
-              </div>
-
-              {/* Dept name */}
-              <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", lineHeight: 1.3, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {job.department}
-              </h2>
+          <div className="detail-title-block">
+            <h1 className="detail-dept-title">{job.department}</h1>
+            <div className="detail-header-pills">
+              {provinces.length > 0 && (
+                <span className="detail-header-pill">
+                  📍 {provinces.join(", ")}
+                </span>
+              )}
+              <span className="detail-header-pill">
+                👥 รวม {totalCount} อัตรา
+              </span>
+              {job.positionList && job.positionList.length > 0 && (
+                <span className="detail-header-pill">
+                  💼 {job.positionList.length} ตำแหน่ง
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Province tags */}
-      <div style={{
-        padding: "16px 28px",
-        borderBottom: "1px solid var(--gray-100)",
-        background: "var(--white)",
-      }}>
+      {/* ── 2. Executive Stats Bar ── */}
+      <div className={`detail-stats-bar ${provinces.length > 0 ? "has-location" : "no-location"}`}>
+        {/* Metric 1: กำหนดการรับสมัคร */}
+        <div className="detail-stat-card stat-deadline">
+          <div className="detail-stat-icon-wrapper">📅</div>
+          <div className="detail-stat-body">
+            <div className="detail-stat-label">กำหนดการรับสมัคร</div>
+            <div className="detail-stat-value">
+              {days >= 0 ? (
+                <>
+                  <span className="stat-date-text">
+                    {displayStartDate ? `${formatDate(displayStartDate)} – ` : ""}
+                    <strong>{formatDate(job.deadline)}</strong>
+                  </span>
+                  <span className={`stat-pill-days ${days === 0 ? "today" : days <= 5 ? "urgent" : "normal"}`}>
+                    {days === 0 ? "ปิดรับวันนี้!" : `เหลือ ${days} วัน`}
+                  </span>
+                </>
+              ) : (
+                <span className="stat-pill-days closed">หมดเขตรับสมัครแล้ว</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Metric 2: อัตราเงินเดือน */}
+        <div className="detail-stat-card stat-salary">
+          <div className="detail-stat-icon-wrapper">💰</div>
+          <div className="detail-stat-body">
+            <div className="detail-stat-label">อัตราเงินเดือน</div>
+            <div className="detail-stat-value">
+              <span className="stat-value-highlight green">{displaySalary || "ตามระเบียบกำหนด"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Metric 3: จำนวนที่เปิดรับ */}
+        <div className="detail-stat-card stat-quota">
+          <div className="detail-stat-icon-wrapper">👥</div>
+          <div className="detail-stat-body">
+            <div className="detail-stat-label">จำนวนที่เปิดรับ</div>
+            <div className="detail-stat-value">
+              <span className="stat-value-highlight navy">{totalCount} อัตรา</span>
+              <span className="stat-sub-text">({job.positionList?.length || 1} ตำแหน่ง)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Metric 4: สถานที่ปฏิบัติงาน (ซ่อนเมื่อเลือก 'ไม่ระบุ') */}
         {provinces.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.68rem", color: "var(--navy-500)", flexShrink: 0 }}>📍</span>
-            {provinces.map((prov) => (
-              <span key={prov} style={{
-                padding: "2px 10px",
-                background: "linear-gradient(135deg, var(--navy-50), #eff6ff)",
-                border: "1px solid var(--navy-100)",
-                borderRadius: "999px",
-                fontSize: "0.72rem", fontWeight: 600,
-                color: "var(--navy-700)", whiteSpace: "nowrap",
-              }}>
-                {prov}
-              </span>
-            ))}
-            {provinces.length > 1 && (
-              <span style={{ fontSize: "0.68rem", color: "var(--gray-400)", fontWeight: 600 }}>
-                รวม {provinces.length} จังหวัด
-              </span>
-            )}
+          <div className="detail-stat-card stat-location">
+            <div className="detail-stat-icon-wrapper">📍</div>
+            <div className="detail-stat-body">
+              <div className="detail-stat-label">สถานที่ปฏิบัติงาน</div>
+              <div className="detail-stat-value">
+                <span className="stat-location-name">{provinces.join(", ")}</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* ── Body ── */}
-      <div className="modal-body">
+      {/* ── 3. Body Content ── */}
+      <div className="modal-body detail-modal-body">
 
-        {/* Deadline banner */}
-        <div style={{
-          display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px",
-          background: days <= 7 && days >= 0 ? "var(--orange-50)" : days < 0 ? "#fef2f2" : "var(--navy-50)",
-          border: `1px solid ${days <= 7 && days >= 0 ? "var(--orange-200)" : days < 0 ? "#fecaca" : "var(--navy-100)"}`,
-          borderRadius: "var(--radius-md)", marginBottom: 20, fontSize: "0.875rem",
-          color: days <= 7 && days >= 0 ? "var(--orange-700)" : days < 0 ? "#dc2626" : "var(--navy-700)",
-          lineHeight: 1.5
-        }}>
-          <span style={{ flexShrink: 0, fontSize: "1rem" }}>{days >= 0 ? "📅" : "❌"}</span>
-          <div style={{ flex: 1, wordBreak: "break-word" }}>
-            {days >= 0
-              ? <>
-                {displayStartDate ? `เปิดรับ ${formatDate(displayStartDate)} - ` : "ปิดรับสมัคร "}
-                <strong>{formatDate(job.deadline)}</strong>
-                <span style={{
-                  color: (days <= 7 && days >= 0) ? "var(--orange-700)" : "var(--gray-500)",
-                  fontWeight: (days <= 7 && days >= 0) ? 700 : 500,
-                  display: "inline-block",
-                  marginLeft: 4
-                }}>
-                  {days === 0 ? "(ปิดรับวันนี้!)" : `(เหลือ ${days} วัน)`}
-                </span>
-              </>
-              : <>หมดเขตรับสมัครแล้ว ({displayStartDate ? `${formatDate(displayStartDate)} - ` : ""}{formatDate(job.deadline)})</>}
+        {/* ── Position Section Header ── */}
+        <div className="detail-section-header">
+          <div className="detail-section-title-wrap">
+            <span className="detail-section-icon">📋</span>
+            <h2 className="detail-section-title">ตำแหน่งที่เปิดรับสมัคร</h2>
+            <span className="detail-section-count-badge">({job.positionList?.length || 1} ตำแหน่ง)</span>
+          </div>
+          <div className="detail-section-total-pill">
+            รวม {totalCount} อัตรา
           </div>
         </div>
 
-        {/* ── Position section header ── */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          marginBottom: 12,
-        }}>
-          <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--navy-800)", margin: 0 }}>
-            📋 ตำแหน่งที่เปิดรับสมัคร
-          </h3>
-          <span style={{
-            padding: "3px 12px",
-            background: "var(--navy-700)", color: "white",
-            borderRadius: "999px", fontSize: "0.75rem", fontWeight: 700,
-          }}>
-            รวม {totalCount} อัตรา
-          </span>
-        </div>
-
-        {/* ── Position cards (document style) ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+        {/* ── Position Cards ── */}
+        <div className="detail-position-list">
           {job.positionList?.map((pos, i) => {
             const posEdus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
             if (pos.units && pos.units.length > 0) {
               return (
-                <div key={i} style={{
-                  border: "1.5px solid var(--gray-200)",
-                  borderRadius: "var(--radius-lg)",
-                  overflow: "hidden",
-                  boxShadow: "0 1px 4px rgba(18,39,84,0.06)",
-                }}>
+                <div key={i} className="detail-pos-card">
                   {/* Group Header */}
-                  <div style={{
-                    display: "flex", alignItems: "flex-start", gap: 10,
-                    padding: "12px 16px",
-                    background: "linear-gradient(135deg, var(--navy-800), var(--navy-700))",
-                  }}>
-                    <span style={{
-                      width: 24, height: 24, flexShrink: 0,
-                      background: "rgba(255,255,255,0.18)",
-                      borderRadius: "50%",
-                      display: "inline-flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "0.72rem", fontWeight: 800, color: "white",
-                      marginTop: 2
-                    }}>
-                      {i + 1}
-                    </span>
-                    <div style={{ flex: 1, fontSize: "0.92rem", fontWeight: 700, color: "white", lineHeight: 1.4, wordBreak: "break-word" }}>
-                      <span style={{ fontSize: "1rem", marginRight: 6 }}>📁</span>
+                  <div className="detail-pos-header">
+                    <span className="detail-pos-index">{i + 1}</span>
+                    <div className="detail-pos-title">
+                      <span className="pos-folder-icon">📁</span>
                       {pos.title}
                     </div>
-                    {/* Salary badge */}
                     {pos.salary && (
-                      <span style={{
-                        padding: "2px 10px",
-                        background: "rgba(255,255,255,0.15)",
-                        border: "1px solid rgba(255,255,255,0.25)",
-                        borderRadius: "999px",
-                        fontSize: "0.72rem", fontWeight: 700, color: "white",
-                        whiteSpace: "nowrap", flexShrink: 0,
-                        marginTop: 2
-                      }}>
+                      <span className="detail-pos-header-salary">
                         💰 {pos.salary}
                       </span>
                     )}
                   </div>
 
                   {/* Units Body */}
-                  <div style={{ background: "var(--white)", padding: "8px 16px" }}>
+                  <div className="detail-units-container">
                     {pos.units.map((unit, uIdx) => {
                       const unitEdus = Array.isArray(unit.education) ? unit.education : (unit.education ? [unit.education] : []);
                       return (
-                        <div key={uIdx} style={{
-                          padding: "12px 0",
-                          borderBottom: uIdx === pos.units.length - 1 ? "none" : "1px dashed var(--gray-300)"
-                        }}>
-                          <div style={{ fontWeight: 700, color: "var(--navy-800)", fontSize: "0.92rem", marginBottom: 8, display: "flex", alignItems: "flex-start", gap: 6 }}>
-                            <span style={{ color: "#dc2626", marginTop: 2 }}>📍</span>
-                            <span>{unit.name} <span style={{ color: "var(--navy-600)", fontWeight: 600, fontSize: "0.85rem" }}>(จำนวน {unit.count} อัตรา)</span></span>
+                        <div key={uIdx} className="detail-unit-row">
+                          <div className="detail-unit-title-bar">
+                            <span className="unit-pin-icon">📍</span>
+                            <span className="unit-name">{unit.name}</span>
+                            <span className="unit-quota-pill">(จำนวน {unit.count} อัตรา)</span>
                           </div>
-                          <div style={{ fontSize: "0.85rem", color: "var(--gray-700)", lineHeight: 1.6, marginLeft: 24 }}>
-                            <div style={{ marginBottom: 6, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                              <span style={{ fontWeight: 700, color: "var(--navy-700)" }}>🎓 วุฒิที่เปิดรับ:</span>
+                          <div className="detail-unit-specs">
+                            <div className="unit-edu-row">
+                              <span className="unit-spec-title">🎓 วุฒิที่เปิดรับ:</span>
                               {unitEdus.map((edu, eIdx) => {
                                 const eduStyle = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
                                 return (
-                                  <span key={eIdx} style={{
-                                    padding: "2px 10px",
-                                    background: eduStyle.bg, border: `1px solid ${eduStyle.border}`,
-                                    borderRadius: "999px",
-                                    fontSize: "0.75rem", fontWeight: 700, color: eduStyle.color,
+                                  <span key={eIdx} className="detail-edu-tag" style={{
+                                    background: eduStyle.bg, borderColor: eduStyle.border, color: eduStyle.color
                                   }}>
                                     {edu}
                                   </span>
                                 );
                               })}
                               {unit.major && (
-                                <span style={{ fontSize: "0.85rem", color: "var(--gray-700)" }}>
-                                  {unit.major}
-                                </span>
+                                <span className="unit-major-name">{unit.major}</span>
                               )}
                             </div>
                             {unit.details && (
-                              <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                                <span style={{ fontWeight: 700, color: "var(--navy-700)", flexShrink: 0 }}>⚙️ ลักษณะงาน:</span>
-                                <span style={{ marginTop: 1 }}>{unit.details}</span>
+                              <div className="unit-work-row">
+                                <span className="unit-spec-title">⚙️ ลักษณะงาน:</span>
+                                <span className="unit-work-text">{unit.details}</span>
                               </div>
                             )}
                           </div>
@@ -458,103 +417,57 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             }
 
             return (
-              <div key={i} style={{
-                border: "1.5px solid var(--gray-200)",
-                borderRadius: "var(--radius-lg)",
-                overflow: "hidden",
-                boxShadow: "0 1px 4px rgba(18,39,84,0.06)",
-              }}>
-                {/* Position header bar */}
-                <div style={{
-                  display: "flex", alignItems: "flex-start", gap: 10,
-                  padding: "12px 16px",
-                  background: "linear-gradient(135deg, var(--navy-800), var(--navy-700))",
-                }}>
-                  {/* Number badge */}
-                  <span style={{
-                    width: 24, height: 24, flexShrink: 0,
-                    background: "rgba(255,255,255,0.18)",
-                    borderRadius: "50%",
-                    display: "inline-flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.72rem", fontWeight: 800, color: "white",
-                    marginTop: 2
-                  }}>
-                    {i + 1}
-                  </span>
-                  <div style={{ flex: 1, fontSize: "0.92rem", fontWeight: 700, color: "white", lineHeight: 1.4, wordBreak: "break-word" }}>
-                    {pos.title}
-                  </div>
-                  {/* Count badge */}
+              <div key={i} className="detail-pos-card">
+                {/* Position Header Bar */}
+                <div className="detail-pos-header">
+                  <span className="detail-pos-index">{i + 1}</span>
+                  <div className="detail-pos-title">{pos.title}</div>
                   {pos.count && (
-                    <span style={{
-                      padding: "2px 10px",
-                      background: "rgba(255,255,255,0.15)",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      borderRadius: "999px",
-                      fontSize: "0.72rem", fontWeight: 700, color: "white",
-                      whiteSpace: "nowrap", flexShrink: 0,
-                      marginTop: 2
-                    }}>
-                      {pos.count} อัตรา
+                    <span className="detail-pos-quota-pill">
+                      🎯 {pos.count} อัตรา
                     </span>
                   )}
                 </div>
 
-                {/* Position details body */}
-                <div style={{ padding: "12px 16px", background: "var(--white)" }}>
-                  {/* Salary + Education row */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: pos.details ? 12 : 0 }}>
-                    {/* Salary */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: "0.72rem", color: "var(--gray-400)", fontWeight: 600 }}>💰 เงินเดือน</span>
-                      <span style={{
-                        padding: "3px 12px",
-                        background: "#f0fdf4", border: "1px solid #86efac",
-                        borderRadius: "999px",
-                        fontSize: "0.8rem", fontWeight: 700, color: "#15803d",
-                      }}>
-                        {pos.salary}
-                      </span>
-                    </div>
-                    {/* Education */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "0.72rem", color: "var(--gray-400)", fontWeight: 600 }}>🎓 วุฒิ</span>
-                      {posEdus.map((edu, eIdx) => {
-                        const style = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
-                        return (
-                          <span key={eIdx} style={{
-                            padding: "3px 12px",
-                            background: style.bg, border: `1px solid ${style.border}`,
-                            borderRadius: "999px",
-                            fontSize: "0.78rem", fontWeight: 700, color: style.color,
-                          }}>
-                            {edu}
-                          </span>
-                        );
-                      })}
-                    </div>
+                {/* Position Details Body */}
+                <div className="detail-pos-content">
+                  {/* Salary & Education Specs */}
+                  <div className="detail-pos-specs-bar">
+                    {pos.salary && (
+                      <div className="detail-spec-chip chip-salary">
+                        <span className="spec-label">💰 เงินเดือน:</span>
+                        <span className="spec-value">{pos.salary}</span>
+                      </div>
+                    )}
+                    {posEdus.length > 0 && (
+                      <div className="detail-spec-chip chip-education">
+                        <span className="spec-label">🎓 วุฒิ:</span>
+                        <div className="spec-edu-tags">
+                          {posEdus.map((edu, eIdx) => {
+                            const style = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+                            return (
+                              <span key={eIdx} className="detail-edu-tag" style={{
+                                background: style.bg, borderColor: style.border, color: style.color
+                              }}>
+                                {edu}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Qualifications (details) */}
+                  {/* Qualifications Note */}
                   {pos.details && (
-                    <div style={{
-                      padding: "10px 14px",
-                      background: "var(--navy-50)",
-                      border: "1px solid var(--navy-100)",
-                      borderRadius: "var(--radius-md)",
-                      fontSize: "0.82rem",
-                      color: "var(--gray-700)",
-                      lineHeight: 1.85,
-                      whiteSpace: "pre-wrap",
-                    }}>
-                      <div style={{
-                        fontSize: "0.7rem", fontWeight: 700,
-                        color: "var(--navy-600)", textTransform: "uppercase",
-                        letterSpacing: "0.05em", marginBottom: 6,
-                      }}>
-                        คุณสมบัติเฉพาะตำแหน่ง
+                    <div className="detail-pos-qualifications">
+                      <div className="qualifications-header">
+                        <span className="qualifications-icon">📌</span>
+                        <span>คุณสมบัติเฉพาะสำหรับตำแหน่ง</span>
                       </div>
-                      {pos.details}
+                      <div className="qualifications-content">
+                        {pos.details}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -563,25 +476,55 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           })}
         </div>
 
-        {/* Description / Application info */}
+        {/* ── 4. Application Guide & Info ── */}
         {job.description && (
-          <div style={{
-            marginBottom: 20,
-            padding: "14px 16px",
-            background: "linear-gradient(135deg, #f0f9ff, #e0f2fe)",
-            border: "1px solid #bae6fd",
-            borderRadius: "var(--radius-lg)",
-          }}>
-            <h3 style={{
-              fontSize: "0.82rem", fontWeight: 700,
-              color: "#0369a1", marginBottom: 8,
-              display: "flex", alignItems: "center", gap: 6,
-            }}>
-              📝 การรับสมัคร
-            </h3>
-            <p style={{ fontSize: "0.855rem", color: "#0c4a6e", lineHeight: 1.85, margin: 0, whiteSpace: "pre-wrap" }}>
-              {job.description}
-            </p>
+          <div className="detail-apply-guide-card">
+            <div className="apply-guide-header">
+              <div className="apply-guide-title-wrap">
+                <span className="apply-guide-icon">📝</span>
+                <h3 className="apply-guide-title">วิธีการรับสมัครและรายละเอียด</h3>
+              </div>
+              {isEmail && (
+                <span className="apply-guide-mode-tag">รับสมัครทางอีเมล</span>
+              )}
+            </div>
+
+            <div className="apply-guide-body">
+              <p className="apply-guide-text">{job.description}</p>
+            </div>
+
+            {/* Smart Email Application Box */}
+            {isEmail && detectedEmail && (
+              <div className="detail-email-action-box">
+                <div className="email-action-left">
+                  <div className="email-action-avatar">✉️</div>
+                  <div className="email-action-meta">
+                    <span className="email-action-subtitle">ส่งเอกสารใบสมัครทางอีเมลได้ที่:</span>
+                    <strong className="email-action-address">{detectedEmail}</strong>
+                  </div>
+                </div>
+                <div className="email-action-buttons">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(detectedEmail);
+                      setIsEmailCopied(true);
+                      setTimeout(() => setIsEmailCopied(false), 2200);
+                    }}
+                    className="btn-copy-email-action"
+                    title={`คัดลอกอีเมล ${detectedEmail}`}
+                  >
+                    {isEmailCopied ? "✅ คัดลอกแล้ว" : "📋 คัดลอกอีเมล"}
+                  </button>
+                  <a
+                    href={`mailto:${detectedEmail}?subject=${encodeURIComponent(emailSubject)}`}
+                    className="btn-send-email-action"
+                  >
+                    ✉️ ส่งเมลสมัครทันที
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

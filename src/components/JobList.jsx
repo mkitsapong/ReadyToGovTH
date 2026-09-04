@@ -78,6 +78,29 @@ export default function JobList({
   }, [filterOCSC]);
   
   const { bookmarks = [], toggleBookmark, isBookmarked } = useBookmarks();
+
+  // Count only bookmarks that correspond to real jobs currently available
+  const validBookmarkCount = useMemo(() => {
+    if (!jobs || jobs.length === 0) return 0;
+    return jobs.filter((j) => isBookmarked(j.id)).length;
+  }, [jobs, isBookmarked, bookmarks]);
+
+  // Automatically prune ghost or deleted job IDs from localStorage
+  useEffect(() => {
+    if (jobs && jobs.length > 0 && bookmarks.length > 0) {
+      const activeJobIds = new Set(jobs.map((j) => String(j.id)));
+      const hasOrphans = bookmarks.some((id) => !activeJobIds.has(String(id)));
+      if (hasOrphans) {
+        const cleaned = bookmarks.filter((id) => activeJobIds.has(String(id)));
+        try {
+          localStorage.setItem("readytogov_bookmarks", JSON.stringify(cleaned));
+          window.dispatchEvent(new CustomEvent("readytogov_bookmarks_updated"));
+        } catch (e) {
+          console.error("Error pruning ghost bookmarks", e);
+        }
+      }
+    }
+  }, [jobs, bookmarks]);
   const regionDropdownRef = useRef(null);
   const ITEMS_PER_PAGE = 9;
 
@@ -495,8 +518,8 @@ export default function JobList({
                 >
                   <span className="chip-icon">{showBookmarksOnly ? "❤️" : "🤍"}</span>
                   <span>ที่บันทึกไว้</span>
-                  {bookmarks.length > 0 && (
-                    <span className="chip-counter">{bookmarks.length}</span>
+                  {validBookmarkCount > 0 && (
+                    <span className="chip-counter">{validBookmarkCount}</span>
                   )}
                 </button>
                 
