@@ -25,7 +25,7 @@ export async function convertExternalImageToBase64(url, timeoutMs = 6000) {
         return await blobToDataUrl(blob);
       }
     }
-  } catch (_) { /* fallthrough */ }
+  } catch { /* fallthrough */ }
 
   // Try CORS proxies
   for (const makeProxy of CORS_PROXIES) {
@@ -38,13 +38,13 @@ export async function convertExternalImageToBase64(url, timeoutMs = 6000) {
           return await blobToDataUrl(blob);
         }
       }
-    } catch (_) { /* fallthrough */ }
+    } catch { /* fallthrough */ }
   }
 
   // Try canvas approach
   try {
     return await loadImageViaCanvas(url, timeoutMs);
-  } catch (_) { /* fallthrough */ }
+  } catch { /* fallthrough */ }
 
   return url; // Return original if all fail
 }

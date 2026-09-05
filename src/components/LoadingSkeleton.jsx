@@ -1,5 +1,3 @@
-import React from "react";
-
 // Modern dual-ring spinner with central glowing dot
 export function LoadingSpinner({ size = 38, color = "var(--accent)" }) {
   return (
@@ -109,7 +107,7 @@ export function JobCardSkeleton() {
       </div>
 
       {/* Countdown strip skeleton */}
-      <div style={{ padding: "9px 18px", borderBottom: "1px solid var(--gray-100)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--gray-50)" }}>
+      <div style={{ padding: "9px 18px", borderBottom: "1px solid var(--border-light, var(--gray-100))", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-card-subtle, var(--gray-50))" }}>
         <div className="skeleton-box skeleton-shimmer" style={{ height: 14, width: 140, borderRadius: 6 }} />
         <div className="skeleton-box skeleton-shimmer" style={{ height: 20, width: 80, borderRadius: 999 }} />
       </div>
@@ -117,7 +115,7 @@ export function JobCardSkeleton() {
       {/* Card Body (Clean Minimalist) */}
       <div style={{ padding: "14px 18px 12px", display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
         {/* Salary & Quota summary bar skeleton */}
-        <div style={{ padding: "8px 12px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ padding: "8px 12px", background: "var(--bg-card-hover, #f8fafc)", border: "1px solid var(--border-card, #e2e8f0)", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div className="skeleton-box skeleton-shimmer" style={{ height: 16, width: 110, borderRadius: 6 }} />
           <div className="skeleton-box skeleton-shimmer" style={{ height: 14, width: 70, borderRadius: 6 }} />
         </div>
@@ -213,20 +211,14 @@ export function JobDetailSkeleton({ onBack }) {
               }}
             />
 
-            {/* Header top actions placeholder */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginBottom: 12 }}>
-              <div className="skeleton-box skeleton-shimmer-dark" style={{ width: 34, height: 34, borderRadius: "50%" }} />
-              <div className="skeleton-box skeleton-shimmer-dark" style={{ width: 34, height: 34, borderRadius: "50%" }} />
-            </div>
-
             {/* Main Header Content */}
             <div style={{ display: "flex", alignItems: "center", gap: "clamp(16px, 4vw, 24px)" }}>
               {/* Logo Skeleton */}
               <div
                 className="skeleton-box skeleton-shimmer-dark"
                 style={{
-                  width: "clamp(72px, 18vw, 96px)",
-                  height: "clamp(72px, 18vw, 96px)",
+                  width: "clamp(92px, 18vw, 130px)",
+                  height: "clamp(92px, 18vw, 130px)",
                   borderRadius: "50%",
                   flexShrink: 0,
                   border: "3px solid rgba(255,255,255,0.15)",
@@ -235,12 +227,22 @@ export function JobDetailSkeleton({ onBack }) {
 
               {/* Header Text Skeleton */}
               <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 24, width: 90, borderRadius: 999 }} />
-                  <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 24, width: 115, borderRadius: 999 }} />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 24, width: 90, borderRadius: 999 }} />
+                    <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 24, width: 115, borderRadius: 999 }} />
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <div className="skeleton-box skeleton-shimmer-dark" style={{ width: 60, height: 28, borderRadius: 8 }} />
+                    <div className="skeleton-box skeleton-shimmer-dark" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                  </div>
                 </div>
-                <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 26, width: "75%", borderRadius: 6 }} />
-                <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 16, width: "45%", borderRadius: 6 }} />
+                <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 28, width: "65%", borderRadius: 6 }} />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 22, width: 120, borderRadius: 999 }} />
+                  <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 22, width: 95, borderRadius: 999 }} />
+                  <div className="skeleton-box skeleton-shimmer-dark" style={{ height: 22, width: 85, borderRadius: 999 }} />
+                </div>
               </div>
             </div>
           </div>

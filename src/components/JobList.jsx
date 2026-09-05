@@ -83,7 +83,7 @@ export default function JobList({
   const validBookmarkCount = useMemo(() => {
     if (!jobs || jobs.length === 0) return 0;
     return jobs.filter((j) => isBookmarked(j.id)).length;
-  }, [jobs, isBookmarked, bookmarks]);
+  }, [jobs, isBookmarked]);
 
   // Automatically prune ghost or deleted job IDs from localStorage
   useEffect(() => {
@@ -600,14 +600,14 @@ export default function JobList({
 
           {/* Pagination Controls */}
           {!isLoading && !isError && totalPages > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: "3rem" }}>
+            <div className="pagination-wrapper">
               <button
+                className="pagination-btn"
                 onClick={() => {
                   setCurrentPage(p => Math.max(1, p - 1));
                   window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
                 }}
                 disabled={currentPage === 1}
-                style={{ padding: "8px 16px", border: "1px solid var(--gray-200)", borderRadius: "var(--radius-md)", background: currentPage === 1 ? "var(--gray-50)" : "white", cursor: currentPage === 1 ? "not-allowed" : "pointer", color: currentPage === 1 ? "var(--gray-400)" : "var(--navy-600)", fontWeight: 600 }}
               >
                 ก่อนหน้า
               </button>
@@ -616,41 +616,32 @@ export default function JobList({
                 const p = i + 1;
                 // Show first, last, current, and one adjacent
                 if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+                  const isActive = p === currentPage;
                   return (
                     <button
                       key={p}
+                      className={`pagination-num-btn ${isActive ? "active" : ""}`}
                       onClick={() => {
                         setCurrentPage(p);
                         window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
-                      }}
-                      style={{
-                        width: 40, height: 40,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        borderRadius: "var(--radius-md)",
-                        border: p === currentPage ? "none" : "1px solid var(--gray-200)",
-                        background: p === currentPage ? "linear-gradient(135deg, var(--navy-600), var(--navy-800))" : "white",
-                        color: p === currentPage ? "white" : "var(--navy-600)",
-                        fontWeight: p === currentPage ? 700 : 500,
-                        cursor: "pointer",
-                        boxShadow: p === currentPage ? "0 4px 12px rgba(13,31,60,0.2)" : "none"
                       }}
                     >
                       {p}
                     </button>
                   );
                 } else if (p === currentPage - 2 || p === currentPage + 2) {
-                  return <span key={`dots-${p}`} style={{ padding: "0 4px", color: "var(--gray-400)" }}>...</span>;
+                  return <span key={`dots-${p}`} className="pagination-dots">...</span>;
                 }
                 return null;
               })}
 
               <button
+                className="pagination-btn"
                 onClick={() => {
                   setCurrentPage(p => Math.min(totalPages, p + 1));
                   window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
                 }}
                 disabled={currentPage === totalPages}
-                style={{ padding: "8px 16px", border: "1px solid var(--gray-200)", borderRadius: "var(--radius-md)", background: currentPage === totalPages ? "var(--gray-50)" : "white", cursor: currentPage === totalPages ? "not-allowed" : "pointer", color: currentPage === totalPages ? "var(--gray-400)" : "var(--navy-600)", fontWeight: 600 }}
               >
                 ถัดไป
               </button>

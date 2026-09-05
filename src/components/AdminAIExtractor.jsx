@@ -112,25 +112,24 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
   }
 
   return (
-    <div style={{
+    <div className="admin-ai-card" style={{
       marginBottom: "20px",
       borderRadius: "var(--radius-xl)",
       border: "1.5px solid rgba(234, 88, 12, 0.3)",
-      background: "linear-gradient(135deg, rgba(234, 88, 12, 0.04) 0%, rgba(59, 130, 246, 0.04) 100%)",
       overflow: "hidden",
       boxShadow: "0 4px 16px rgba(0, 0, 0, 0.03)"
     }}>
       {/* Header bar */}
-      <div style={{
-        padding: "12px 18px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        background: "rgba(255, 255, 255, 0.8)",
-        borderBottom: isOpen ? "1px solid rgba(234, 88, 12, 0.15)" : "none",
-        cursor: "pointer",
-      }}
-      onClick={() => setIsOpen(!isOpen)}
+      <div 
+        className="admin-ai-header"
+        style={{
+          padding: "12px 18px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: "pointer",
+        }}
+        onClick={() => setIsOpen(!isOpen)}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{
@@ -148,20 +147,20 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
             ✨
           </span>
           <div>
-            <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--navy-900)", display: "flex", alignItems: "center", gap: 6 }}>
+            <div className="admin-ai-title" style={{ fontSize: "0.92rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
               AI ดึงข้อมูลประกาศอัตโนมัติ (PDF / ข้อความ)
-              <span style={{
+              <span className="admin-ai-badge" style={{
                 fontSize: "0.68rem",
                 fontWeight: 700,
                 color: "#ea580c",
-                background: "rgba(234, 88, 12, 0.1)",
+                background: "rgba(234, 88, 12, 0.12)",
                 padding: "2px 8px",
                 borderRadius: "999px"
               }}>
                 Gemini Flash AI
               </span>
             </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--navy-500)", marginTop: 2 }}>
+            <div className="admin-ai-subtitle" style={{ fontSize: "0.75rem", marginTop: 2 }}>
               อัปโหลด PDF ประกาศ หรือวางข้อความ เพื่อให้ AI ช่วยกรอกฟอร์มให้อัตโนมัติใน 3 วินาที
             </div>
           </div>
@@ -170,23 +169,12 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             type="button"
+            className="admin-ai-key-btn"
             onClick={(e) => {
               e.stopPropagation();
               setShowKeyConfig(!showKeyConfig);
             }}
             title="ตั้งค่า Gemini API Key"
-            style={{
-              background: "var(--gray-100)",
-              border: "1px solid var(--gray-300)",
-              borderRadius: "var(--radius-sm)",
-              padding: "4px 8px",
-              fontSize: "0.72rem",
-              color: "var(--navy-700)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4
-            }}
           >
             ⚙️ {apiKey ? "มี API Key แล้ว" : "ตั้งค่า API Key"}
           </button>
@@ -198,30 +186,27 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
 
       {/* Body when open */}
       {isOpen && (
-        <div style={{ padding: "16px 20px", background: "white" }}>
+        <div className="admin-ai-body" style={{ padding: "16px 20px" }}>
           {/* API Key configuration box */}
           {showKeyConfig && (
-            <div style={{
+            <div className="admin-ai-key-box" style={{
               padding: "12px 14px",
-              background: "var(--navy-50)",
-              border: "1px solid var(--navy-200)",
               borderRadius: "var(--radius-md)",
               marginBottom: 16
             }}>
-              <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--navy-800)", display: "block", marginBottom: 4 }}>
+              <label className="form-label" style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: 4 }}>
                 🔑 Google Gemini API Key
               </label>
               <div style={{ display: "flex", gap: 8 }}>
                 <input
                   type="password"
+                  className="form-input"
                   placeholder="AIzaSy..."
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   style={{
                     flex: 1,
                     padding: "8px 12px",
-                    border: "1px solid var(--gray-300)",
-                    borderRadius: "var(--radius-sm)",
                     fontSize: "0.85rem"
                   }}
                 />
@@ -234,7 +219,7 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
                   บันทึก Key
                 </button>
               </div>
-              <p style={{ fontSize: "0.72rem", color: "var(--navy-600)", margin: "6px 0 0 0" }}>
+              <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", margin: "6px 0 0 0" }}>
                 💡 รับ API Key ฟรีได้จาก <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: "var(--accent)", fontWeight: 600 }}>Google AI Studio ↗</a>
               </p>
             </div>
@@ -244,43 +229,15 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             <button
               type="button"
+              className={`admin-ai-tab-btn ${activeTab === "file" ? "active" : ""}`}
               onClick={() => { setActiveTab("file"); setError(""); }}
-              style={{
-                flex: 1,
-                padding: "8px 14px",
-                borderRadius: "var(--radius-md)",
-                border: activeTab === "file" ? "1.5px solid var(--accent)" : "1px solid var(--gray-200)",
-                background: activeTab === "file" ? "rgba(234, 88, 12, 0.08)" : "var(--gray-50)",
-                color: activeTab === "file" ? "var(--accent)" : "var(--navy-700)",
-                fontWeight: activeTab === "file" ? 700 : 500,
-                fontSize: "0.85rem",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6
-              }}
             >
               📄 อัปโหลดไฟล์ PDF / รูปภาพประกาศ
             </button>
             <button
               type="button"
+              className={`admin-ai-tab-btn ${activeTab === "text" ? "active" : ""}`}
               onClick={() => { setActiveTab("text"); setError(""); }}
-              style={{
-                flex: 1,
-                padding: "8px 14px",
-                borderRadius: "var(--radius-md)",
-                border: activeTab === "text" ? "1.5px solid var(--accent)" : "1px solid var(--gray-200)",
-                background: activeTab === "text" ? "rgba(234, 88, 12, 0.08)" : "var(--gray-50)",
-                color: activeTab === "text" ? "var(--accent)" : "var(--navy-700)",
-                fontWeight: activeTab === "text" ? 700 : 500,
-                fontSize: "0.85rem",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6
-              }}
             >
               📋 วางข้อความประกาศ
             </button>
@@ -299,6 +256,7 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
 
               {!file ? (
                 <div
+                  className={`admin-ai-dropzone ${isDragOver ? "drag-over" : ""}`}
                   onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
                   onDragLeave={() => setIsDragOver(false)}
                   onDrop={(e) => {
@@ -308,31 +266,27 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
                   }}
                   onClick={() => fileInputRef.current?.click()}
                   style={{
-                    border: `2px dashed ${isDragOver ? "var(--accent)" : "var(--gray-300)"}`,
                     borderRadius: "var(--radius-lg)",
                     padding: "28px 16px",
                     textAlign: "center",
                     cursor: "pointer",
-                    background: isDragOver ? "rgba(234, 88, 12, 0.05)" : "var(--gray-50)",
                     transition: "all 0.2s"
                   }}
                 >
                   <div style={{ fontSize: "2rem", marginBottom: 8 }}>📁</div>
-                  <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--navy-800)" }}>
+                  <div className="admin-ai-drop-title" style={{ fontSize: "0.9rem", fontWeight: 700 }}>
                     คลิกเพื่อเลือกไฟล์ หรือลากไฟล์ PDF / รูปภาพประกาศมาวางที่นี่
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--gray-500)", marginTop: 4 }}>
+                  <div className="admin-ai-drop-sub" style={{ fontSize: "0.75rem", marginTop: 4 }}>
                     รองรับไฟล์ PDF, PNG, JPG ขนาดไม่เกิน 20 MB
                   </div>
                 </div>
               ) : (
-                <div style={{
+                <div className="admin-ai-file-preview" style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   padding: "12px 16px",
-                  background: "var(--navy-50)",
-                  border: "1px solid var(--navy-200)",
                   borderRadius: "var(--radius-md)"
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -340,10 +294,10 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
                       {file.name.endsWith(".pdf") ? "📑" : "🖼️"}
                     </span>
                     <div>
-                      <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--navy-900)" }}>
+                      <div className="admin-ai-file-name" style={{ fontSize: "0.88rem", fontWeight: 700 }}>
                         {file.name}
                       </div>
-                      <div style={{ fontSize: "0.72rem", color: "var(--navy-500)" }}>
+                      <div className="admin-ai-file-size" style={{ fontSize: "0.72rem" }}>
                         {(file.size / 1024 / 1024).toFixed(2)} MB
                       </div>
                     </div>
@@ -354,7 +308,7 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
                     style={{
                       background: "transparent",
                       border: "none",
-                      color: "#dc2626",
+                      color: "#ef4444",
                       cursor: "pointer",
                       fontSize: "0.85rem",
                       fontWeight: 600
@@ -383,26 +337,21 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
 
           {/* Real-time Progress Bar & Status */}
           {isLoading && (
-            <div style={{
+            <div className="admin-ai-progress-box" style={{
               marginTop: 14,
               padding: "16px 18px",
-              background: "linear-gradient(135deg, rgba(234,88,12,0.06), rgba(59,130,246,0.06))",
-              border: "1px solid rgba(234,88,12,0.25)",
               borderRadius: "var(--radius-lg)",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", fontWeight: 700, color: "var(--navy-900)" }}>
+                <div className="admin-ai-progress-title" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", fontWeight: 700 }}>
                   <span style={{ display: "inline-block", animation: "spin 1.5s linear infinite" }}>⚙️</span>
                   <span>{progressStep || "กำลังประมวลผล..."}</span>
                 </div>
-                <span style={{
+                <span className="admin-ai-progress-pct" style={{
                   fontSize: "0.85rem",
                   fontWeight: 800,
-                  color: "#ea580c",
-                  background: "white",
                   padding: "2px 10px",
                   borderRadius: "999px",
-                  boxShadow: "0 2px 6px rgba(234,88,12,0.15)",
                 }}>
                   {progress}%
                 </span>
@@ -412,7 +361,7 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
               <div style={{
                 width: "100%",
                 height: "10px",
-                background: "rgba(0,0,0,0.06)",
+                background: "rgba(0,0,0,0.1)",
                 borderRadius: "999px",
                 overflow: "hidden",
                 position: "relative",
@@ -427,7 +376,7 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
                 }} />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", color: "var(--navy-500)", marginTop: 8 }}>
+              <div className="admin-ai-progress-steps" style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", marginTop: 8 }}>
                 <span>1. อ่านเอกสาร</span>
                 <span>2. สแกนเนื้อหา</span>
                 <span>3. แกะตำแหน่ง & วุฒิ</span>

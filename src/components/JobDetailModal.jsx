@@ -134,109 +134,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
         <div className="detail-header-glow detail-glow-tr" />
         <div className="detail-header-glow detail-glow-bl" />
 
-        {/* Top Slim Utility Bar: Badges + Action Buttons */}
-        <div className="detail-header-top-bar">
-          <div className="detail-header-badges">
-            {categories.map((cat, idx) => {
-              const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
-              return (
-                <span key={idx} className={`detail-cat-badge ${catMeta.badge}`}>
-                  <span>{cat}</span>
-                </span>
-              );
-            })}
-            {job.isNoOCSC ? (
-              <span className="top-bar-badge badge-no-ocsc detail-badge-ocsc">
-                <span className="badge-icon">✨</span>
-                <span>ไม่ต้องผ่าน ภาค ก</span>
-              </span>
-            ) : job.isOCSC ? (
-              <span className="top-bar-badge badge-ocsc detail-badge-ocsc">
-                <span className="badge-icon">📝</span>
-                <span>ต้องผ่าน ภาค ก</span>
-              </span>
-            ) : null}
-            {days >= 0 && days <= 5 && (
-              <span className="detail-badge-urgent">
-                🔥 {days === 0 ? "ปิดรับวันนี้!" : `ด่วน! เหลืออีก ${days} วัน`}
-              </span>
-            )}
-          </div>
-
-          <div className="detail-header-actions">
-            {isAdmin && onEdit && (
-              <button
-                type="button"
-                onClick={() => onEdit(job)}
-                title="แก้ไขประกาศนี้"
-                className="btn-header-action btn-header-edit"
-              >
-                ✏️ แก้ไข
-              </button>
-            )}
-
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={handleDownloadBanner}
-                disabled={isGeneratingBanner}
-                title="สร้างรูปแบนเนอร์สรุปสำหรับแชร์"
-                className="btn-header-action btn-header-banner"
-              >
-                {isGeneratingBanner ? "⏳ กำลังสร้าง..." : "📷 เซฟรูปแบนเนอร์"}
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={async () => {
-                const url = `${window.location.origin}/job/${job.id}`;
-                if (navigator.share) {
-                  try {
-                    await navigator.share({
-                      title: `งานราชการ: ${job.department}`,
-                      text: `ดูประกาศรับสมัครงานของ ${job.department} ได้ที่นี่`,
-                      url: url,
-                    });
-                  } catch {
-                    // user cancelled or error
-                  }
-                } else {
-                  navigator.clipboard.writeText(url);
-                  setIsCopied(true);
-                  setTimeout(() => setIsCopied(false), 2000);
-                }
-              }}
-              title="แชร์ลิงก์งานนี้"
-              className="btn-header-action btn-header-glass"
-            >
-              {isCopied ? "✅ คัดลอกแล้ว" : "🔗 แชร์"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => toggleBookmark(job.id)}
-              title={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
-              className={`btn-header-bookmark ${bookmarked ? "bookmarked" : ""}`}
-            >
-              {bookmarked ? "❤️" : "🤍"}
-            </button>
-
-            {!inline && (
-              <button
-                type="button"
-                className="btn-header-close"
-                onClick={onClose}
-                aria-label="ปิด"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Main Identity: Logo + Department Title + Meta Subline */}
-        <div className="detail-header-main">
+        <div className="detail-header-inner">
+          {/* Main Identity Logo */}
           <div className="detail-logo-wrapper">
             {job.logoUrl ? (
               <img
@@ -254,23 +153,125 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             )}
           </div>
 
-          <div className="detail-title-block">
-            <h1 className="detail-dept-title">{job.department}</h1>
-            <div className="detail-header-pills">
-              {provinces.length > 0 && (
-                <span className="detail-header-pill">
-                  📍 {provinces.join(", ")}
+          {/* Top row: Badges on left, Action Buttons on right */}
+          <div className="detail-info-top-row">
+            <div className="detail-header-badges">
+              {categories.map((cat, idx) => {
+                const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
+                return (
+                  <span key={idx} className={`detail-cat-badge ${catMeta.badge}`}>
+                    <span>{cat}</span>
+                  </span>
+                );
+              })}
+              {job.isNoOCSC ? (
+                <span className="top-bar-badge badge-no-ocsc detail-badge-ocsc">
+                  <span className="badge-icon">✨</span>
+                  <span>ไม่ต้องผ่าน ภาค ก</span>
                 </span>
-              )}
-              <span className="detail-header-pill">
-                👥 รวม {totalCount} อัตรา
-              </span>
-              {job.positionList && job.positionList.length > 0 && (
-                <span className="detail-header-pill">
-                  💼 {job.positionList.length} ตำแหน่ง
+              ) : job.isOCSC ? (
+                <span className="top-bar-badge badge-ocsc detail-badge-ocsc">
+                  <span className="badge-icon">📝</span>
+                  <span>ต้องผ่าน ภาค ก</span>
+                </span>
+              ) : null}
+              {days >= 0 && days <= 5 && (
+                <span className="detail-badge-urgent">
+                  🔥 {days === 0 ? "ปิดรับวันนี้!" : `ด่วน! เหลืออีก ${days} วัน`}
                 </span>
               )}
             </div>
+
+            <div className="detail-header-actions">
+              {isAdmin && onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(job)}
+                  title="แก้ไขประกาศนี้"
+                  className="btn-header-action btn-header-edit"
+                >
+                  ✏️ แก้ไข
+                </button>
+              )}
+
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={handleDownloadBanner}
+                  disabled={isGeneratingBanner}
+                  title="สร้างรูปแบนเนอร์สรุปสำหรับแชร์"
+                  className="btn-header-action btn-header-banner"
+                >
+                  {isGeneratingBanner ? "⏳ กำลังสร้าง..." : "📷 เซฟรูปแบนเนอร์"}
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={async () => {
+                  const url = `${window.location.origin}/job/${job.id}`;
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: `งานราชการ: ${job.department}`,
+                        text: `ดูประกาศรับสมัครงานของ ${job.department} ได้ที่นี่`,
+                        url: url,
+                      });
+                    } catch {
+                      // user cancelled or error
+                    }
+                  } else {
+                    navigator.clipboard.writeText(url);
+                    setIsCopied(true);
+                    setTimeout(() => setIsCopied(false), 2000);
+                  }
+                }}
+                title="แชร์ลิงก์งานนี้"
+                className="btn-header-action btn-header-glass"
+              >
+                {isCopied ? "✅ คัดลอกแล้ว" : "🔗 แชร์"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleBookmark(job.id)}
+                title={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+                className={`btn-header-bookmark ${bookmarked ? "bookmarked" : ""}`}
+              >
+                {bookmarked ? "❤️" : "🤍"}
+              </button>
+
+              {!inline && (
+                <button
+                  type="button"
+                  className="btn-header-close"
+                  onClick={onClose}
+                  aria-label="ปิด"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Department Title */}
+          <h1 className="detail-dept-title">{job.department}</h1>
+
+          {/* Meta Subline: Location, Headcount, Positions */}
+          <div className="detail-header-pills">
+            {provinces.length > 0 && (
+              <span className="detail-header-pill">
+                📍 {provinces.join(", ")}
+              </span>
+            )}
+            <span className="detail-header-pill">
+              👥 รวม {totalCount} อัตรา
+            </span>
+            {job.positionList && job.positionList.length > 0 && (
+              <span className="detail-header-pill">
+                💼 {job.positionList.length} ตำแหน่ง
+              </span>
+            )}
           </div>
         </div>
       </div>

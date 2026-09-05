@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "../utils/constants.js";
-import { getDisplayProvinces, getEduMatchStatus, daysLeft, formatDate, getTotalJobPositions } from "../utils/helpers.js";
+import { getDisplayProvinces, daysLeft, formatDate, getTotalJobPositions } from "../utils/helpers.js";
 
 export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark }) {
 
@@ -10,7 +10,6 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
   const days = daysLeft(job.deadline);
   const urgent = days <= 7 && days >= 0;
   const expired = days < 0;
-  const eduStatus = getEduMatchStatus(job.positionList, userEducation);
   const totalCount = getTotalJobPositions(job);
 
   const displayStartDate = job.startDate || job.postedDate;

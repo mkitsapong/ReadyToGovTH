@@ -473,9 +473,9 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
               <div className="form-grid-2">
                 <div id="admin-field-categories" className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">ประเภทงาน <span className="required">*</span></label>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px 16px" }}>
+                  <div className="admin-checkbox-group" style={{ display: "flex", flexWrap: "wrap", gap: "10px 16px" }}>
                     {CATEGORIES.map((c) => (
-                      <label key={c} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: "0.85rem", color: "var(--navy-800)" }}>
+                      <label key={c} className="admin-checkbox-label">
                         <input 
                           type="checkbox" 
                           checked={form.categories?.includes(c)}
@@ -487,13 +487,13 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                           }}
                           style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--accent)" }}
                         />
-                        {c}
+                        <span>{c}</span>
                       </label>
                     ))}
                   </div>
                   {errors.categories && <p style={{ color: "var(--accent)", fontSize: "0.78rem", marginTop: 4 }}>{errors.categories}</p>}
-                  <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.82rem", color: "var(--navy-700)", fontWeight: 600 }}>
+                  <div className="admin-ocsc-group" style={{ display: "flex", gap: 16, marginTop: 12 }}>
+                    <label className="admin-checkbox-label">
                       <input
                         type="checkbox"
                         checked={form.isOCSC}
@@ -503,10 +503,10 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                         }}
                         style={{ width: 16, height: 16, cursor: "pointer" }}
                       />
-                      ต้องผ่าน ภาค ก
+                      <span>ต้องผ่าน ภาค ก</span>
                     </label>
 
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: "0.82rem", color: "var(--navy-700)", fontWeight: 600 }}>
+                    <label className="admin-checkbox-label">
                       <input
                         type="checkbox"
                         checked={form.isNoOCSC}
@@ -516,7 +516,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                         }}
                         style={{ width: 16, height: 16, cursor: "pointer" }}
                       />
-                      ไม่ต้องผ่าน ภาค ก
+                      <span>ไม่ต้องผ่าน ภาค ก</span>
                     </label>
                   </div>
                 </div>
@@ -528,17 +528,9 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                     id="admin-field-provinces"
                     type="button"
                     onClick={() => setProvinceOpen((o) => !o)}
+                    className="admin-province-select-btn"
                     style={{
-                      width: "100%", textAlign: "left",
-                      padding: "9px 12px",
                       border: `1.5px solid ${errors.provinces ? "var(--accent)" : "var(--gray-200)"}`,
-                      borderRadius: "var(--radius-md)",
-                      background: "var(--gray-50)",
-                      fontSize: "0.85rem",
-                      color: form.provinces.length ? "var(--navy-800)" : "var(--gray-400)",
-                      cursor: "pointer",
-                      fontFamily: "var(--font-sans)",
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
                     }}
                   >
                     <span style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", flex: 1 }}>
@@ -553,17 +545,12 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                   {form.provinces.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
                       {form.provinces.map((prov) => (
-                        <span key={prov} style={{
-                          display: "inline-flex", alignItems: "center", gap: 4,
-                          padding: "2px 8px", background: "var(--navy-50)",
-                          border: "1px solid var(--navy-200)", borderRadius: "999px",
-                          fontSize: "0.72rem", color: "var(--navy-700)", fontWeight: 600,
-                        }}>
+                        <span key={prov} className="admin-province-tag">
                           📍 {prov}
                           <button
                             type="button"
                             onClick={() => toggleProvince(prov)}
-                            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gray-400)", fontSize: "0.75rem", lineHeight: 1, padding: 0 }}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", opacity: 0.7, fontSize: "0.75rem", lineHeight: 1, padding: 0 }}
                           >×</button>
                         </span>
                       ))}
@@ -572,10 +559,9 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
 
                   {/* Dropdown list grouped by region */}
                   {provinceOpen && (
-                    <div style={{
+                    <div className="admin-province-dropdown" style={{
                       position: "absolute", zIndex: 1000, marginTop: 4,
-                      background: "var(--white)", border: "1.5px solid var(--gray-200)",
-                      borderRadius: "var(--radius-lg)", boxShadow: "var(--shadow-lg)",
+                      borderRadius: "var(--radius-lg)",
                       maxHeight: 280, overflowY: "auto", width: "100%",
                     }}>
                       {regions.map((region) => (
@@ -584,17 +570,16 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                             <button
                               type="button"
                               onClick={() => toggleProvince(region.name)}
+                              className={`admin-region-btn ${form.provinces.includes(region.name) ? "selected" : ""}`}
                               style={{
                                 padding: "6px 12px",
-                                background: form.provinces.includes(region.name) ? "var(--navy-100)" : "var(--navy-50)",
-                                borderBottom: "1px solid var(--gray-100)",
                                 borderTop: "none", borderLeft: "none", borderRight: "none",
                                 display: "flex", alignItems: "center", gap: 8,
                                 width: "100%", textAlign: "left", cursor: "pointer",
                                 fontFamily: "var(--font-sans)",
                               }}
                             >
-                              <span style={{
+                              <span className="admin-region-checkbox-box" style={{
                                 width: 16, height: 16, flexShrink: 0,
                                 borderRadius: 4,
                                 border: `2px solid ${form.provinces.includes(region.name) ? "var(--navy-600)" : "var(--gray-300)"}`,
@@ -604,9 +589,9 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                               }}>
                                 {form.provinces.includes(region.name) ? "✓" : ""}
                               </span>
-                              <span style={{
+                              <span className="admin-region-title" style={{
                                 fontSize: "0.75rem", fontWeight: 700,
-                                color: form.provinces.includes(region.name) ? "var(--navy-800)" : "var(--navy-600)", textTransform: "uppercase",
+                                textTransform: "uppercase",
                                 letterSpacing: "0.05em",
                               }}>
                                 {region.name}
@@ -620,20 +605,18 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                                 key={prov}
                                 type="button"
                                 onClick={() => toggleProvince(prov)}
+                                className={`admin-province-item ${selected ? "selected" : ""}`}
                                 style={{
                                   display: "flex", alignItems: "center", gap: 8,
                                   width: "100%", textAlign: "left",
                                   padding: "7px 14px",
-                                  background: selected ? "var(--navy-50)" : "transparent",
                                   border: "none", cursor: "pointer",
                                   fontSize: "0.82rem",
-                                  color: selected ? "var(--navy-700)" : "var(--gray-700)",
                                   fontWeight: selected ? 600 : 400,
                                   fontFamily: "var(--font-sans)",
-                                  borderBottom: "1px solid var(--gray-50)",
                                 }}
                               >
-                                <span style={{
+                                <span className="admin-prov-checkbox-box" style={{
                                   width: 16, height: 16, flexShrink: 0,
                                   borderRadius: 4,
                                   border: `2px solid ${selected ? "var(--navy-600)" : "var(--gray-300)"}`,
@@ -643,7 +626,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                                 }}>
                                   {selected ? "✓" : ""}
                                 </span>
-                                {prov}
+                                <span>{prov}</span>
                               </button>
                             );
                           })}
@@ -678,17 +661,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                 <label className="form-label" style={{ margin: 0 }}>
                   ตำแหน่งที่เปิดรับ <span className="required">*</span>
                 </label>
-                <button type="button" onClick={addPosition}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 5,
-                    padding: "5px 12px",
-                    background: "var(--navy-50)", color: "var(--navy-700)",
-                    border: "1.5px dashed var(--navy-300)",
-                    borderRadius: "var(--radius-md)",
-                    fontSize: "0.78rem", fontWeight: 600,
-                    cursor: "pointer", fontFamily: "var(--font-sans)",
-                    transition: "all 0.15s",
-                  }}>
+                <button type="button" onClick={addPosition} className="admin-add-pos-btn">
                   ＋ เพิ่มตำแหน่ง
                 </button>
               </div>
@@ -701,27 +674,18 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                 {form.positionList.map((pos, i) => {
                   const isExpanded = expandedPosIndex === i;
                   return (
-                  <div key={i} style={{
-                    padding: "12px 14px",
-                    background: "var(--gray-50)",
-                    border: isExpanded ? "1.5px solid var(--accent)" : "1.5px solid var(--gray-200)",
-                    borderRadius: "var(--radius-lg)",
-                    position: "relative",
-                  }}>
+                  <div key={i} className={`admin-pos-accordion-card ${isExpanded ? "expanded" : ""}`}>
                     {/* Header (Accordion Toggle) */}
                     <div 
+                      className="admin-pos-accordion-header"
                       style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: isExpanded ? 12 : 0 }}
                       onClick={() => setExpandedPosIndex(isExpanded ? -1 : i)}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{
-                          background: "var(--navy-700)", color: "white",
-                          fontSize: "0.68rem", fontWeight: 700,
-                          padding: "2px 8px", borderRadius: "999px",
-                        }}>
+                        <div className="admin-pos-badge">
                           ตำแหน่งที่ {i + 1}
                         </div>
-                        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: pos.title ? "var(--navy-800)" : "var(--gray-400)" }}>
+                        <span className="admin-pos-title-text">
                           {pos.title || "(ยังไม่ได้ระบุชื่อตำแหน่ง)"}
                         </span>
                       </div>
@@ -794,16 +758,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                                       if (newEdu.length === 0) newEdu = [ed]; // Prevent empty selection
                                       handlePositionChange(i, "education", newEdu);
                                     }}
-                                    style={{
-                                      padding: "4px 10px",
-                                      borderRadius: "999px",
-                                      fontSize: "0.75rem",
-                                      fontWeight: isSelected ? 600 : 400,
-                                      cursor: "pointer",
-                                      border: isSelected ? "1px solid var(--accent)" : "1px solid var(--gray-300)",
-                                      background: isSelected ? "rgba(234, 88, 12, 0.1)" : "var(--white)",
-                                      color: isSelected ? "var(--accent)" : "var(--gray-600)"
-                                    }}
+                                    className={`admin-edu-pill ${isSelected ? "selected" : ""}`}
                                   >
                                     {ed}
                                   </button>
@@ -829,19 +784,19 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
 
                     {/* Units Section */}
                     {pos.units && pos.units.length > 0 && (
-                      <div style={{ marginTop: 12, paddingLeft: 12, borderLeft: "2px solid var(--accent-light)" }}>
+                      <div className="admin-units-wrapper" style={{ marginTop: 12, paddingLeft: 12, borderLeft: "2px solid var(--accent-light)" }}>
                         {pos.units.map((unit, uIdx) => (
-                          <div key={uIdx} style={{ marginBottom: 12, position: "relative" }}>
+                          <div key={uIdx} className="admin-unit-box" style={{ marginBottom: 12, position: "relative" }}>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 80px 1fr", gap: 8, marginBottom: 4 }}>
                               <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>สถานที่ / หน่วยงานย่อย *</label>
+                                <label className="form-label" style={{ fontSize: "0.7rem" }}>สถานที่ / หน่วยงานย่อย *</label>
                                 <input className="form-input" style={{ fontSize: "0.75rem", padding: "6px 10px" }}
                                   placeholder="เช่น หน่วยที่ 1 (จำนวน 1 อัตรา)"
                                   value={unit.name}
                                   onChange={(e) => handleUnitChange(i, uIdx, "name", e.target.value)} />
                               </div>
                               <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>อัตรา</label>
+                                <label className="form-label" style={{ fontSize: "0.7rem" }}>อัตรา</label>
                                 <input type="number" min="1" className="form-input" style={{ fontSize: "0.75rem", padding: "6px 10px" }}
                                   value={unit.count}
                                   onChange={(e) => handleUnitChange(i, uIdx, "count", e.target.value)} />
@@ -849,7 +804,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "10px", marginBottom: "10px" }}>
                               <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>วุฒิที่ต้องการ</label>
+                                <label className="form-label" style={{ fontSize: "0.7rem" }}>วุฒิที่ต้องการ</label>
                                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
                                   {EDUCATION.map((ed) => {
                                     const isSelected = Array.isArray(unit.education) ? unit.education.includes(ed) : unit.education === ed;
@@ -863,16 +818,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                                           if (newEdu.length === 0) newEdu = [ed];
                                           handleUnitChange(i, uIdx, "education", newEdu);
                                         }}
-                                        style={{
-                                          padding: "2px 8px",
-                                          borderRadius: "999px",
-                                          fontSize: "0.7rem",
-                                          fontWeight: isSelected ? 600 : 400,
-                                          cursor: "pointer",
-                                          border: isSelected ? "1px solid var(--accent)" : "1px solid var(--gray-300)",
-                                          background: isSelected ? "rgba(234, 88, 12, 0.1)" : "var(--white)",
-                                          color: isSelected ? "var(--accent)" : "var(--gray-600)"
-                                        }}
+                                        className={`admin-edu-pill ${isSelected ? "selected" : ""}`}
                                       >
                                         {ed}
                                       </button>
@@ -881,7 +827,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                                 </div>
                               </div>
                               <div className="form-group" style={{ marginBottom: 0 }}>
-                                <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>สาขาวิชา (ถ้ามี)</label>
+                                <label className="form-label" style={{ fontSize: "0.7rem" }}>สาขาวิชา (ถ้ามี)</label>
                                 <input className="form-input" style={{ fontSize: "0.75rem", padding: "6px 10px" }}
                                   placeholder="เช่น วิศวกรรมศาสตร์, คอมพิวเตอร์..."
                                   value={unit.major || ""}
@@ -889,7 +835,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                               </div>
                             </div>
                             <div className="form-group" style={{ marginBottom: 0 }}>
-                              <label className="form-label" style={{ fontSize: "0.7rem", color: "var(--navy-600)" }}>ลักษณะงาน</label>
+                              <label className="form-label" style={{ fontSize: "0.7rem" }}>ลักษณะงาน</label>
                               <textarea className="form-textarea"
                                 placeholder="เช่น งานสารบรรณ รับ-ส่งเอกสาร..."
                                 rows={2}
@@ -911,13 +857,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                     )}
 
                     <div style={{ marginTop: 8 }}>
-                      <button type="button" onClick={() => addUnit(i)}
-                        style={{
-                          background: "none", border: "1px dashed var(--gray-300)",
-                          color: "var(--navy-600)", fontSize: "0.75rem", fontWeight: 600,
-                          padding: "6px 12px", borderRadius: "var(--radius-md)",
-                          cursor: "pointer", width: "100%"
-                        }}>
+                      <button type="button" onClick={() => addUnit(i)} className="admin-add-unit-btn">
                         ＋ เพิ่มหน่วยงานย่อย / สถานที่ปฏิบัติงาน
                       </button>
                     </div>
@@ -961,21 +901,21 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                   }
                 }}
               />
-              <p style={{ fontSize: "0.72rem", color: "var(--navy-500)", marginTop: 4 }}>
+              <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4 }}>
                 💡 หากรับสมัครทางอีเมล สามารถกรอกอีเมลได้ทันที (ระบบจะแปลงเป็น <code>mailto:</code> และแสดงปุ่มส่งอีเมลให้อัตโนมัติ)
               </p>
             </div>
 
             {/* Toggle showBooks & Custom Book URL */}
-            <div className="form-group" style={{ background: "var(--navy-50)", padding: "12px 14px", borderRadius: "var(--radius-md)", border: "1px solid var(--navy-100)", marginTop: 14 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, color: "var(--navy-800)", margin: 0 }}>
+            <div className="form-group admin-book-toggle-box" style={{ padding: "12px 14px", borderRadius: "var(--radius-md)", marginTop: 14 }}>
+              <label className="admin-checkbox-label" style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, margin: 0 }}>
                 <input
                   type="checkbox"
                   checked={form.showBooks !== false}
                   onChange={(e) => handleChange("showBooks", e.target.checked)}
                   style={{ width: 16, height: 16, cursor: "pointer" }}
                 />
-                📚 แสดงกล่องแนะนำหนังสือ & คอร์สติวในป๊อปอัปประกาศนี้
+                <span>📚 แสดงกล่องแนะนำหนังสือ & คอร์สติวในป๊อปอัปประกาศนี้</span>
               </label>
 
               {form.showBooks !== false && (
@@ -1006,7 +946,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                       value={form.customBookUrl || ""}
                       onChange={(e) => handleChange("customBookUrl", e.target.value)}
                     />
-                    <p style={{ fontSize: "0.72rem", color: "var(--navy-600)", marginTop: 4 }}>
+                    <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4 }}>
                       💡 หากกรอก URL ลิงก์นี้จะแสดงเด่นในป๊อปอัปของประกาศตำแหน่งนี้โดยเฉพาะ
                     </p>
                   </div>
@@ -1035,9 +975,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                 </div>
               ) : (
                 <button type="button" id="admin-delete-btn"
-                  style={{ padding: "8px 16px", background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: "var(--radius-md)", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)", marginRight: "auto", transition: "all 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#fee2e2"}
-                  onMouseLeave={e => e.currentTarget.style.background = "#fef2f2"}
+                  className="admin-delete-btn"
                   onClick={() => setConfirmDelete(true)}>
                   🗑️ ลบประกาศ
                 </button>
