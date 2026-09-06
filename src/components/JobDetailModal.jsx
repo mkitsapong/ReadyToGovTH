@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ModalExamPrepSection } from "./ExamResources.jsx";
 import SocialShareCover from "./SocialShareCover.jsx";
-import html2canvas from "html2canvas";
 import { CATEGORY_MAP, EDU_COLORS } from "../utils/constants.js";
 import { formatDate, daysLeft, getDisplayProvinces, getTotalJobPositions } from "../utils/helpers.js";
 
@@ -14,23 +13,31 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [selectedPdfIndex, setSelectedPdfIndex] = useState(0);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(job?.id);
-  const bannerRef = useRef(null);
+  const bannerFeedRef = useRef(null);
+  const bannerStoryRef = useRef(null);
+  const [showBannerModal, setShowBannerModal] = useState(false);
+  const [generatingRatio, setGeneratingRatio] = useState(null);
 
   // Guard clause: must be before any job property access
   if (!job) return null;
 
-  const handleDownloadBanner = async () => {
-    if (!bannerRef.current) return;
+  const handleDownloadBanner = async (ratio = "4:5") => {
+    const targetRef = ratio === "9:16" ? bannerStoryRef.current : bannerFeedRef.current;
+    if (!targetRef) return;
     try {
       setIsGeneratingBanner(true);
-      const canvas = await html2canvas(bannerRef.current, {
+      setGeneratingRatio(ratio);
+      // Dynamic Lazy Loading: html2canvas is loaded only when user clicks to generate/download banner
+      const { default: html2canvas } = await import("html2canvas");
+      const canvas = await html2canvas(targetRef, {
         scale: 2, // High resolution
         useCORS: true, // Allow cross-origin images
         backgroundColor: null,
       });
 
       const image = canvas.toDataURL("image/png");
-      const fileName = `readytogov-${job.department.replace(/\s+/g, "-")}-banner.png`;
+      const ratioSuffix = ratio === "9:16" ? "story-9x16" : "feed-4x5";
+      const fileName = `readytogov-${job.department.replace(/\s+/g, "-")}-${ratioSuffix}.png`;
 
       // Check if it's a mobile device. If it is, use Web Share API, otherwise skip to download.
       const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -43,8 +50,9 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
-              title: job.department,
+              title: `${job.department} (${ratio})`,
             });
+            setShowBannerModal(false);
             return;
           }
         } catch (err) {
@@ -58,11 +66,13 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       link.href = image;
       link.download = fileName;
       link.click();
+      setShowBannerModal(false);
     } catch (err) {
       console.error("Error generating banner:", err);
       alert("เกิดข้อผิดพลาดในการสร้างรูปแบนเนอร์");
     } finally {
       setIsGeneratingBanner(false);
+      setGeneratingRatio(null);
     }
   };
 
@@ -197,12 +207,16 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               {isAdmin && (
                 <button
                   type="button"
-                  onClick={handleDownloadBanner}
+                  onClick={() => setShowBannerModal(true)}
                   disabled={isGeneratingBanner}
                   title="สร้างรูปแบนเนอร์สรุปสำหรับแชร์"
                   className="btn-header-action btn-header-banner"
                 >
-                  {isGeneratingBanner ? "⏳ กำลังสร้าง..." : "📷 เซฟรูปแบนเนอร์"}
+                  {isGeneratingBanner ? (
+                    `⏳ สร้าง (${generatingRatio})...`
+                  ) : (
+                    "📷 เซฟรูปแบนเนอร์"
+                  )}
                 </button>
               )}
 
@@ -717,13 +731,151 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
     );
   }
 
+  const bannerModalContent = showBannerModal && (
+    <div
+      className="modal-overlay"
+      style={{ zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+      onClick={() => !isGeneratingBanner && setShowBannerModal(false)}
+    >
+      <div
+        className="modal animate-fade-up"
+        style={{ maxWidth: 450, width: "100%", padding: 0, overflow: "hidden", borderRadius: "24px", boxShadow: "0 25px 60px rgba(0, 0, 0, 0.35)" }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-color, #e2e8f0)", background: "linear-gradient(135deg, var(--gray-50, #f8fafc), var(--white, #ffffff))", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "1.4rem" }}>📷</span>
+            <div>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "var(--navy-800, #0f172a)" }}>
+                สร้างรูปแบนเนอร์สำหรับแชร์
+              </h3>
+              <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--navy-400, #64748b)" }}>
+                เลือกขนาดรูปภาพความละเอียดสูง (2x) เพื่อโพสต์ลงโซเชียล
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="modal-close"
+            onClick={() => setShowBannerModal(false)}
+            disabled={isGeneratingBanner}
+            style={{ position: "static", background: "none", border: "none", fontSize: "1.2rem", cursor: "pointer", color: "#64748b" }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Option 1: 4:5 Feed */}
+          <div
+            onClick={() => !isGeneratingBanner && handleDownloadBanner("4:5")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              padding: "16px",
+              borderRadius: 16,
+              border: "1.5px solid var(--border-color, #e2e8f0)",
+              background: "var(--card-bg, #ffffff)",
+              cursor: isGeneratingBanner ? "wait" : "pointer",
+              transition: "all 0.2s ease",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.03)"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "var(--accent, #ea580c)";
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(234, 88, 12, 0.12)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--border-color, #e2e8f0)";
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.03)";
+            }}
+          >
+            <div style={{ width: 50, height: 62, borderRadius: 8, background: "#fff7ed", border: "1.5px solid #ffedd5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", flexShrink: 0 }}>
+              🖼️
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--navy-800, #0f172a)" }}>
+                  ขนาด 4:5 (Feed โพสต์)
+                </span>
+                <span style={{ fontSize: "0.72rem", background: "#fff7ed", color: "#ea580c", padding: "2px 8px", borderRadius: 100, fontWeight: 700 }}>
+                  1080 × 1350 px
+                </span>
+              </div>
+              <p style={{ margin: "4px 0 0", fontSize: "0.78rem", color: "var(--navy-400, #64748b)", lineHeight: 1.4 }}>
+                เหมาะสำหรับโพสต์บน Facebook, Instagram Feed, Twitter / X, LINE
+              </p>
+            </div>
+          </div>
+
+          {/* Option 2: 9:16 Story */}
+          <div
+            onClick={() => !isGeneratingBanner && handleDownloadBanner("9:16")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              padding: "16px",
+              borderRadius: 16,
+              border: "1.5px solid var(--border-color, #e2e8f0)",
+              background: "var(--card-bg, #ffffff)",
+              cursor: isGeneratingBanner ? "wait" : "pointer",
+              transition: "all 0.2s ease",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.03)"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#15803d";
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(21, 128, 61, 0.12)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--border-color, #e2e8f0)";
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.03)";
+            }}
+          >
+            <div style={{ width: 50, height: 76, borderRadius: 8, background: "#f0fdf4", border: "1.5px solid #dcfce7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", flexShrink: 0 }}>
+              📱
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--navy-800, #0f172a)" }}>
+                  ขนาด 9:16 (Story / TikTok)
+                </span>
+                <span style={{ fontSize: "0.72rem", background: "#f0fdf4", color: "#15803d", padding: "2px 8px", borderRadius: 100, fontWeight: 700 }}>
+                  1080 × 1920 px
+                </span>
+              </div>
+              <p style={{ margin: "4px 0 0", fontSize: "0.78rem", color: "var(--navy-400, #64748b)", lineHeight: 1.4 }}>
+                สัดส่วนแนวตั้งเต็มจอ สำหรับ Instagram Story, Facebook Story, TikTok, Reels
+              </p>
+            </div>
+          </div>
+
+          {isGeneratingBanner && (
+            <div style={{ textAlign: "center", padding: "12px", background: "var(--gray-50, #f8fafc)", borderRadius: 12, color: "var(--accent, #ea580c)", fontSize: "0.88rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              <span className="spinner" style={{ width: 18, height: 18, border: "2px solid #ea580c", borderTopColor: "transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.8s linear infinite" }} />
+              <span>กำลังสร้างรูปภาพความละเอียดสูง ({generatingRatio})...</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   if (inline) {
     return (
       <>
         {content}
-        {/* Off-screen Banner Container for html2canvas */}
+        {bannerModalContent}
+        {/* Off-screen Banner Containers for html2canvas */}
         <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
-          <SocialShareCover job={job} ref={bannerRef} />
+          <SocialShareCover job={job} aspectRatio="4:5" ref={bannerFeedRef} />
+          <SocialShareCover job={job} aspectRatio="9:16" ref={bannerStoryRef} />
         </div>
       </>
     );
@@ -732,9 +884,11 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       {content}
-      {/* Off-screen Banner Container for html2canvas */}
+      {bannerModalContent}
+      {/* Off-screen Banner Containers for html2canvas */}
       <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
-        <SocialShareCover job={job} ref={bannerRef} />
+        <SocialShareCover job={job} aspectRatio="4:5" ref={bannerFeedRef} />
+        <SocialShareCover job={job} aspectRatio="9:16" ref={bannerStoryRef} />
       </div>
     </div>
   );

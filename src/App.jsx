@@ -1,21 +1,44 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { onAuthStateChanged, signOut } from "firebase/auth";
 import { Routes, Route, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { auth } from "./firebase.js";
+import * as authService from "./services/authService.js";
 import "./index.css";
 import "./App.css";
 
 import Header      from "./components/Header.jsx";
 import JobList     from "./components/JobList.jsx";
-import JobDetailPage from "./components/JobDetailPage.jsx";
-import AdminPanel  from "./components/AdminPanel.jsx";
-import AuthModal   from "./components/AuthModal.jsx";
 import Footer      from "./components/Footer.jsx";
-import PolicyPage  from "./components/PolicyPage.jsx";
 import CookieBanner from "./components/CookieBanner.jsx";
+import OfflineIndicator from "./components/OfflineIndicator.jsx";
 import SEO         from "./components/SEO.jsx";
+import { LoadingSpinner } from "./components/LoadingSkeleton.jsx";
 import * as api    from "./api.js";
+
+// 🚀 Dynamic Lazy-loaded Components (Code Splitting)
+const JobDetailPage = lazy(() => import("./components/JobDetailPage.jsx"));
+const AdminPanel    = lazy(() => import("./components/AdminPanel.jsx"));
+const AuthModal     = lazy(() => import("./components/AuthModal.jsx"));
+const PolicyPage    = lazy(() => import("./components/PolicyPage.jsx"));
+
+function ModalLoadingFallback() {
+  return (
+    <div className="modal-overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: "var(--card-bg, #fff)", padding: "24px 32px", borderRadius: 16, display: "flex", alignItems: "center", gap: 16, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)" }}>
+        <LoadingSpinner size={32} />
+        <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-main, #1e293b)" }}>กำลังโหลดส่วนเสริม...</span>
+      </div>
+    </div>
+  );
+}
+
+function PageLoadingFallback() {
+  return (
+    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+      <LoadingSpinner size={44} />
+      <p style={{ fontSize: "0.9rem", color: "var(--navy-400, #94a3b8)", fontWeight: 500 }}>กำลังโหลดข้อมูลหน้าเว็บ...</p>
+    </div>
+  );
+}
 
 // ─── Toast ───────────────────────────────────────────────────────────────────
 function Toast({ toasts }) {
@@ -124,17 +147,33 @@ export default function App() {
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
   }, []);
 
-  // Listen to Firebase Auth state
+  // Listen to Firebase Auth state (lazy loaded only if admin session exists)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser({ name: "Admin", email: currentUser.email, role: "admin" });
-        addToast(`ยินดีต้อนรับ Admin 👋`);
-      } else {
-        setUser(null);
-      }
-    });
+    let unsubscribe = () => {};
+    if (authService.shouldCheckAdminAuth()) {
+      authService.subscribeToAuthState((currentUser) => {
+        if (currentUser) {
+          setUser({ name: "Admin", email: currentUser.email, role: "admin" });
+          addToast(`ยินดีต้อนรับ Admin 👋`);
+        } else {
+          setUser(null);
+        }
+      }).then((unsub) => {
+        if (typeof unsub === "function") unsubscribe = unsub;
+      });
+    }
     return () => unsubscribe();
+  }, [addToast]);
+
+  const handleAuthSuccess = useCallback((currentUser) => {
+    if (currentUser) {
+      setUser({ name: "Admin", email: currentUser.email, role: "admin" });
+      addToast(`ยินดีต้อนรับ Admin 👋`);
+      authService.subscribeToAuthState((u) => {
+        if (u) setUser({ name: "Admin", email: u.email, role: "admin" });
+        else setUser(null);
+      });
+    }
   }, [addToast]);
 
   // Book Mutations
@@ -200,7 +239,8 @@ export default function App() {
 
   async function handleLogout() {
     try {
-      await signOut(auth);
+      await authService.logoutAdmin();
+      setUser(null);
       addToast(`ออกจากระบบแล้ว`, "success");
       setShowAdmin(false);
       setEditingJob(null);
@@ -260,28 +300,30 @@ export default function App() {
 
       {/* Main Content */}
       <main>
-        <Routes>
-          <Route path="/" element={<MainContent
-            jobs={jobs} books={books}
-            isJobsLoading={isJobsLoading} isBooksLoading={isBooksLoading}
-            isJobsError={isJobsError} isBooksError={isBooksError}
-            isAdmin={isAdmin} handleEditJob={handleEditJob}
-            userEducation={userEducation} setUserEducation={setUserEducation}
-            handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
-            onSelectProvince={handleSelectProvince}
-          />} />
-          <Route path="/category/:categoryId" element={<MainContent
-            jobs={jobs} books={books}
-            isJobsLoading={isJobsLoading} isBooksLoading={isBooksLoading}
-            isJobsError={isJobsError} isBooksError={isBooksError}
-            isAdmin={isAdmin} handleEditJob={handleEditJob}
-            userEducation={userEducation} setUserEducation={setUserEducation}
-            handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
-            onSelectProvince={handleSelectProvince}
-          />} />
-          <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} />} />
-          <Route path="/policy/:policyId" element={<PolicyPage />} />
-        </Routes>
+        <Suspense fallback={<PageLoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<MainContent
+              jobs={jobs} books={books}
+              isJobsLoading={isJobsLoading} isBooksLoading={isBooksLoading}
+              isJobsError={isJobsError} isBooksError={isBooksError}
+              isAdmin={isAdmin} handleEditJob={handleEditJob}
+              userEducation={userEducation} setUserEducation={setUserEducation}
+              handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
+              onSelectProvince={handleSelectProvince}
+            />} />
+            <Route path="/category/:categoryId" element={<MainContent
+              jobs={jobs} books={books}
+              isJobsLoading={isJobsLoading} isBooksLoading={isBooksLoading}
+              isJobsError={isJobsError} isBooksError={isBooksError}
+              isAdmin={isAdmin} handleEditJob={handleEditJob}
+              userEducation={userEducation} setUserEducation={setUserEducation}
+              handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
+              onSelectProvince={handleSelectProvince}
+            />} />
+            <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} />} />
+            <Route path="/policy/:policyId" element={<PolicyPage />} />
+          </Routes>
+        </Suspense>
       </main>
 
       {/* Footer */}
@@ -306,20 +348,25 @@ export default function App() {
 
       {/* Auth Modal */}
       {showAuth && (
-        <AuthModal
-          onClose={() => setShowAuth(false)}
-        />
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <AuthModal
+            onClose={() => setShowAuth(false)}
+            onSuccess={handleAuthSuccess}
+          />
+        </Suspense>
       )}
 
       {/* Admin Panel Modal — Add or Edit */}
       {showAdmin && (
-        <AdminPanel
-          editJob={editingJob}
-          onAddJob={handleAddJob}
-          onUpdateJob={handleUpdateJob}
-          onDeleteJob={handleDeleteJob}
-          onClose={handleCloseAdmin}
-        />
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <AdminPanel
+            editJob={editingJob}
+            onAddJob={handleAddJob}
+            onUpdateJob={handleUpdateJob}
+            onDeleteJob={handleDeleteJob}
+            onClose={handleCloseAdmin}
+          />
+        </Suspense>
       )}
 
       {/* Toast Notifications */}
@@ -327,6 +374,9 @@ export default function App() {
       
       {/* Cookie Banner */}
       <CookieBanner />
+
+      {/* PWA Offline & Install Indicator */}
+      <OfflineIndicator />
     </>
   );
 }

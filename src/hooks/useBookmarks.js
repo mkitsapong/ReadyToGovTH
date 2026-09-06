@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 
 const STORAGE_KEY = "readytogov_bookmarks";
+const FULL_JOBS_KEY = "readytogov_bookmarked_jobs_full";
+const OFFLINE_JOBS_KEY = "readytogov_offline_jobs";
 const EVENT_NAME = "readytogov_bookmarks_updated";
 
 function getStoredBookmarks() {
@@ -12,6 +14,15 @@ function getStoredBookmarks() {
     return parsed.filter((id) => id != null && String(id).trim() !== "");
   } catch (e) {
     console.error("Error reading bookmarks from localStorage", e);
+    return [];
+  }
+}
+
+export function getBookmarkedJobsFull() {
+  try {
+    const raw = localStorage.getItem(FULL_JOBS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
     return [];
   }
 }
@@ -34,7 +45,7 @@ export function useBookmarks() {
     };
   }, []);
 
-  const toggleBookmark = useCallback((jobId) => {
+  const toggleBookmark = useCallback((jobId, jobData = null) => {
     if (!jobId) return;
     const cleanId = String(jobId).trim();
     if (!cleanId) return;
@@ -47,6 +58,27 @@ export function useBookmarks() {
 
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+        // Manage full offline cache for bookmarked jobs
+        let fullJobs = getBookmarkedJobsFull();
+        if (exists) {
+          fullJobs = fullJobs.filter((j) => String(j.id) !== cleanId);
+        } else {
+          let jobToSave = jobData;
+          if (!jobToSave) {
+            try {
+              const offlineJobs = JSON.parse(localStorage.getItem(OFFLINE_JOBS_KEY) || "[]");
+              jobToSave = offlineJobs.find((j) => String(j.id) === cleanId);
+            } catch (err) {
+              console.debug("Lookup in offline jobs failed:", err);
+            }
+          }
+          if (jobToSave) {
+            fullJobs = [jobToSave, ...fullJobs.filter((j) => String(j.id) !== cleanId)];
+          }
+        }
+        localStorage.setItem(FULL_JOBS_KEY, JSON.stringify(fullJobs));
+
         window.dispatchEvent(new CustomEvent(EVENT_NAME));
       } catch (e) {
         console.error("Error saving bookmarks to localStorage", e);
@@ -64,6 +96,7 @@ export function useBookmarks() {
   const clearBookmarks = useCallback(() => {
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(FULL_JOBS_KEY);
       setBookmarks([]);
       window.dispatchEvent(new CustomEvent(EVENT_NAME));
     } catch (e) {
@@ -73,4 +106,3 @@ export function useBookmarks() {
 
   return { bookmarks, toggleBookmark, isBookmarked, clearBookmarks };
 }
-

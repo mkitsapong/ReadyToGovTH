@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase.js";
+import { loginAdmin } from "../services/authService.js";
 
-export default function AuthModal({ onClose }) {
+export default function AuthModal({ onClose, onSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -18,7 +17,8 @@ export default function AuthModal({ onClose }) {
 
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const user = await loginAdmin(email, password);
+      if (onSuccess) onSuccess(user);
       onClose();
     } catch (err) {
       console.error(err);
