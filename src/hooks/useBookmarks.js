@@ -46,45 +46,51 @@ export function useBookmarks() {
   }, []);
 
   const toggleBookmark = useCallback((jobId, jobData = null) => {
-    if (!jobId) return;
+    if (!jobId) return false;
     const cleanId = String(jobId).trim();
-    if (!cleanId) return;
+    if (!cleanId) return false;
 
-    setBookmarks((prev) => {
-      const exists = prev.some((id) => String(id) === cleanId);
-      const updated = exists
-        ? prev.filter((id) => String(id) !== cleanId)
-        : [...prev, jobId];
+    const current = getStoredBookmarks();
+    const exists = current.some((id) => String(id) === cleanId);
+    const updated = exists
+      ? current.filter((id) => String(id) !== cleanId)
+      : [...current, cleanId];
 
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
-        // Manage full offline cache for bookmarked jobs
-        let fullJobs = getBookmarkedJobsFull();
-        if (exists) {
-          fullJobs = fullJobs.filter((j) => String(j.id) !== cleanId);
-        } else {
-          let jobToSave = jobData;
-          if (!jobToSave) {
-            try {
-              const offlineJobs = JSON.parse(localStorage.getItem(OFFLINE_JOBS_KEY) || "[]");
-              jobToSave = offlineJobs.find((j) => String(j.id) === cleanId);
-            } catch (err) {
-              console.debug("Lookup in offline jobs failed:", err);
-            }
-          }
-          if (jobToSave) {
-            fullJobs = [jobToSave, ...fullJobs.filter((j) => String(j.id) !== cleanId)];
+      // Manage full offline cache for bookmarked jobs
+      let fullJobs = getBookmarkedJobsFull();
+      if (exists) {
+        fullJobs = fullJobs.filter((j) => String(j.id) !== cleanId);
+      } else {
+        let jobToSave = jobData;
+        if (!jobToSave) {
+          try {
+            const offlineJobs = JSON.parse(localStorage.getItem(OFFLINE_JOBS_KEY) || "[]");
+            jobToSave = offlineJobs.find((j) => String(j.id) === cleanId);
+          } catch (err) {
+            console.debug("Lookup in offline jobs failed:", err);
           }
         }
-        localStorage.setItem(FULL_JOBS_KEY, JSON.stringify(fullJobs));
-
-        window.dispatchEvent(new CustomEvent(EVENT_NAME));
-      } catch (e) {
-        console.error("Error saving bookmarks to localStorage", e);
+        if (jobToSave) {
+          fullJobs = [jobToSave, ...fullJobs.filter((j) => String(j.id) !== cleanId)];
+        }
       }
-      return updated;
-    });
+      localStorage.setItem(FULL_JOBS_KEY, JSON.stringify(fullJobs));
+    } catch (e) {
+      console.error("Error saving bookmarks to localStorage", e);
+    }
+
+    // Direct React state update
+    setBookmarks(updated);
+
+    // Notify other components/tabs asynchronously without interrupting current React cycle
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(EVENT_NAME));
+    }, 0);
+
+    return !exists; // true if newly bookmarked, false if unbookmarked
   }, []);
 
   const isBookmarked = useCallback((jobId) => {

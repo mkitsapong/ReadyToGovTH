@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 /* ===========================
    CSS CUSTOM PROPERTIES
    =========================== */
@@ -50,7 +48,7 @@
   --accent-dark: var(--orange-700);
 
   /* Typography */
-  --font-sans: 'IBM Plex Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Outfit', 'Noto Sans Thai', 'IBM Plex Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Spacing */
   --radius-sm: 6px;

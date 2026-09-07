@@ -71,8 +71,14 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
           <div className="top-bar-right">
             <button
               type="button"
-              onClick={onToggleBookmark}
+              id={`btn-bookmark-${job.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleBookmark?.();
+              }}
               title={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+              aria-label={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
               className={`job-btn-bookmark ${isBookmarked ? 'bookmarked' : ''}`}
             >
               {isBookmarked ? "❤️" : "🤍"}

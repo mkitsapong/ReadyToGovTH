@@ -39,10 +39,10 @@ export function useTheme() {
 
   // Sync across tabs and custom events
   useEffect(() => {
-    const handleSync = () => {
-      const current = getStoredTheme();
-      setTheme(current);
-      applyThemeToDom(current);
+    const handleSync = (e) => {
+      const newTheme = e?.detail || getStoredTheme();
+      setTheme((prev) => (prev !== newTheme ? newTheme : prev));
+      applyThemeToDom(newTheme);
     };
 
     window.addEventListener("storage", handleSync);
@@ -75,13 +75,22 @@ export function useTheme() {
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {
       const nextTheme = prev === "dark" ? "light" : "dark";
+
+      // 1. Instantly apply to DOM without delay
+      applyThemeToDom(nextTheme);
+
+      // 2. Persist to storage
       try {
         localStorage.setItem(STORAGE_KEY, nextTheme);
-        window.dispatchEvent(new CustomEvent(EVENT_NAME));
       } catch (e) {
         console.warn("Could not save theme to localStorage", e);
       }
-      applyThemeToDom(nextTheme);
+
+      // 3. Defer cross-component notification outside the current React state dispatch cycle
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: nextTheme }));
+      }, 0);
+
       return nextTheme;
     });
   }, []);

@@ -1,11 +1,14 @@
 import { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ModalExamPrepSection } from "./ExamResources.jsx";
 import SocialShareCover from "./SocialShareCover.jsx";
 import { CATEGORY_MAP, EDU_COLORS } from "../utils/constants.js";
 import { formatDate, daysLeft, getDisplayProvinces, getTotalJobPositions } from "../utils/helpers.js";
+import JobPrintSummaryModal from "./JobPrintSummaryModal.jsx";
+import AddToCalendarModal from "./AddToCalendarModal.jsx";
 
-export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit }) {
+export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit, onToast }) {
   const [isCopied, setIsCopied] = useState(false);
   const [isEmailCopied, setIsEmailCopied] = useState(false);
   const [isGeneratingBanner, setIsGeneratingBanner] = useState(false);
@@ -17,6 +20,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const bannerStoryRef = useRef(null);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [generatingRatio, setGeneratingRatio] = useState(null);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
 
   // Guard clause: must be before any job property access
   if (!job) return null;
@@ -138,11 +143,41 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const content = (
     <div className={`modal animate-fade-up detail-modal-wrapper ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: '100%', margin: 0, boxShadow: 'none', maxHeight: 'none', overflow: 'visible' } : { maxWidth: 680 }} role={inline ? "region" : "dialog"} aria-modal={!inline}>
 
+      {/* Closed Notice Banner */}
+      {days < 0 && (
+        <div className="job-closed-notice-banner">
+          <div className="closed-banner-left">
+            <span className="closed-banner-icon">⚠️</span>
+            <div className="closed-banner-text">
+              <strong>ประกาศนี้ปิดรับสมัครแล้ว</strong> (หมดเขตเมื่อ {formatDate(job.deadline)})
+              <p className="closed-banner-sub">
+                ท่านยังสามารถเปิดอ่านเอกสารประกาศฉบับเต็มด้านล่าง เพื่อดูหลักสูตรและขอบเขตวิชาสอบได้
+              </p>
+            </div>
+          </div>
+          <Link to="/" className="btn-closed-view-active">
+            🔍 ดูงานที่เปิดรับอยู่
+          </Link>
+        </div>
+      )}
+
       {/* ── 1. Modern Executive Header ── */}
       <div className="detail-header-card">
         {/* Ambient Glows */}
         <div className="detail-header-glow detail-glow-tr" />
         <div className="detail-header-glow detail-glow-bl" />
+
+        {/* Modal Close Button (Top-Right) */}
+        {!inline && (
+          <button
+            type="button"
+            className="btn-header-close"
+            onClick={onClose}
+            aria-label="ปิด"
+          >
+            ✕
+          </button>
+        )}
 
         <div className="detail-header-inner">
           {/* Main Identity Logo */}
@@ -185,14 +220,36 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                   <span>ต้องผ่าน ภาค ก</span>
                 </span>
               ) : null}
-              {days >= 0 && days <= 5 && (
+              {days < 0 ? (
+                <span className="pill-badge pill-expired detail-badge-expired">
+                  ⚠️ ปิดรับสมัครแล้ว
+                </span>
+              ) : days >= 0 && days <= 5 ? (
                 <span className="detail-badge-urgent">
                   🔥 {days === 0 ? "ปิดรับวันนี้!" : `ด่วน! เหลืออีก ${days} วัน`}
                 </span>
-              )}
+              ) : null}
             </div>
 
             <div className="detail-header-actions">
+              <button
+                type="button"
+                onClick={() => setShowCalendarModal(true)}
+                title="บันทึกเตือนวันลงปฏิทิน (Google Calendar / Apple / Outlook)"
+                className="btn-header-action btn-header-calendar"
+              >
+                📅 เตือนลงปฏิทิน
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                title="พิมพ์หรือบันทึกเป็น PDF สรุป 1 หน้า (A4)"
+                className="btn-header-action btn-header-print"
+              >
+                🖨️ สรุป 1 หน้า
+              </button>
+
               {isAdmin && onEdit && (
                 <button
                   type="button"
@@ -248,23 +305,24 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
               <button
                 type="button"
-                onClick={() => toggleBookmark(job.id)}
+                id={`btn-modal-bookmark-${job.id}`}
+                onClick={() => {
+                  const isNowBookmarked = toggleBookmark(job.id, job);
+                  if (onToast) {
+                    onToast(
+                      isNowBookmarked
+                        ? `บันทึกงาน "${job.department}" แล้ว ❤️`
+                        : `ยกเลิกการบันทึก "${job.department}" แล้ว`,
+                      isNowBookmarked ? "success" : "info"
+                    );
+                  }
+                }}
                 title={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+                aria-label={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
                 className={`btn-header-bookmark ${bookmarked ? "bookmarked" : ""}`}
               >
                 {bookmarked ? "❤️" : "🤍"}
               </button>
-
-              {!inline && (
-                <button
-                  type="button"
-                  className="btn-header-close"
-                  onClick={onClose}
-                  aria-label="ปิด"
-                >
-                  ✕
-                </button>
-              )}
             </div>
           </div>
 
@@ -307,6 +365,17 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                   <span className={`stat-pill-days ${days === 0 ? "today" : days <= 5 ? "urgent" : "normal"}`}>
                     {days === 0 ? "ปิดรับวันนี้!" : `เหลือ ${days} วัน`}
                   </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCalendarModal(true);
+                    }}
+                    className="btn-stat-calendar-quick"
+                    title="บันทึกเตือนวันปิดรับสมัครลงปฏิทินมือถือ/คอมพิวเตอร์"
+                  >
+                    <span>📅 บันทึกปฏิทิน</span>
+                  </button>
                 </>
               ) : (
                 <span className="stat-pill-days closed">หมดเขตรับสมัครแล้ว</span>
@@ -556,6 +625,14 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       {/* ── Footer ── */}
       <div className="modal-footer">
         <div className="modal-footer-actions">
+          <button
+            type="button"
+            onClick={() => setShowPrintModal(true)}
+            className="btn btn-outline modal-btn-action btn-print-summary"
+            title="พิมพ์หรือบันทึกเป็น PDF สรุป 1 หน้า (A4)"
+          >
+            🖨️ สรุป 1 หน้า (PDF)
+          </button>
           {pdfUrls.length > 0 && (
             <button
               onClick={() => {
@@ -569,7 +646,22 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               {pdfUrls.length > 1 && ` (${pdfUrls.length})`}
             </button>
           )}
-          {isNotOpenYet ? (
+          {days < 0 ? (
+            <button
+              type="button"
+              disabled
+              className="btn modal-btn-action btn-closed"
+              style={{
+                background: "rgba(100, 116, 139, 0.15)",
+                color: "var(--text-muted)",
+                border: "1px solid rgba(148, 163, 184, 0.3)",
+                cursor: "not-allowed",
+                fontWeight: 600,
+              }}
+            >
+              ⚠️ ปิดรับสมัครแล้ว
+            </button>
+          ) : isNotOpenYet ? (
             job.applyUrl ? (
               <a
                 href={job.applyUrl}
@@ -872,6 +964,12 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       <>
         {content}
         {bannerModalContent}
+        {showPrintModal && (
+          <JobPrintSummaryModal job={job} onClose={() => setShowPrintModal(false)} />
+        )}
+        {showCalendarModal && (
+          <AddToCalendarModal job={job} onClose={() => setShowCalendarModal(false)} onToast={onToast} />
+        )}
         {/* Off-screen Banner Containers for html2canvas */}
         <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
           <SocialShareCover job={job} aspectRatio="4:5" ref={bannerFeedRef} />
@@ -885,6 +983,12 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       {content}
       {bannerModalContent}
+      {showPrintModal && (
+        <JobPrintSummaryModal job={job} onClose={() => setShowPrintModal(false)} />
+      )}
+      {showCalendarModal && (
+        <AddToCalendarModal job={job} onClose={() => setShowCalendarModal(false)} onToast={onToast} />
+      )}
       {/* Off-screen Banner Containers for html2canvas */}
       <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
         <SocialShareCover job={job} aspectRatio="4:5" ref={bannerFeedRef} />

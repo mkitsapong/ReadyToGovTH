@@ -3,7 +3,7 @@ import JobCard from "./JobCard.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
-import { getProvinces, getTotalJobPositions } from "../utils/helpers.js";
+import { getProvinces, getTotalJobPositions, daysLeft } from "../utils/helpers.js";
 import { JobCardSkeleton } from "./LoadingSkeleton.jsx";
 
 const CATEGORY_FILTER = {
@@ -40,6 +40,7 @@ export default function JobList({
   onUpdateBook,
   onDeleteBook,
   onSelectProvince,
+  onToast,
 }) {
   const [searchQuery, setSearchQuery] = useState(() => sessionStorage.getItem("searchQuery") || "");
   const [sortBy, setSortBy] = useState(() => sessionStorage.getItem("sortBy") || "deadline");
@@ -49,6 +50,7 @@ export default function JobList({
   });
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(() => sessionStorage.getItem("showBookmarksOnly") === "true");
+  const [showExpired, setShowExpired] = useState(() => sessionStorage.getItem("showExpired") === "true");
   const [filterNoOCSC, setFilterNoOCSC] = useState(() => sessionStorage.getItem("filterNoOCSC") === "true");
   const [filterOCSC, setFilterOCSC] = useState(() => sessionStorage.getItem("filterOCSC") === "true");
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
@@ -68,6 +70,10 @@ export default function JobList({
   useEffect(() => {
     sessionStorage.setItem("showBookmarksOnly", showBookmarksOnly);
   }, [showBookmarksOnly]);
+
+  useEffect(() => {
+    sessionStorage.setItem("showExpired", showExpired);
+  }, [showExpired]);
   
   useEffect(() => {
     sessionStorage.setItem("filterNoOCSC", filterNoOCSC);
@@ -85,22 +91,33 @@ export default function JobList({
     return jobs.filter((j) => isBookmarked(j.id)).length;
   }, [jobs, isBookmarked]);
 
-  // Automatically prune ghost or deleted job IDs from localStorage
+  // Count active vs expired jobs
+  const expiredCount = useMemo(() => {
+    if (!jobs || jobs.length === 0) return 0;
+    return jobs.filter((j) => j.deadline && daysLeft(j.deadline) < 0).length;
+  }, [jobs]);
+
+  // Prune ghost or deleted job IDs from localStorage once when active jobs are first loaded
+  const hasPrunedGhostRef = useRef(false);
   useEffect(() => {
-    if (jobs && jobs.length > 0 && bookmarks.length > 0) {
+    if (!hasPrunedGhostRef.current && jobs && jobs.length > 0 && bookmarks.length > 0) {
+      hasPrunedGhostRef.current = true;
       const activeJobIds = new Set(jobs.map((j) => String(j.id)));
       const hasOrphans = bookmarks.some((id) => !activeJobIds.has(String(id)));
       if (hasOrphans) {
         const cleaned = bookmarks.filter((id) => activeJobIds.has(String(id)));
         try {
           localStorage.setItem("readytogov_bookmarks", JSON.stringify(cleaned));
-          window.dispatchEvent(new CustomEvent("readytogov_bookmarks_updated"));
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("readytogov_bookmarks_updated"));
+          }, 0);
         } catch (e) {
           console.error("Error pruning ghost bookmarks", e);
         }
       }
     }
-  }, [jobs, bookmarks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs]);
   const regionDropdownRef = useRef(null);
   const ITEMS_PER_PAGE = 9;
 
@@ -142,6 +159,14 @@ export default function JobList({
         const cats = j.categories && j.categories.length > 0 ? j.categories : (j.category ? [j.category] : []);
         return cats.includes(categoryFilter);
       });
+    }
+
+    // Expired vs Active filter
+    if (showExpired) {
+      result = result.filter((j) => j.deadline && daysLeft(j.deadline) < 0);
+    } else if (!showBookmarksOnly) {
+      // Default view: Show only currently active jobs
+      result = result.filter((j) => !j.deadline || daysLeft(j.deadline) >= 0);
     }
     
     // Bookmarks Filter
@@ -261,7 +286,7 @@ export default function JobList({
     }
 
     return result;
-  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, isBookmarked, filterNoOCSC, filterOCSC]);
+  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, isBookmarked, filterNoOCSC, filterOCSC]);
 
   // Stats
   const totalPositions = filtered.reduce(
@@ -271,7 +296,7 @@ export default function JobList({
 
   // Reset page when filters change
   const prevFiltersRef = useRef({
-    categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, filterNoOCSC, filterOCSC
+    categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC
   });
   
   useEffect(() => {
@@ -283,15 +308,16 @@ export default function JobList({
       prev.searchQuery !== searchQuery ||
       prev.sortBy !== sortBy ||
       prev.showBookmarksOnly !== showBookmarksOnly ||
+      prev.showExpired !== showExpired ||
       prev.filterNoOCSC !== filterNoOCSC ||
       prev.filterOCSC !== filterOCSC
     ) {
       setCurrentPage(1);
       prevFiltersRef.current = {
-        categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, filterNoOCSC, filterOCSC
+        categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC
       };
     }
-  }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, filterNoOCSC, filterOCSC]);
+  }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const currentJobs = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -513,13 +539,36 @@ export default function JobList({
                 {/* Bookmarks Filter */}
                 <button
                   type="button"
-                  onClick={() => setShowBookmarksOnly(!showBookmarksOnly)}
+                  onClick={() => {
+                    const nextVal = !showBookmarksOnly;
+                    setShowBookmarksOnly(nextVal);
+                    if (nextVal) setShowExpired(false);
+                  }}
                   className={`filter-chip-btn ${showBookmarksOnly ? 'active-bookmark' : ''}`}
                 >
                   <span className="chip-icon">{showBookmarksOnly ? "❤️" : "🤍"}</span>
                   <span>ที่บันทึกไว้</span>
                   {validBookmarkCount > 0 && (
                     <span className="chip-counter">{validBookmarkCount}</span>
+                  )}
+                </button>
+
+                {/* Expired Jobs Filter */}
+                <button
+                  type="button"
+                  id="filter-chip-expired"
+                  onClick={() => {
+                    const nextVal = !showExpired;
+                    setShowExpired(nextVal);
+                    if (nextVal) setShowBookmarksOnly(false);
+                  }}
+                  className={`filter-chip-btn ${showExpired ? 'active-expired' : ''}`}
+                  title={showExpired ? "คลิกเพื่อกลับไปดูงานที่เปิดรับสมัครอยู่" : "ดูประกาศงานราชการที่ปิดรับสมัครแล้ว"}
+                >
+                  <span className="chip-icon">⌛</span>
+                  <span>ปิดรับสมัครแล้ว</span>
+                  {expiredCount > 0 && (
+                    <span className="chip-counter chip-counter-expired">{expiredCount}</span>
                   )}
                 </button>
                 
@@ -545,7 +594,7 @@ export default function JobList({
 
               {/* Result Count Badge */}
               <div className="filter-count-badge">
-                พบ <strong>{filtered.length}</strong> ประกาศ
+                พบ <strong>{filtered.length}</strong> ประกาศ{showExpired ? " (ปิดรับสมัครแล้ว)" : ""}
               </div>
             </div>
           </div>
@@ -576,9 +625,9 @@ export default function JobList({
               </div>
             ) : filtered.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-state-icon">📭</div>
-                <h3>ไม่พบรายการที่ตรงกับเงื่อนไข</h3>
-                <p>ลองเปลี่ยนคำค้นหาหรือเลือกจังหวัดใหม่</p>
+                <div className="empty-state-icon">{showExpired ? "⌛" : "📭"}</div>
+                <h3>{showExpired ? "ยังไม่มีประกาศที่ปิดรับสมัครแล้ว" : "ไม่พบรายการที่ตรงกับเงื่อนไข"}</h3>
+                <p>{showExpired ? "ประกาศงานทั้งหมดในขณะนี้ยังคงเปิดรับสมัครอยู่" : "ลองเปลี่ยนคำค้นหาหรือเลือกจังหวัดใหม่"}</p>
               </div>
             ) : (
               <>
@@ -591,7 +640,17 @@ export default function JobList({
                     onEdit={onEditJob}
                     userEducation={userEducation}
                     isBookmarked={isBookmarked(job.id)}
-                    onToggleBookmark={() => toggleBookmark(job.id)}
+                    onToggleBookmark={() => {
+                      const isNowBookmarked = toggleBookmark(job.id, job);
+                      if (onToast) {
+                        onToast(
+                          isNowBookmarked
+                            ? `บันทึก "${job.department}" แล้ว ❤️ (ดูได้ที่ปุ่ม "ที่บันทึกไว้")`
+                            : `ยกเลิกการบันทึก "${job.department}" แล้ว`,
+                          isNowBookmarked ? "success" : "info"
+                        );
+                      }
+                    }}
                   />
                 ))}
               </>

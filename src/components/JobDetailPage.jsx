@@ -43,7 +43,7 @@ function generateJobPostingSchema(job) {
   return JSON.stringify(schema);
 }
 
-export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin, onEditJob }) {
+export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin, onEditJob, onToast }) {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -170,7 +170,7 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
         </div>
         <article className="job-detail-page-card">
            {/* Re-use JobDetailModal content logic but render it directly on the page instead of a modal */}
-           <JobDetailModal job={job} books={books} inline={true} isAdmin={isAdmin} onEdit={onEditJob} />
+           <JobDetailModal job={job} books={books} inline={true} isAdmin={isAdmin} onEdit={onEditJob} onToast={onToast} />
         </article>
       </div>
     </>

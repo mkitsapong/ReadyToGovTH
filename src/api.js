@@ -10,24 +10,14 @@ export const fetchJobs = async () => {
     const snapshot = await getDocs(collection(db, "jobs_live"));
     const jobs = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Filter out jobs that have passed their deadline
-    const activeJobs = jobs.filter(job => {
-      if (!job.deadline) return true;
-      const deadlineDate = new Date(job.deadline);
-      return deadlineDate >= today;
-    });
-
     // Cache latest snapshot to LocalStorage for Offline Reading
     try {
-      localStorage.setItem(OFFLINE_JOBS_KEY, JSON.stringify(activeJobs));
+      localStorage.setItem(OFFLINE_JOBS_KEY, JSON.stringify(jobs));
     } catch (e) {
       console.debug("Failed to cache jobs offline:", e);
     }
 
-    return activeJobs;
+    return jobs;
   } catch (error) {
     console.warn("Firestore fetchJobs failed (possibly offline). Attempting offline cache fallback...", error);
     try {

@@ -65,7 +65,7 @@ function getActivePage(pathname) {
 
 // ─── Main Content Wrapper ───────────────────────────────────────────────────
 // This component handles the URL params/search and passes them to JobList
-function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, isBooksError, isAdmin, handleEditJob, userEducation, setUserEducation, handleAddBook, handleUpdateBook, handleDeleteBook, onSelectProvince }) {
+function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, isBooksError, isAdmin, handleEditJob, userEducation, setUserEducation, handleAddBook, handleUpdateBook, handleDeleteBook, onSelectProvince, onToast }) {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   
@@ -111,6 +111,7 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
         onAddBook={handleAddBook}
         onUpdateBook={handleUpdateBook}
         onDeleteBook={handleDeleteBook}
+        onToast={onToast}
       />
     </>
   );
@@ -310,6 +311,7 @@ export default function App() {
               userEducation={userEducation} setUserEducation={setUserEducation}
               handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
               onSelectProvince={handleSelectProvince}
+              onToast={addToast}
             />} />
             <Route path="/category/:categoryId" element={<MainContent
               jobs={jobs} books={books}
@@ -319,8 +321,9 @@ export default function App() {
               userEducation={userEducation} setUserEducation={setUserEducation}
               handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
               onSelectProvince={handleSelectProvince}
+              onToast={addToast}
             />} />
-            <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} />} />
+            <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} onToast={addToast} />} />
             <Route path="/policy/:policyId" element={<PolicyPage />} />
           </Routes>
         </Suspense>
