@@ -48,7 +48,7 @@
   --accent-dark: var(--orange-700);
 
   /* Typography */
-  --font-sans: 'Outfit', 'Noto Sans Thai', 'IBM Plex Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'IBM Plex Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Spacing */
   --radius-sm: 6px;

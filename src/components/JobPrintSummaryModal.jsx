@@ -151,7 +151,7 @@ export default function JobPrintSummaryModal({ job, onClose }) {
               padding: 0;
               background: #ffffff !important;
               color: #0f172a !important;
-              font-family: 'IBM Plex Sans Thai', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
+              font-family: 'IBM Plex Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
               font-size: 13px;
               line-height: 1.4;
             }

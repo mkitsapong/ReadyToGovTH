@@ -34,7 +34,7 @@ const SocialShareCover = forwardRef(({ job, aspectRatio = "4:5" }, ref) => {
           ? "linear-gradient(165deg, #090d1a 0%, #0f172a 35%, #1e3a8a 100%)"
           : "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
         position: "relative",
-        fontFamily: "'Outfit', 'Noto Sans Thai', 'IBM Plex Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamily: "'IBM Plex Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
