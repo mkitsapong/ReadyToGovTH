@@ -207,17 +207,15 @@ export default function App() {
     mutationFn: api.addJob,
     onSuccess: (newJob) => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      addToast(`เพิ่มประกาศ "${newJob.title}" เรียบร้อยแล้ว ✅`);
+      addToast(`เพิ่มประกาศ "${newJob.department || newJob.title || "ใหม่"}" เรียบร้อยแล้ว ✅`);
     },
   });
-
-
 
   const updateJobMutation = useMutation({
     mutationFn: api.updateJob,
     onSuccess: (updatedJob) => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
-      addToast(`แก้ไขประกาศ "${updatedJob.title}" เรียบร้อยแล้ว ✅`);
+      addToast(`แก้ไขประกาศ "${updatedJob.department || updatedJob.title || "เรียบร้อย"}" เรียบร้อยแล้ว ✅`);
     },
   });
 

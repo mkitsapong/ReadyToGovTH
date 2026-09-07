@@ -295,7 +295,7 @@ export function ModalExamPrepSection({
               border: "1px solid var(--gray-200)",
               display: "flex",
               flexDirection: "column",
-              justify: "space-between",
+              justifyContent: "space-between",
             }}>
               <div>
                 <span style={{ fontSize: "0.65rem", fontWeight: 700, color: b.badgeColor || "#2563eb", background: b.bg || "#eff6ff", padding: "2px 6px", borderRadius: "4px", display: "inline-block", marginBottom: 4 }}>

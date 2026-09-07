@@ -10,6 +10,67 @@ export default function JobPrintSummaryModal({ job, onClose }) {
   const printSheetRef = useRef(null);
   const previewContainerRef = useRef(null);
 
+  // Application URL & Job link
+  const currentOrigin = typeof window !== "undefined" ? window.location.origin : "https://readytogov.th";
+  const jobDetailUrl = job ? `${currentOrigin}/job/${job.id}` : "";
+
+  // Smart detection of application channel
+  const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i;
+  let detectedEmail = "";
+  if (job?.applyUrl) {
+    if (job.applyUrl.startsWith("mailto:")) {
+      const match = job.applyUrl.replace(/^mailto:/i, "").match(emailRegex);
+      if (match) detectedEmail = match[1];
+    } else if (job.applyUrl.includes("@") && !job.applyUrl.startsWith("http")) {
+      const match = job.applyUrl.match(emailRegex);
+      if (match) detectedEmail = match[1];
+    }
+  }
+  if (!detectedEmail && job?.description) {
+    const match = job.description.match(emailRegex);
+    if (match) detectedEmail = match[1];
+  }
+
+  const isEmail = Boolean(detectedEmail);
+  const isOnline = Boolean(job?.applyUrl && job.applyUrl.startsWith("http") && !isEmail);
+  const isInPerson = !isEmail && !isOnline;
+
+  const pdfUrl = job?.announcementUrl ? job.announcementUrl.split(/[\s,]+/)[0] : "";
+  const targetQrUrl = isOnline ? job.applyUrl : (pdfUrl || jobDetailUrl);
+
+  // Generate QR Code on mount
+  useEffect(() => {
+    if (!targetQrUrl) return;
+    QRCode.toDataURL(targetQrUrl, {
+      width: 140,
+      margin: 1,
+      color: {
+        dark: "#0f172a",
+        light: "#ffffff"
+      }
+    })
+      .then((url) => setQrCodeUrl(url))
+      .catch((err) => console.warn("QR code generation error:", err));
+  }, [targetQrUrl]);
+
+  // Adjust preview scaling to fit screen width on mobile
+  useEffect(() => {
+    const updateScale = () => {
+      if (previewContainerRef.current) {
+        const containerWidth = previewContainerRef.current.clientWidth - 32; // padding
+        const sheetWidth = 794; // A4 standard width at 96 DPI
+        if (containerWidth < sheetWidth) {
+          setScale(Math.max(0.38, containerWidth / sheetWidth));
+        } else {
+          setScale(1);
+        }
+      }
+    };
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+
   if (!job) return null;
 
   const totalCount = getTotalJobPositions(job);
@@ -46,66 +107,6 @@ export default function JobPrintSummaryModal({ job, onClose }) {
   } else if (job.salary) {
     displaySalary = job.salary;
   }
-
-  // Application URL & Job link
-  const currentOrigin = typeof window !== "undefined" ? window.location.origin : "https://readytogov.th";
-  const jobDetailUrl = `${currentOrigin}/job/${job.id}`;
-
-  // Smart detection of application channel
-  const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i;
-  let detectedEmail = "";
-  if (job.applyUrl) {
-    if (job.applyUrl.startsWith("mailto:")) {
-      const match = job.applyUrl.replace(/^mailto:/i, "").match(emailRegex);
-      if (match) detectedEmail = match[1];
-    } else if (job.applyUrl.includes("@") && !job.applyUrl.startsWith("http")) {
-      const match = job.applyUrl.match(emailRegex);
-      if (match) detectedEmail = match[1];
-    }
-  }
-  if (!detectedEmail && job.description) {
-    const match = job.description.match(emailRegex);
-    if (match) detectedEmail = match[1];
-  }
-
-  const isEmail = Boolean(detectedEmail);
-  const isOnline = Boolean(job.applyUrl && job.applyUrl.startsWith("http") && !isEmail);
-  const isInPerson = !isEmail && !isOnline;
-
-  const pdfUrl = job.announcementUrl ? job.announcementUrl.split(/[\s,]+/)[0] : "";
-  const targetQrUrl = isOnline ? job.applyUrl : (pdfUrl || jobDetailUrl);
-
-  // Generate QR Code on mount
-  useEffect(() => {
-    QRCode.toDataURL(targetQrUrl, {
-      width: 140,
-      margin: 1,
-      color: {
-        dark: "#0f172a",
-        light: "#ffffff"
-      }
-    })
-      .then((url) => setQrCodeUrl(url))
-      .catch((err) => console.warn("QR code generation error:", err));
-  }, [targetQrUrl]);
-
-  // Adjust preview scaling to fit screen width on mobile
-  useEffect(() => {
-    const updateScale = () => {
-      if (previewContainerRef.current) {
-        const containerWidth = previewContainerRef.current.clientWidth - 32; // padding
-        const sheetWidth = 794; // A4 standard width at 96 DPI
-        if (containerWidth < sheetWidth) {
-          setScale(Math.max(0.38, containerWidth / sheetWidth));
-        } else {
-          setScale(1);
-        }
-      }
-    };
-    updateScale();
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
-  }, []);
 
   // 🖨️ Handle Print via hidden iframe (Pure Vector, 1-Page A4, Zero Glitch)
   const handlePrint = () => {

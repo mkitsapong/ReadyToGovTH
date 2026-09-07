@@ -274,9 +274,17 @@ export default function JobList({
 
     // Sort
     if (sortBy === "newest") {
-      result.sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
+      result.sort((a, b) => {
+        const timeA = a.postedDate ? new Date(a.postedDate).getTime() : 0;
+        const timeB = b.postedDate ? new Date(b.postedDate).getTime() : 0;
+        return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
+      });
     } else if (sortBy === "deadline") {
-      result.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+      result.sort((a, b) => {
+        const timeA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const timeB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return (isNaN(timeA) ? Infinity : timeA) - (isNaN(timeB) ? Infinity : timeB);
+      });
     } else if (sortBy === "positions") {
       result.sort((a, b) => {
         const countA = getTotalJobPositions(a);

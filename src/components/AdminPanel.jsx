@@ -2,7 +2,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { regions } from "../data/provinces.js";
 import AdminAIExtractor from "./AdminAIExtractor.jsx";
 import { findOfficialGovLogo } from "../utils/logoHelper.js";
-import { convertExternalImageToBase64 } from "../utils/imageHelper.js";
+import {
+  convertExternalImageToBase64,
+  resizeAndOptimizeImage,
+  removeWhiteBackground,
+} from "../utils/imageHelper.js";
 
 const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ"];
 const EDUCATION = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
@@ -75,9 +79,29 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   const [logoPreview, setLogoPreview] = useState(isEditMode ? editJob.logoUrl || "" : "");
   const [logoLoading, setLogoLoading] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+  const [originalLogo, setOriginalLogo] = useState(null);
+  const [hasCutBg, setHasCutBg] = useState(false);
+  const [logoFeedback, setLogoFeedback] = useState(null);
   const [provinceOpen, setProvinceOpen] = useState(false);
   const provinceRef = useRef(null);
   const logoConvertTimerRef = useRef(null);
+  const logoFeedbackTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (logoConvertTimerRef.current) clearTimeout(logoConvertTimerRef.current);
+      if (logoFeedbackTimerRef.current) clearTimeout(logoFeedbackTimerRef.current);
+    };
+  }, []);
+
+  const showLogoFeedback = useCallback((text, type = "success") => {
+    if (logoFeedbackTimerRef.current) clearTimeout(logoFeedbackTimerRef.current);
+    setLogoFeedback({ text, type });
+    logoFeedbackTimerRef.current = setTimeout(() => {
+      setLogoFeedback(null);
+    }, 3500);
+  }, []);
 
   // Auto-convert external logo URL to base64 for reliable preview
   const tryConvertLogo = useCallback(async (url) => {
@@ -168,21 +192,151 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   }
 
 
-  // ── Logo handlers ──────────────────────────────────────────────────────────
+  // ── Logo handlers & Clipboard Paste ─────────────────────────────────────────
+  const processImageFile = useCallback(async (file, sourceName = "Clipboard") => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("ไฟล์ที่เลือกไม่ใช่รูปภาพ กรุณาใช้ไฟล์รูปภาพ (PNG, JPG, WEBP, SVG)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("ไฟล์รูปภาพมีขนาดเกิน 5 MB");
+      return;
+    }
+    setLogoLoading(true);
+    setLogoError(false);
+    try {
+      // Resize & optimize to max 400x400 to keep base64 compact for Firestore
+      const base64 = await resizeAndOptimizeImage(file, 400);
+      setLogoPreview(base64);
+      setForm((prev) => ({ ...prev, logoUrl: base64 }));
+      setOriginalLogo(base64);
+      setHasCutBg(false);
+      setLogoError(false);
+      showLogoFeedback(`📋 วางรูปจาก ${sourceName} สำเร็จ!`);
+    } catch (err) {
+      console.error("Failed to process image:", err);
+      alert("เกิดข้อผิดพลาดในการประมวลผลรูปภาพ");
+      setLogoError(true);
+    } finally {
+      setLogoLoading(false);
+    }
+  }, [showLogoFeedback]);
+
+  const handleLogoPaste = useCallback((e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith("image/")) {
+        e.preventDefault();
+        const file = items[i].getAsFile();
+        if (file) {
+          processImageFile(file, "Clipboard (Ctrl+V)");
+        }
+        return;
+      }
+    }
+  }, [processImageFile]);
+
+  // Global paste handler: allows pressing Ctrl+V anywhere inside the modal when an image was copied
+  useEffect(() => {
+    function handleWindowPaste(e) {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      let imageItem = null;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith("image/")) {
+          imageItem = items[i];
+          break;
+        }
+      }
+      if (!imageItem) return;
+
+      // Don't hijack if user is pasting text into a regular text input or textarea
+      const activeEl = document.activeElement;
+      const isOtherTextInput = activeEl && (
+        (activeEl.tagName === "INPUT" && activeEl.id !== "admin-field-logo-url") ||
+        activeEl.tagName === "TEXTAREA"
+      );
+      if (isOtherTextInput && e.clipboardData.types.includes("text/plain")) {
+        return;
+      }
+
+      e.preventDefault();
+      const file = imageItem.getAsFile();
+      if (file) {
+        processImageFile(file, "Clipboard (Ctrl+V)");
+      }
+    }
+
+    window.addEventListener("paste", handleWindowPaste);
+    return () => window.removeEventListener("paste", handleWindowPaste);
+  }, [processImageFile]);
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingLogo(true);
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingLogo(false);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingLogo(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processImageFile(file, "การลากวาง (Drag & Drop)");
+    }
+  }
+
   function handleLogoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { alert("ไฟล์ต้องมีขนาดไม่เกิน 2 MB"); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setLogoPreview(ev.target.result);
-      setForm((prev) => ({ ...prev, logoUrl: ev.target.result }));
-    };
-    reader.readAsDataURL(file);
+    processImageFile(file, "ไฟล์เครื่อง");
   }
+
   function clearLogo() {
     setLogoPreview("");
     setForm((prev) => ({ ...prev, logoUrl: "" }));
+    setOriginalLogo(null);
+    setHasCutBg(false);
+    setLogoError(false);
+  }
+
+  async function handleRemoveWhiteBg() {
+    if (!logoPreview || logoLoading) return;
+    setLogoLoading(true);
+    try {
+      if (!originalLogo) {
+        setOriginalLogo(logoPreview);
+      }
+      const transparentPng = await removeWhiteBackground(logoPreview, 38);
+      setLogoPreview(transparentPng);
+      setForm((prev) => ({ ...prev, logoUrl: transparentPng }));
+      setHasCutBg(true);
+      showLogoFeedback("✂️ ตัดพื้นหลังสีขาวโปร่งใสเรียบร้อยแล้ว");
+    } catch (err) {
+      console.error("Error removing white background:", err);
+      alert("ไม่สามารถตัดพื้นหลังได้ หรือรูปภาพติดข้อจำกัด CORS กรุณาแคปภาพแล้วกด Ctrl+V แทน");
+    } finally {
+      setLogoLoading(false);
+    }
+  }
+
+  function handleUndoRemoveBg() {
+    if (originalLogo) {
+      setLogoPreview(originalLogo);
+      setForm((prev) => ({ ...prev, logoUrl: originalLogo }));
+      setHasCutBg(false);
+      showLogoFeedback("↩️ คืนค่ารูปต้นฉบับเรียบร้อยแล้ว", "info");
+    }
   }
 
   // ── Position list handlers ─────────────────────────────────────────────────
@@ -359,31 +513,71 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
             {/* AI Extractor Component */}
             <AdminAIExtractor onExtracted={handleAIExtracted} defaultOpen={!isEditMode} />
 
-            {/* Logo Upload or URL */}
+            {/* Logo Upload, Clipboard Paste, or URL */}
             <div className="form-group">
-              <label className="form-label">Logo หน่วยงาน</label>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <label className="form-label" style={{ margin: 0 }}>Logo หน่วยงาน</label>
+                <span style={{ fontSize: "0.72rem", color: "var(--primary-600)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                  📋 กดแคปภาพแล้วกด <strong>Ctrl + V</strong> วางได้ทันที
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                {/* Interactive Logo Box: Dropzone & Paste Target */}
                 <div
-                  style={{
-                    width: 64, height: 64,
-                    borderRadius: "var(--radius-md)",
-                    background: logoPreview && !logoError ? "var(--gray-100)" : "linear-gradient(135deg, var(--navy-700), var(--navy-500))",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden", border: `2px dashed ${logoError ? '#ef4444' : 'var(--gray-300)'}`,
-                    flexShrink: 0, cursor: "pointer",
-                    position: "relative",
-                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="กล่องโลโก้หน่วยงาน กดคลิกหรือกด Ctrl+V เพื่อวางรูปภาพ หรือลากไฟล์มาวาง"
+                  title="คลิกเพื่อเลือกไฟล์ หรือกดคลิกแล้วกด Ctrl+V เพื่อวางภาพ หรือลากไฟล์มาวาง"
+                  onPaste={handleLogoPaste}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                   onClick={() => document.getElementById("logo-upload-input").click()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      document.getElementById("logo-upload-input").click();
+                    }
+                  }}
+                  style={{
+                    width: 72, height: 72,
+                    borderRadius: "var(--radius-md)",
+                    background: isDraggingLogo
+                      ? "rgba(59, 130, 246, 0.14)"
+                      : logoPreview && !logoError
+                      ? "var(--gray-100)"
+                      : "linear-gradient(135deg, var(--navy-700), var(--navy-500))",
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    overflow: "hidden",
+                    border: `2px dashed ${
+                      isDraggingLogo
+                        ? "var(--primary-500)"
+                        : logoError
+                        ? "#ef4444"
+                        : "var(--gray-300)"
+                    }`,
+                    flexShrink: 0,
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "all 0.18s ease",
+                    boxShadow: isDraggingLogo ? "0 0 0 4px rgba(59, 130, 246, 0.25)" : "none",
+                    outline: "none",
+                  }}
                 >
                   {logoLoading ? (
-                    <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.8)", textAlign: "center", lineHeight: 1.3 }}>⏳<br/>โหลด...</span>
+                    <span style={{ fontSize: "0.65rem", color: logoPreview ? "var(--gray-700)" : "rgba(255,255,255,0.9)", textAlign: "center", lineHeight: 1.3, fontWeight: 600 }}>
+                      ⏳<br/>ประมวลผล...
+                    </span>
+                  ) : isDraggingLogo ? (
+                    <span style={{ fontSize: "0.65rem", color: "var(--primary-600)", fontWeight: 700, textAlign: "center" }}>
+                      📥<br/>ปล่อยรูป
+                    </span>
                   ) : logoPreview && !logoError ? (
                     <img
                       src={logoPreview}
                       alt="logo"
                       referrerPolicy="no-referrer"
                       onError={() => {
-                        // If the preview fails (CORS), try converting via proxy
                         if (form.logoUrl && !form.logoUrl.startsWith("data:")) {
                           tryConvertLogo(form.logoUrl);
                         } else {
@@ -393,30 +587,49 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                       style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
                     />
                   ) : (
-                    <span style={{ fontSize: "1.5rem" }}>{CATEGORY_ICONS[form.categories?.[0]] || "🏛️"}</span>
+                    <>
+                      <span style={{ fontSize: "1.4rem" }}>{CATEGORY_ICONS[form.categories?.[0]] || "🏛️"}</span>
+                      <span style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.75)", marginTop: 2, fontWeight: 600 }}>
+                        Ctrl+V
+                      </span>
+                    </>
                   )}
                 </div>
+
+                {/* Input Controls */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    <input id="logo-upload-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                      style={{ display: "none" }} onChange={handleLogoChange} />
-                    <button type="button" className="btn btn-outline"
+                    <input
+                      id="logo-upload-input"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      style={{ display: "none" }}
+                      onChange={handleLogoChange}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline"
                       style={{ fontSize: "0.8rem", padding: "6px 12px", flexShrink: 0, height: 34 }}
-                      onClick={() => document.getElementById("logo-upload-input").click()}>
+                      onClick={() => document.getElementById("logo-upload-input").click()}
+                    >
                       📁 อัปโหลดรูป
                     </button>
                     <span style={{ fontSize: "0.8rem", color: "var(--gray-500)" }}>หรือ</span>
-                    <input 
+                    <input
+                      id="admin-field-logo-url"
                       type="text"
-                      placeholder="ใส่ลิงก์รูปภาพ (URL)"
+                      placeholder="ใส่ลิงก์รูปภาพ (URL) หรือกด Ctrl+V ที่นี่"
                       className="form-input"
                       style={{ flex: 1, minWidth: 150, padding: "6px 10px", fontSize: "0.8rem", height: 34 }}
                       value={form.logoUrl || ""}
+                      onPaste={handleLogoPaste}
                       onChange={(e) => {
                         const url = e.target.value;
                         setForm((prev) => ({ ...prev, logoUrl: url }));
                         setLogoPreview(url);
                         setLogoError(false);
+                        setOriginalLogo(null);
+                        setHasCutBg(false);
                         // Debounce: auto-convert after user stops typing
                         clearTimeout(logoConvertTimerRef.current);
                         if (url && url.startsWith("http")) {
@@ -446,14 +659,101 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                     >
                       ✨ หาโลโก้
                     </button>
+
+                    {/* 1-Click Auto Remove White Background */}
+                    {logoPreview && !logoError && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveWhiteBg}
+                        disabled={logoLoading}
+                        title="ลบขอบสี่เหลี่ยมสีขาวรอบโลโก้อัตโนมัติให้โปร่งใส (Transparent PNG)"
+                        style={{
+                          background: "rgba(16, 185, 129, 0.12)",
+                          border: "1px solid rgba(16, 185, 129, 0.35)",
+                          color: "#059669",
+                          borderRadius: "var(--radius-sm)",
+                          padding: "6px 10px",
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          cursor: logoLoading ? "wait" : "pointer",
+                          height: 34,
+                          whiteSpace: "nowrap",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {logoLoading ? "⏳ กำลังตัด..." : "✂️ ตัดพื้นหลังขาว"}
+                      </button>
+                    )}
+
+                    {/* Undo Cut Background */}
+                    {hasCutBg && originalLogo && (
+                      <button
+                        type="button"
+                        onClick={handleUndoRemoveBg}
+                        title="คืนค่ารูปภาพก่อนตัดพื้นหลัง"
+                        style={{
+                          background: "rgba(107, 114, 128, 0.1)",
+                          border: "1px solid var(--gray-300)",
+                          color: "var(--gray-600)",
+                          borderRadius: "var(--radius-sm)",
+                          padding: "6px 10px",
+                          fontSize: "0.78rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          height: 34,
+                          whiteSpace: "nowrap",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4
+                        }}
+                      >
+                        ↩️ คืนค่าเดิม
+                      </button>
+                    )}
+
                     {logoPreview && (
-                      <button type="button" onClick={clearLogo}
-                        style={{ background: "none", border: "none", fontSize: "0.78rem", color: "var(--gray-400)", cursor: "pointer", textDecoration: "underline", flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={clearLogo}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          fontSize: "0.78rem",
+                          color: "var(--gray-400)",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          flexShrink: 0
+                        }}
+                      >
                         ลบรูป
                       </button>
                     )}
                   </div>
-                  <p style={{ fontSize: "0.72rem", color: "var(--gray-400)", margin: 0 }}>อัปโหลด: PNG, JPG, WEBP, SVG ไม่เกิน 2 MB</p>
+
+                  {/* Helper Tips & Feedback Toast */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
+                    <p style={{ fontSize: "0.72rem", color: "var(--gray-400)", margin: 0 }}>
+                      📋 <strong>ลัดไว:</strong> แคปภาพจากเว็บหรือประกาศ (Snipping Tool) แล้วกด <strong>Ctrl+V</strong> ที่กล่องโลโก้ได้ทันที • ลากไฟล์มาวางได้
+                    </p>
+                    {logoFeedback && (
+                      <span
+                        style={{
+                          fontSize: "0.74rem",
+                          fontWeight: 600,
+                          color: logoFeedback.type === "info" ? "var(--primary-600)" : "#059669",
+                          background: logoFeedback.type === "info" ? "rgba(59, 130, 246, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                          border: `1px solid ${logoFeedback.type === "info" ? "rgba(59, 130, 246, 0.25)" : "rgba(16, 185, 129, 0.3)"}`,
+                          borderRadius: "var(--radius-sm)",
+                          padding: "2px 8px"
+                        }}
+                      >
+                        {logoFeedback.text}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

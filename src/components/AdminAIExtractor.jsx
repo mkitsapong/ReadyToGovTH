@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { extractJobDataWithAI } from "../services/aiJobExtractor.js";
 
 export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
@@ -11,8 +11,19 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
   const [showKeyConfig, setShowKeyConfig] = useState(false);
   const [apiKey, setApiKey] = useState(() => localStorage.getItem("readytogov_gemini_api_key") || "");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressStep, setProgressStep] = useState("");
 
   const fileInputRef = useRef(null);
+  const progressIntervalRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
 
   function handleSaveKey(key) {
     setApiKey(key);
@@ -35,10 +46,6 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
     }
     setFile(selectedFile);
   }
-
-  const [progress, setProgress] = useState(0);
-  const [progressStep, setProgressStep] = useState("");
-  const progressIntervalRef = useRef(null);
 
   const PROGRESS_STEPS = [
     { threshold: 25, text: "📂 กำลังอ่านและประมวลผลไฟล์เอกสาร..." },

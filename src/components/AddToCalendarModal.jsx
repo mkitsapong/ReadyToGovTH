@@ -5,6 +5,8 @@ import {
   getGoogleCalendarUrl,
   getOutlookCalendarUrl,
   downloadIcsFile,
+  openNativeMobileCalendar,
+  getDevicePlatform,
 } from "../utils/calendarHelper.js";
 
 export default function AddToCalendarModal({ job, onClose, onToast }) {
@@ -18,6 +20,8 @@ export default function AddToCalendarModal({ job, onClose, onToast }) {
   const hasStartDate = Boolean(job.startDate && job.startDate > today);
   const days = daysLeft(job.deadline);
 
+  const { isMobile, isIOS } = getDevicePlatform();
+
   // Reminders list
   const activeReminders = [];
   if (reminder1Day) activeReminders.push(1);
@@ -27,6 +31,12 @@ export default function AddToCalendarModal({ job, onClose, onToast }) {
     eventType,
     reminderDays: activeReminders.length > 0 ? activeReminders : [1],
   });
+
+  const handleNativeMobile = () => {
+    if (!eventData) return;
+    openNativeMobileCalendar(eventData, onToast);
+    onClose();
+  };
 
   const handleGoogleCalendar = () => {
     if (!eventData) return;
@@ -155,6 +165,37 @@ export default function AddToCalendarModal({ job, onClose, onToast }) {
 
           {/* Platform Buttons List */}
           <div className="calendar-platforms-list">
+            {/* Native Mobile Calendar (Direct 1-Click for iOS / Android) */}
+            {isMobile && (
+              <button
+                type="button"
+                className="calendar-platform-btn btn-native-mobile"
+                onClick={handleNativeMobile}
+                style={{
+                  background: "linear-gradient(135deg, #1d4ed8, #2563eb)",
+                  color: "#ffffff",
+                  border: "1px solid rgba(255, 255, 255, 0.25)",
+                  boxShadow: "0 4px 14px rgba(37, 99, 235, 0.35)",
+                }}
+              >
+                <div className="platform-icon-box" style={{ background: "rgba(255, 255, 255, 0.2)", fontSize: "1.2rem", color: "#fff" }}>
+                  📱
+                </div>
+                <div className="platform-text-box">
+                  <span className="platform-name" style={{ color: "#ffffff", display: "flex", alignItems: "center", gap: 6, fontWeight: 700 }}>
+                    เปิดในแอปปฏิทินในเครื่องทันที
+                    <span style={{ fontSize: "0.68rem", background: "rgba(255, 255, 255, 0.28)", padding: "1px 6px", borderRadius: "10px", fontWeight: 700 }}>
+                      ⚡ 1 คลิก
+                    </span>
+                  </span>
+                  <span className="platform-desc" style={{ color: "rgba(255, 255, 255, 0.9)" }}>
+                    {isIOS ? "บันทึกลงแอป Apple Calendar ของ iPhone โดยตรง" : "บันทึกลงแอปปฏิทินในเครื่อง Android โดยตรง"}
+                  </span>
+                </div>
+                <span className="platform-arrow" style={{ color: "#ffffff" }}>→</span>
+              </button>
+            )}
+
             {/* Google Calendar */}
             <button
               type="button"

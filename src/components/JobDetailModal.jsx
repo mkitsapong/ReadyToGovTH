@@ -5,6 +5,11 @@ import { ModalExamPrepSection } from "./ExamResources.jsx";
 import SocialShareCover from "./SocialShareCover.jsx";
 import { CATEGORY_MAP, EDU_COLORS } from "../utils/constants.js";
 import { formatDate, daysLeft, getDisplayProvinces, getTotalJobPositions } from "../utils/helpers.js";
+import {
+  buildCalendarEventData,
+  openNativeMobileCalendar,
+  getDevicePlatform,
+} from "../utils/calendarHelper.js";
 import JobPrintSummaryModal from "./JobPrintSummaryModal.jsx";
 import AddToCalendarModal from "./AddToCalendarModal.jsx";
 
@@ -22,6 +27,21 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [generatingRatio, setGeneratingRatio] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+
+  const handleQuickCalendarClick = (e) => {
+    e.stopPropagation();
+    const { isMobile } = getDevicePlatform();
+    if (isMobile) {
+      // 1-Tap: Directly trigger the native Calendar app on the mobile phone!
+      const eventData = buildCalendarEventData(job, {
+        eventType: "deadline",
+        reminderDays: [1, 3],
+      });
+      openNativeMobileCalendar(eventData, onToast);
+    } else {
+      setShowCalendarModal(true);
+    }
+  };
 
   // Guard clause: must be before any job property access
   if (!job) return null;
@@ -358,27 +378,38 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             <div className="detail-stat-value">
               {days >= 0 ? (
                 <>
-                  <span className="stat-date-text">
+                  <div className="stat-date-text">
                     {displayStartDate ? `${formatDate(displayStartDate)} – ` : ""}
                     <strong>{formatDate(job.deadline)}</strong>
-                  </span>
-                  <span className={`stat-pill-days ${days === 0 ? "today" : days <= 5 ? "urgent" : "normal"}`}>
-                    {days === 0 ? "ปิดรับวันนี้!" : `เหลือ ${days} วัน`}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowCalendarModal(true);
-                    }}
-                    className="btn-stat-calendar-quick"
-                    title="บันทึกเตือนวันปิดรับสมัครลงปฏิทินมือถือ/คอมพิวเตอร์"
-                  >
-                    <span>📅 บันทึกปฏิทิน</span>
-                  </button>
+                  </div>
+                  <div className="stat-deadline-actions">
+                    <span className={`stat-pill-days ${days === 0 ? "today" : days <= 5 ? "urgent" : "normal"}`}>
+                      <span className="stat-pill-icon">{days === 0 ? "🚨" : days <= 5 ? "🔥" : "⏳"}</span>
+                      <span>{days === 0 ? "ปิดรับวันนี้!" : `เหลือ ${days} วัน`}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleQuickCalendarClick}
+                      className="btn-stat-calendar-quick"
+                      title="บันทึกเตือนวันปิดรับสมัครลงปฏิทินในมือถือ / คอมพิวเตอร์"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                      <span>เตือนปฏิทิน</span>
+                    </button>
+                  </div>
                 </>
               ) : (
-                <span className="stat-pill-days closed">หมดเขตรับสมัครแล้ว</span>
+                <div className="stat-deadline-actions">
+                  <span className="stat-pill-days closed">
+                    <span>⚠️</span>
+                    <span>หมดเขตรับสมัครแล้ว</span>
+                  </span>
+                </div>
               )}
             </div>
           </div>

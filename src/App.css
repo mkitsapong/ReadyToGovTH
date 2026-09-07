@@ -3565,8 +3565,8 @@
 .detail-stat-card {
   padding: 16px 20px;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
   border-right: 1px solid #eaedf2;
   transition: background var(--transition-fast);
 }
@@ -3580,10 +3580,41 @@
 }
 
 .detail-stat-icon-wrapper {
-  font-size: 1.35rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
   flex-shrink: 0;
-  line-height: 1;
-  margin-top: 2px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.detail-stat-card:hover .detail-stat-icon-wrapper {
+  transform: scale(1.06);
+}
+
+.stat-deadline .detail-stat-icon-wrapper {
+  background: #fff7ed;
+  border-color: #ffedd5;
+}
+
+.stat-salary .detail-stat-icon-wrapper {
+  background: #f0fdf4;
+  border-color: #dcfce7;
+}
+
+.stat-quota .detail-stat-icon-wrapper {
+  background: #eff6ff;
+  border-color: #dbeafe;
+}
+
+.stat-location .detail-stat-icon-wrapper {
+  background: #fff1f2;
+  border-color: #ffe4e6;
 }
 
 .detail-stat-body {
@@ -3603,13 +3634,15 @@
 .detail-stat-value {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .stat-date-text {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: var(--navy-800);
-  line-height: 1.3;
+  line-height: 1.35;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .stat-date-text strong {
@@ -3617,39 +3650,78 @@
   font-weight: 700;
 }
 
+.stat-deadline-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
 .stat-pill-days {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
-  padding: 2px 8px;
+  gap: 4px;
+  padding: 3px 9px;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .stat-pill-days.urgent {
-  background: var(--orange-50);
-  border: 1px solid var(--orange-300);
-  color: var(--orange-700);
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
 }
 
 .stat-pill-days.today {
   background: #fef2f2;
-  border: 1px solid #fca5a5;
+  border: 1px solid #fecaca;
   color: #dc2626;
   animation: subtle-pulse 2s infinite ease-in-out;
 }
 
 .stat-pill-days.normal {
-  background: var(--navy-50);
-  border: 1px solid var(--navy-200);
-  color: var(--navy-700);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
 }
 
 .stat-pill-days.closed {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  color: #6b7280;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+}
+
+.btn-stat-calendar-quick {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-stat-calendar-quick:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
+}
+
+.btn-stat-calendar-quick svg {
+  flex-shrink: 0;
 }
 
 .stat-value-highlight {
@@ -4841,6 +4913,68 @@
 
 [data-theme="dark"] .stat-sub-text {
   color: #64748b;
+}
+
+[data-theme="dark"] .detail-stat-icon-wrapper {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .stat-deadline .detail-stat-icon-wrapper {
+  background: rgba(234, 88, 12, 0.15);
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+[data-theme="dark"] .stat-salary .detail-stat-icon-wrapper {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .stat-quota .detail-stat-icon-wrapper {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .stat-location .detail-stat-icon-wrapper {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+[data-theme="dark"] .stat-pill-days.urgent {
+  background: rgba(234, 88, 12, 0.15);
+  border-color: rgba(249, 115, 22, 0.35);
+  color: #fb923c;
+}
+
+[data-theme="dark"] .stat-pill-days.today {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #f87171;
+}
+
+[data-theme="dark"] .stat-pill-days.normal {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .stat-pill-days.closed {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .btn-stat-calendar-quick {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+}
+
+[data-theme="dark"] .btn-stat-calendar-quick:hover {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.4);
 }
 
 [data-theme="dark"] .detail-modal-body {
@@ -6416,29 +6550,6 @@
   transform: translateY(-1px);
 }
 
-/* Quick calendar button inside stat card */
-.btn-stat-calendar-quick {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 999px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-  transition: all 0.2s ease;
-}
-
-.btn-stat-calendar-quick:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.15);
-}
 
 /* Modal layout */
 .calendar-modal-container {

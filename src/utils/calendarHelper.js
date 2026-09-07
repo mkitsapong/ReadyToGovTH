@@ -1,4 +1,4 @@
-import { formatDate, daysLeft, getTotalJobPositions, getDisplayProvinces } from "./helpers.js";
+import { formatDate, getTotalJobPositions, getDisplayProvinces } from "./helpers.js";
 
 /**
  * Format a Date or YYYY-MM-DD string to standard iCal format: YYYYMMDD
@@ -264,6 +264,91 @@ END:VALARM`
 }
 
 /**
+ * Detect user device platform
+ */
+export function getDevicePlatform() {
+  if (typeof navigator === "undefined") return { isMobile: false, isIOS: false, isAndroid: false };
+  const ua = navigator.userAgent || "";
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  const isMobile = isIOS || isAndroid || /Mobi/i.test(ua);
+  return { isMobile, isIOS, isAndroid };
+}
+
+/**
+ * Directly trigger the native calendar app on mobile devices (iOS / Android)
+ * @param {object} eventData
+ * @param {function} onToast
+ */
+export function openNativeMobileCalendar(eventData, onToast) {
+  if (!eventData) return;
+  const { isIOS, isAndroid } = getDevicePlatform();
+
+  if (isIOS) {
+    // ── iOS (iPhone / iPad) Native Apple Calendar ──
+    // Generating .ics blob and triggering link navigation prompts the native iOS "Add to Calendar" sheet
+    const content = generateIcsFileContent(eventData);
+    const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+    const fileName = `readytogov-${eventData.jobId}.ics`;
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1500);
+
+    if (onToast) {
+      onToast("เปิดแอปปฏิทิน Apple Calendar ในเครื่องแล้ว 🍏", "success");
+    }
+    return;
+  }
+
+  if (isAndroid) {
+    // ── Android Native Calendar App (Samsung Calendar / Google Calendar) ──
+    try {
+      const targetDate = eventData.targetDate || new Date().toISOString().split("T")[0];
+      const startMs = new Date(`${targetDate}T09:00:00`).getTime() || Date.now();
+      const endMs = new Date(`${targetDate}T17:00:00`).getTime() || (startMs + 3600000);
+
+      // Android Intent scheme for calendar insert
+      const intentUrl = `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/event;S.title=${encodeURIComponent(eventData.title)};S.description=${encodeURIComponent(eventData.description)};S.eventLocation=${encodeURIComponent(eventData.location)};l.beginTime=${startMs};l.endTime=${endMs};B.allDay=true;end`;
+
+      // Fallback: Google Calendar web/app link
+      const fallbackUrl = getGoogleCalendarUrl(eventData);
+
+      const start = Date.now();
+      window.location.href = intentUrl;
+
+      // If Android intent does not switch app within 800ms, fallback to Google Calendar
+      setTimeout(() => {
+        if (Date.now() - start < 1500) {
+          window.open(fallbackUrl, "_blank");
+        }
+      }, 800);
+
+      if (onToast) {
+        onToast("เปิดแอปปฏิทินในเครื่อง Android แล้ว 📅", "success");
+      }
+      return;
+    } catch {
+      window.open(getGoogleCalendarUrl(eventData), "_blank");
+      return;
+    }
+  }
+
+  // Fallback for desktop or other devices: direct .ics download
+  downloadIcsFile(eventData);
+  if (onToast) {
+    onToast("ดาวน์โหลดไฟล์ปฏิทิน .ics เรียบร้อยแล้ว 📅", "success");
+  }
+}
+
+/**
  * Download or trigger open for .ics file (Supports iOS Calendar & desktop)
  */
 export function downloadIcsFile(eventData, fileName) {
@@ -272,25 +357,6 @@ export function downloadIcsFile(eventData, fileName) {
   const content = generateIcsFileContent(eventData);
   const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
   const actualFileName = fileName || `readytogov-${eventData.jobId}-reminder.ics`;
-
-  // Mobile Web Share API support for files (e.g. iOS or Android)
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (isMobile && navigator.canShare) {
-    try {
-      const file = new File([blob], actualFileName, { type: "text/calendar" });
-      if (navigator.canShare({ files: [file] })) {
-        navigator.share({
-          files: [file],
-          title: eventData.title,
-        }).catch((err) => {
-          if (err.name !== "AbortError") fallbackDownload(blob, actualFileName);
-        });
-        return;
-      }
-    } catch {
-      // Fallback
-    }
-  }
 
   fallbackDownload(blob, actualFileName);
 }
@@ -305,5 +371,6 @@ function fallbackDownload(blob, fileName) {
   setTimeout(() => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, 300);
+  }, 500);
 }
+

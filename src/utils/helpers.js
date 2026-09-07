@@ -23,7 +23,9 @@ export function getDisplayProvinces(job) {
  */
 export function formatDate(dateStr) {
   if (!dateStr) return "-";
-  return new Date(dateStr).toLocaleDateString("th-TH", {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("th-TH", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -35,9 +37,11 @@ export function formatDate(dateStr) {
  * Returns a negative number if the deadline has passed.
  */
 export function daysLeft(deadline) {
+  if (!deadline) return 0;
   const d1 = new Date();
   d1.setHours(0, 0, 0, 0);
   const d2 = new Date(deadline);
+  if (isNaN(d2.getTime())) return 0;
   d2.setHours(0, 0, 0, 0);
   return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
 }

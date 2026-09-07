@@ -5,13 +5,16 @@ import SEO from "./SEO.jsx";
 
 import { JobDetailSkeleton } from "./LoadingSkeleton.jsx";
 
-import { getDisplayProvinces } from "../utils/helpers.js";
+import { getDisplayProvinces, formatDate } from "../utils/helpers.js";
 
 // Function to generate JSON-LD script for Google
 function generateJobPostingSchema(job) {
   const categoryName = (job.categories && job.categories.length > 0) ? job.categories[0] : (job.category || "งานราชการ");
   const displayProvs = getDisplayProvinces(job);
   const provinceName = displayProvs.length > 0 ? displayProvs[0] : "Thailand";
+
+  const datePostedValid = job.postedDate && !isNaN(new Date(job.postedDate).getTime());
+  const deadlineValid = job.deadline && !isNaN(new Date(job.deadline).getTime());
 
   const schema = {
     "@context": "https://schema.org/",
@@ -23,8 +26,8 @@ function generateJobPostingSchema(job) {
       "name": job.department,
       "value": String(job.id)
     },
-    "datePosted": job.postedDate || new Date().toISOString(),
-    "validThrough": job.deadline ? new Date(job.deadline).toISOString() : undefined,
+    "datePosted": datePostedValid ? new Date(job.postedDate).toISOString() : new Date().toISOString(),
+    "validThrough": deadlineValid ? new Date(job.deadline).toISOString() : undefined,
     "employmentType": "FULL_TIME",
     "hiringOrganization": {
       "@type": "Organization",
@@ -142,7 +145,7 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
     <>
       <SEO 
         title={`รับสมัครงาน ${job.department}`}
-        description={`ประกาศรับสมัครงาน ${job.department} อัปเดตล่าสุด รีบสมัครก่อน ${new Date(job.deadline).toLocaleDateString("th-TH")}`}
+        description={`ประกาศรับสมัครงาน ${job.department} อัปเดตล่าสุด${job.deadline ? ` รีบสมัครก่อน ${formatDate(job.deadline)}` : ""}`}
         url={`https://readytogov.th/job/${job.id}`}
         imageUrl={job.logoUrl}
       />
