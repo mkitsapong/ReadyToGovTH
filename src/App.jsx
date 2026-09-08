@@ -361,6 +361,7 @@ export default function App() {
       {showAdmin && (
         <Suspense fallback={<ModalLoadingFallback />}>
           <AdminPanel
+            jobs={jobs}
             editJob={editingJob}
             onAddJob={handleAddJob}
             onUpdateJob={handleUpdateJob}

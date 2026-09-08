@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { regions } from "../data/provinces.js";
 import AdminAIExtractor from "./AdminAIExtractor.jsx";
+import SocialPosterModal from "./SocialPosterModal.jsx";
 import { findOfficialGovLogo } from "../utils/logoHelper.js";
+import { findDuplicateOrExtensionJob } from "../utils/duplicateDetector.js";
+import { formatDate } from "../utils/helpers.js";
 import {
   convertExternalImageToBase64,
   resizeAndOptimizeImage,
@@ -35,9 +38,14 @@ const EMPTY_FORM = {
   positionList: [{ ...EMPTY_POSITION }],
 };
 
-export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose, editJob }) {
-  const isEditMode = !!editJob;
+export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose, editJob, jobs = [] }) {
+  const [activeEditJob, setActiveEditJob] = useState(editJob);
+  const isEditMode = !!activeEditJob;
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [posterJob, setPosterJob] = useState(null);
+  const [isSavedSuccess, setIsSavedSuccess] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState(null);
+  const [extractedCache, setExtractedCache] = useState(null);
 
   const [form, setForm] = useState(
     isEditMode
@@ -176,6 +184,64 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
       positionList: extractedData.positionList?.length ? extractedData.positionList : prev.positionList,
     }));
     setErrors({});
+
+    // Check for duplicate or extension against existing jobs in database
+    setExtractedCache(extractedData);
+    const match = findDuplicateOrExtensionJob(extractedData, jobs, activeEditJob?.id);
+    if (match) {
+      setDuplicateInfo(match);
+    } else {
+      setDuplicateInfo(null);
+    }
+  }
+
+  function handleApplyExtension() {
+    if (!duplicateInfo) return;
+    const existing = duplicateInfo.existingJob;
+    // Switch to editing the existing job
+    setActiveEditJob(existing);
+
+    // Merge new extracted deadline and other fields while preserving existing ones
+    setForm((prev) => ({
+      ...prev,
+      deadline: duplicateInfo.newDeadline || existing.deadline || prev.deadline,
+      announcementUrl: extractedCache?.announcementUrl
+        ? (existing.announcementUrl && !existing.announcementUrl.includes(extractedCache.announcementUrl)
+            ? `${existing.announcementUrl}, ${extractedCache.announcementUrl}`
+            : extractedCache.announcementUrl)
+        : existing.announcementUrl || prev.announcementUrl,
+      department: existing.department || prev.department,
+      categories: existing.categories || prev.categories,
+      provinces: existing.provinces || prev.provinces,
+      positionList: extractedCache?.positionList?.length
+        ? extractedCache.positionList
+        : existing.positionList || prev.positionList,
+    }));
+
+    showLogoFeedback(
+      `📅 สลับเข้าสู่โหมดอัปเดตงานเดิมแล้ว! ขยายวันรับสมัครเป็น ${formatDate(duplicateInfo.newDeadline)} เรียบร้อย`
+    );
+    setDuplicateInfo(null);
+  }
+
+  function handleDismissDuplicate() {
+    setDuplicateInfo(null);
+    showLogoFeedback("➕ จะบันทึกเป็นประกาศใหม่แยกต่างหาก", "info");
+  }
+
+  function handleManualCheckDuplicate() {
+    const checkData = {
+      department: form.department,
+      positionList: form.positionList,
+      deadline: form.deadline,
+    };
+    const match = findDuplicateOrExtensionJob(checkData, jobs, activeEditJob?.id);
+    if (match) {
+      setDuplicateInfo(match);
+      setExtractedCache(checkData);
+    } else {
+      showLogoFeedback("✅ ไม่พบประกาศงานซ้ำในระบบ สามารถลงประกาศได้ทันที!", "success");
+    }
   }
 
   function handleAutoDetectLogo() {
@@ -472,20 +538,26 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
       };
     });
 
+    const savedJobData = isEditMode
+      ? { ...(activeEditJob || editJob), ...form, category: form.categories[0], positionList }
+      : {
+          ...form,
+          category: form.categories[0],
+          positionList,
+          id: Date.now(),
+          requirements: [],
+          postedDate: form.postedDate || new Date().toISOString().split("T")[0],
+        };
+
     if (isEditMode) {
-      onUpdateJob({ ...editJob, ...form, category: form.categories[0], positionList });
+      onUpdateJob(savedJobData);
     } else {
-      onAddJob({
-        ...form,
-        category: form.categories[0],
-        positionList,
-        id: Date.now(),
-        requirements: [],
-        postedDate: form.postedDate || new Date().toISOString().split("T")[0],
-      });
+      onAddJob(savedJobData);
     }
     setLoading(false);
-    onClose();
+    // Launch Social Media Poster directly for the newly saved job!
+    setPosterJob(savedJobData);
+    setIsSavedSuccess(true);
   }
 
   // ─── JSX ──────────────────────────────────────────────────────────────────
@@ -512,6 +584,90 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
 
             {/* AI Extractor Component */}
             <AdminAIExtractor onExtracted={handleAIExtracted} defaultOpen={!isEditMode} />
+
+            {/* Duplicate & Extension Detector Card */}
+            {duplicateInfo && (
+              <div className="duplicate-detector-card animate-fade-up">
+                <div className="duplicate-detector-header">
+                  <span className="duplicate-detector-icon">
+                    {duplicateInfo.isExtension ? "📅" : "⚠️"}
+                  </span>
+                  <div className="duplicate-detector-title-group">
+                    <h3 className="duplicate-detector-title">
+                      {duplicateInfo.isExtension 
+                        ? "ตรวจพบประกาศนี้ขยายเวลารับสมัคร! (มีงานเดิมในระบบ)" 
+                        : "ตรวจพบประกาศงานที่มีอยู่แล้วในระบบ!"}
+                      {duplicateInfo.isExtension && (
+                        <span className="duplicate-badge-ext">
+                          ขยายเวลา +{duplicateInfo.daysExtended} วัน 🚀
+                        </span>
+                      )}
+                    </h3>
+                    <p className="duplicate-detector-desc">
+                      หน่วยงาน <strong>{duplicateInfo.existingJob.department}</strong> เคยลงประกาศไว้แล้วเมื่อวันที่ {formatDate(duplicateInfo.postedDate)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Comparison Grid */}
+                <div className="duplicate-compare-grid">
+                  <div className="duplicate-compare-box">
+                    <span className="duplicate-compare-badge existing">📁 ข้อมูลเดิมในระบบ (ID: {duplicateInfo.existingJob.id})</span>
+                    <div className="duplicate-compare-row">
+                      <strong>ตำแหน่ง:</strong> {duplicateInfo.existingJob.positionList?.[0]?.title} {duplicateInfo.existingJob.positionList?.length > 1 && `(+${duplicateInfo.existingJob.positionList.length - 1} ตำแหน่ง)`}
+                    </div>
+                    <div className="duplicate-compare-row">
+                      <strong>กำหนดเดิม:</strong> {formatDate(duplicateInfo.oldDeadline)}
+                    </div>
+                    <div className="duplicate-compare-row">
+                      <strong>จำนวนรับ:</strong> {duplicateInfo.existingJob.positionList?.reduce((s, p) => s + (Number(p.count) || 1), 0)} อัตรา
+                    </div>
+                  </div>
+
+                  <div className="duplicate-compare-box" style={{ borderLeft: "3px solid #16a34a" }}>
+                    <span className="duplicate-compare-badge new">📄 ข้อมูลใหม่ที่ AI ตรวจพบ</span>
+                    <div className="duplicate-compare-row">
+                      <strong>ตำแหน่ง:</strong> {extractedCache?.positionList?.[0]?.title || form.positionList?.[0]?.title} {(extractedCache?.positionList?.length || form.positionList?.length) > 1 && `(+${(extractedCache?.positionList?.length || form.positionList?.length) - 1} ตำแหน่ง)`}
+                    </div>
+                    <div className="duplicate-compare-row">
+                      <strong>กำหนดใหม่:</strong> <span style={{ color: "#15803d", fontWeight: 700 }}>{formatDate(duplicateInfo.newDeadline)}</span>
+                    </div>
+                    <div className="duplicate-compare-row">
+                      <strong>จำนวนรับ:</strong> {(extractedCache?.positionList || form.positionList)?.reduce((s, p) => s + (Number(p.count) || 1), 0)} อัตรา
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="duplicate-detector-actions">
+                  <button
+                    type="button"
+                    className="btn-dup-primary"
+                    onClick={handleApplyExtension}
+                  >
+                    <span>🔄</span>
+                    <span>{duplicateInfo.isExtension ? "อัปเดตขยายวันรับสมัครงานเดิม (แนะนำ)" : "อัปเดตข้อมูลทับงานเดิม"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn-dup-secondary"
+                    onClick={handleDismissDuplicate}
+                  >
+                    <span>➕</span>
+                    <span>สร้างเป็นประกาศใหม่แยกต่างหาก</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn-dup-ghost"
+                    onClick={() => setDuplicateInfo(null)}
+                  >
+                    ✕ ซ่อนการแจ้งเตือน
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Logo Upload, Clipboard Paste, or URL */}
             <div className="form-group">
@@ -760,7 +916,30 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
 
             {/* Department */}
             <div className="form-group">
-              <label className="form-label">หน่วยงาน <span className="required">*</span></label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <label className="form-label" style={{ margin: 0 }}>หน่วยงาน <span className="required">*</span></label>
+                {form.department && (
+                  <button
+                    type="button"
+                    onClick={handleManualCheckDuplicate}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--primary-600)",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      textDecoration: "underline",
+                    }}
+                    title="กดเพื่อตรวจสอบว่ามีประกาศของหน่วยงานนี้อยู่ในระบบแล้วหรือไม่"
+                  >
+                    🔍 ตรวจสอบงานซ้ำในระบบ
+                  </button>
+                )}
+              </div>
               <input id="admin-field-department" className="form-input"
                 placeholder="เช่น กรมบัญชีกลาง กระทรวงการคลัง"
                 value={form.department}
@@ -1282,6 +1461,32 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
               )
             )}
 
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                borderColor: "var(--orange-400)",
+                color: "var(--orange-700)",
+                background: "var(--orange-50)",
+                fontWeight: 600,
+              }}
+              onClick={() => {
+                const previewJob = {
+                  ...form,
+                  category: form.categories[0],
+                  id: editJob?.id || Date.now(),
+                };
+                setPosterJob(previewJob);
+              }}
+              title="เปิดตัวช่วยสร้างข้อความโพสต์โซเชียล & แบนเนอร์"
+            >
+              <span>📢</span>
+              <span>สร้างโพสต์โซเชียล</span>
+            </button>
+
             <button type="button" className="btn btn-outline" onClick={onClose}>ยกเลิก</button>
             <button id="admin-submit-btn" type="submit" className="btn btn-accent" disabled={loading}>
               {loading ? "⏳ กำลังบันทึก..." : isEditMode ? "💾 บันทึกการแก้ไข" : "💾 บันทึกประกาศ"}
@@ -1289,6 +1494,18 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
           </div>
         </form>
       </div>
+
+      {posterJob && (
+        <SocialPosterModal
+          job={posterJob}
+          onClose={() => {
+            setPosterJob(null);
+            if (isSavedSuccess) {
+              onClose();
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -135,7 +135,7 @@ export default function JobPrintSummaryModal({ job, onClose }) {
           <title>สรุปประกาศรับสมัครงาน - ${job.department}</title>
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+          <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
           ${styleElements}
           <style>
             @page {
@@ -152,7 +152,7 @@ export default function JobPrintSummaryModal({ job, onClose }) {
               padding: 0;
               background: #ffffff !important;
               color: #0f172a !important;
-              font-family: 'IBM Plex Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              font-family: 'Prompt', 'Plus Jakarta Sans', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
               font-size: 13px;
               line-height: 1.4;
             }

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ModalExamPrepSection } from "./ExamResources.jsx";
@@ -12,6 +12,7 @@ import {
 } from "../utils/calendarHelper.js";
 import JobPrintSummaryModal from "./JobPrintSummaryModal.jsx";
 import AddToCalendarModal from "./AddToCalendarModal.jsx";
+import SocialPosterModal from "./SocialPosterModal.jsx";
 
 export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit, onToast }) {
   const [isCopied, setIsCopied] = useState(false);
@@ -19,6 +20,9 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [isGeneratingBanner, setIsGeneratingBanner] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
   const [selectedPdfIndex, setSelectedPdfIndex] = useState(0);
+  const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(true);
+  const [useGoogleDocsViewer, setUseGoogleDocsViewer] = useState(false);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(job?.id);
   const bannerFeedRef = useRef(null);
@@ -27,6 +31,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [generatingRatio, setGeneratingRatio] = useState(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [showPosterModal, setShowPosterModal] = useState(false);
 
   const handleQuickCalendarClick = (e) => {
     e.stopPropagation();
@@ -42,6 +47,41 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       setShowCalendarModal(true);
     }
   };
+
+  // Keyboard listener for Escape key to close document viewer or exit fullscreen
+  useEffect(() => {
+    if (!showPdf) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (isPdfFullscreen) {
+          setIsPdfFullscreen(false);
+        } else {
+          setShowPdf(false);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showPdf, isPdfFullscreen]);
+
+  // Reset loading state when switching document index or viewer engine
+  useEffect(() => {
+    if (showPdf) {
+      setIsPdfLoading(true);
+    }
+  }, [showPdf, selectedPdfIndex, useGoogleDocsViewer]);
+
+  // Lock body scroll when in fullscreen reading mode
+  useEffect(() => {
+    if (isPdfFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isPdfFullscreen]);
 
   // Guard clause: must be before any job property access
   if (!job) return null;
@@ -284,16 +324,18 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               {isAdmin && (
                 <button
                   type="button"
-                  onClick={() => setShowBannerModal(true)}
-                  disabled={isGeneratingBanner}
-                  title="สร้างรูปแบนเนอร์สรุปสำหรับแชร์"
+                  onClick={() => setShowPosterModal(true)}
+                  title="สร้างข้อความแคปชั่นสำหรับโพสต์ลง Facebook / X / Threads และแบนเนอร์ (1 คลิก)"
                   className="btn-header-action btn-header-banner"
+                  style={{
+                    background: "linear-gradient(135deg, #f97316, #ea580c)",
+                    color: "white",
+                    border: "none",
+                    fontWeight: 700,
+                    boxShadow: "0 2px 8px rgba(249, 115, 22, 0.35)",
+                  }}
                 >
-                  {isGeneratingBanner ? (
-                    `⏳ สร้าง (${generatingRatio})...`
-                  ) : (
-                    "📷 เซฟรูปแบนเนอร์"
-                  )}
+                  📢 โพสต์โซเชียล (1 คลิก)
                 </button>
               )}
 
@@ -767,88 +809,175 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
   if (showPdf) {
     const currentPdfUrl = pdfUrls[selectedPdfIndex] || "";
-    const embedUrl = currentPdfUrl.includes("drive.google.com/file/d/")
-      ? currentPdfUrl.replace(/\/view.*$/, "/preview")
-      : `${currentPdfUrl}${currentPdfUrl.includes('#') ? '&' : '#'}view=FitH`;
+    let embedUrl = "";
+    if (useGoogleDocsViewer) {
+      embedUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(currentPdfUrl)}&embedded=true`;
+    } else if (currentPdfUrl.includes("drive.google.com/file/d/")) {
+      embedUrl = currentPdfUrl.replace(/\/view.*$/, "/preview");
+    } else {
+      embedUrl = `${currentPdfUrl}${currentPdfUrl.includes("#") ? "&" : "#"}view=FitH`;
+    }
 
     const pdfContent = (
-      <div className={`modal animate-fade-up ${inline ? 'inline-mode' : ''}`} style={inline ? { maxWidth: 850, width: "100%", margin: "0 auto", boxShadow: "0 12px 48px rgba(0,0,0,0.15)", height: "100vh", display: 'flex', flexDirection: 'column', borderLeft: "1px solid var(--gray-200)", borderRight: "1px solid var(--gray-200)" } : { maxWidth: 1000, height: '90vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--gray-200)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255, 255, 255, 0.95)", backdropFilter: "blur(8px)", borderRadius: inline ? 0 : "var(--radius-2xl) var(--radius-2xl) 0 0", position: "sticky", top: 0, zIndex: 10 }}>
-          <button onClick={() => setShowPdf(false)}
-            style={{
-              background: "transparent", border: "1px solid var(--gray-200)", display: "flex", alignItems: "center", gap: 6,
-              color: "var(--navy-700)", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer",
-              padding: "6px 14px", borderRadius: "999px", transition: "all 0.2s",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "var(--gray-50)"; e.currentTarget.style.borderColor = "var(--gray-300)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--gray-200)"; }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-            ปิดเอกสาร
-          </button>
-
-          <h2 style={{ fontSize: "1.05rem", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, textAlign: "center", color: "var(--navy-900)", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <span style={{ fontSize: "1.2rem", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}>📄</span> เอกสารประกาศรับสมัคร
-          </h2>
-
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
-            <a href={currentPdfUrl} target="_blank" rel="noopener noreferrer" title="เปิดในแท็บใหม่"
-              style={{
-                padding: "8px 16px", color: "white", textDecoration: "none",
-                display: "flex", alignItems: "center",
-                background: "linear-gradient(135deg, var(--navy-600), var(--navy-800))",
-                borderRadius: "999px", fontSize: "0.85rem", fontWeight: 700, gap: 6,
-                boxShadow: "0 4px 12px rgba(30, 58, 138, 0.2)", transition: "all 0.2s"
+      <div className={`doc-viewer-wrapper ${inline ? "inline-mode" : "modal-mode"} ${isPdfFullscreen ? "fullscreen-mode" : ""}`}>
+        {/* Top Header / Control Bar */}
+        <div className="doc-viewer-header">
+          {/* Left: Back button & Department Context */}
+          <div className="doc-viewer-left">
+            <button
+              type="button"
+              onClick={() => {
+                if (isPdfFullscreen) {
+                  setIsPdfFullscreen(false);
+                } else {
+                  setShowPdf(false);
+                }
               }}
-              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
-              onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+              className="doc-viewer-back-btn"
+              title={isPdfFullscreen ? "ออกจากโหมดเต็มจอ (Esc)" : "ปิดเอกสารกลับสู่หน้ารายละเอียด (Esc)"}
             >
-              เปิดดูไฟล์เต็ม
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-            </a>
-            {!inline ? (
-              <button onClick={onClose} style={{ background: "var(--gray-100)", border: "none", width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--gray-600)", transition: "all 0.2s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "var(--gray-200)"; e.currentTarget.style.color = "var(--gray-800)"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "var(--gray-100)"; e.currentTarget.style.color = "var(--gray-600)"; }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>{isPdfFullscreen ? "ย่อหน้าจอ" : "ปิดเอกสาร"}</span>
+            </button>
+
+            <div className="doc-viewer-divider" />
+
+            <div className="doc-viewer-title-group">
+              <div className="doc-viewer-dept" title={job.department}>
+                {job.department}
+              </div>
+              <div className="doc-viewer-subtitle">
+                <span className="doc-viewer-badge">
+                  {mainMeta.icon || "📄"} {categories[0] || "งานราชการ"}
+                </span>
+                <span>• ประกาศรับสมัครงานฉบับเต็ม</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Center: File Switcher Tabs (if multiple attachments) */}
+          {pdfUrls.length > 1 && (
+            <div className="doc-viewer-center">
+              {pdfUrls.map((url, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPdfIndex(idx);
+                    setIsPdfLoading(true);
+                  }}
+                  className={`doc-file-pill ${selectedPdfIndex === idx ? "active" : ""}`}
+                  title={`สลับดูไฟล์ที่ ${idx + 1}`}
+                >
+                  <span>📄</span>
+                  <span>ฉบับที่ {idx + 1}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Right: Action tools */}
+          <div className="doc-viewer-right">
+            {/* Toggle Fullscreen Theater Mode */}
+            <button
+              type="button"
+              onClick={() => setIsPdfFullscreen(prev => !prev)}
+              className="doc-tool-btn accent"
+              title={isPdfFullscreen ? "ย่อขนาดจอ (Esc)" : "ขยายโหมดอ่านเต็มหน้าจอ (Fullscreen)"}
+            >
+              {isPdfFullscreen ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+                  </svg>
+                  <span className="btn-label">ย่อหน้าจอ</span>
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                  </svg>
+                  <span className="btn-label">ขยายเต็มจอ</span>
+                </>
+              )}
+            </button>
+
+            {/* Close Cross Button for Modal or Fullscreen */}
+            {(!inline || isPdfFullscreen) && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isPdfFullscreen) {
+                    setIsPdfFullscreen(false);
+                  } else {
+                    onClose ? onClose() : setShowPdf(false);
+                  }
+                }}
+                className="doc-tool-icon-btn"
+                title="ปิด (Esc)"
               >
                 ✕
               </button>
-            ) : <div style={{ width: 32 }} />}
+            )}
           </div>
         </div>
-        {pdfUrls.length > 1 && (
-          <div style={{ padding: "8px 16px", background: "white", borderBottom: "1px solid var(--gray-200)", display: "flex", gap: 8, overflowX: "auto" }}>
-            {pdfUrls.map((url, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedPdfIndex(idx)}
-                style={{
-                  padding: "4px 12px", borderRadius: "999px", fontSize: "0.8rem", fontWeight: 600, border: "none",
-                  background: selectedPdfIndex === idx ? "var(--navy-600)" : "var(--gray-100)",
-                  color: selectedPdfIndex === idx ? "white" : "var(--gray-700)",
-                  cursor: "pointer", whiteSpace: "nowrap"
-                }}
-              >
-                ไฟล์ประกาศที่ {idx + 1}
-              </button>
-            ))}
+
+        {/* Informative Sub-toolbar / Troubleshooting helper */}
+        <div className="doc-viewer-infobar">
+          <div className="doc-viewer-infobar-left">
+            <span>
+              📄 เอกสารฉบับที่ {selectedPdfIndex + 1} จาก {pdfUrls.length}
+            </span>
+            <span style={{ opacity: 0.4 }}>|</span>
+            <span>
+              💡 แนะนำ: กดปุ่ม <strong>"ขยายเต็มจอ"</strong> เพื่ออ่านเอกสาร A4 และตารางคะแนนได้ชัดเจนที่สุด
+            </span>
           </div>
-        )}
-        <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative", backgroundColor: "#f3f4f6", borderRadius: inline ? 0 : "0 0 var(--radius-2xl) var(--radius-2xl)" }}>
-          {/* Support scrolling on some mobile browsers using a wrapper, and fallback to direct link if it still stucks */}
+          <div className="doc-viewer-infobar-right">
+            <span>เอกสารไม่ขึ้นหรือโหลดช้า?</span>
+            <button
+              type="button"
+              onClick={() => setUseGoogleDocsViewer(prev => !prev)}
+              className="inline-link"
+              title="สลับโหมดการแสดงผลกรณีหน่วยงานตั้งค่าบล็อก Iframe"
+            >
+              🔄 {useGoogleDocsViewer ? "สลับกลับมุมมองปกติ" : "เปิดผ่าน Google Viewer"}
+            </button>
+          </div>
+        </div>
+
+        {/* Viewer Canvas */}
+        <div className="doc-viewer-body">
+          {isPdfLoading && (
+            <div className="doc-viewer-loader">
+              <div className="doc-viewer-spinner" />
+              <div style={{ fontSize: "0.85rem", fontWeight: 500, color: "#94a3b8" }}>
+                กำลังเชื่อมต่อและโหลดเอกสารประกาศ...
+              </div>
+            </div>
+          )}
+
           <iframe
             src={embedUrl}
-            style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
-            title={`ประกาศรับสมัครไฟล์ที่ ${selectedPdfIndex + 1}`}
+            className="doc-viewer-iframe"
+            title={`เอกสารประกาศรับสมัคร - ${job.department}`}
+            onLoad={() => setIsPdfLoading(false)}
           />
         </div>
       </div>
     );
 
-    if (inline) return pdfContent;
+    if (inline && !isPdfFullscreen) return pdfContent;
+
     return (
-      <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowPdf(false)}>
+      <div
+        className="modal-overlay"
+        onClick={(e) => e.target === e.currentTarget && !isPdfFullscreen && setShowPdf(false)}
+        style={{ zIndex: isPdfFullscreen ? 99999 : 1100, padding: isPdfFullscreen ? 0 : "20px 16px" }}
+      >
         {pdfContent}
       </div>
     );
@@ -1001,6 +1130,9 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
         {showCalendarModal && (
           <AddToCalendarModal job={job} onClose={() => setShowCalendarModal(false)} onToast={onToast} />
         )}
+        {showPosterModal && (
+          <SocialPosterModal job={job} onClose={() => setShowPosterModal(false)} onToast={onToast} />
+        )}
         {/* Off-screen Banner Containers for html2canvas */}
         <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
           <SocialShareCover job={job} aspectRatio="4:5" ref={bannerFeedRef} />
@@ -1019,6 +1151,9 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       )}
       {showCalendarModal && (
         <AddToCalendarModal job={job} onClose={() => setShowCalendarModal(false)} onToast={onToast} />
+      )}
+      {showPosterModal && (
+        <SocialPosterModal job={job} onClose={() => setShowPosterModal(false)} onToast={onToast} />
       )}
       {/* Off-screen Banner Containers for html2canvas */}
       <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>

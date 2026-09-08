@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import JobCard from "./JobCard.jsx";
+import SocialPosterModal from "./SocialPosterModal.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
@@ -54,6 +55,7 @@ export default function JobList({
   const [filterNoOCSC, setFilterNoOCSC] = useState(() => sessionStorage.getItem("filterNoOCSC") === "true");
   const [filterOCSC, setFilterOCSC] = useState(() => sessionStorage.getItem("filterOCSC") === "true");
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
+  const [posterJob, setPosterJob] = useState(null);
 
   useEffect(() => {
     sessionStorage.setItem("searchQuery", searchQuery);
@@ -646,6 +648,7 @@ export default function JobList({
                     style={{ animationDelay: `${i * 0.05}s` }}
                     isAdmin={isAdmin}
                     onEdit={onEditJob}
+                    onOpenPoster={setPosterJob}
                     userEducation={userEducation}
                     isBookmarked={isBookmarked(job.id)}
                     onToggleBookmark={() => {
@@ -727,6 +730,15 @@ export default function JobList({
           </div>
         </div>
       </section>
+
+      {/* Social Poster Modal */}
+      {posterJob && (
+        <SocialPosterModal
+          job={posterJob}
+          onClose={() => setPosterJob(null)}
+          onToast={onToast}
+        />
+      )}
     </>
   );
 }

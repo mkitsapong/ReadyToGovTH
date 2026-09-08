@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "../utils/constants.js";
 import { getDisplayProvinces, daysLeft, formatDate, getTotalJobPositions } from "../utils/helpers.js";
 
-export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark }) {
+export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark, onOpenPoster }) {
 
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
   const provinces = getDisplayProvinces(job);
@@ -124,15 +124,38 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
               })}
 
               {isAdmin && (
-                <button
-                  type="button"
-                  id={`btn-edit-${job.id}`}
-                  onClick={() => onEdit(job)}
-                  title="แก้ไขประกาศ"
-                  className="job-btn-edit-inline"
-                >
-                  ✏️ แก้ไข
-                </button>
+                <>
+                  <button
+                    type="button"
+                    id={`btn-edit-${job.id}`}
+                    onClick={() => onEdit(job)}
+                    title="แก้ไขประกาศ"
+                    className="job-btn-edit-inline"
+                  >
+                    ✏️ แก้ไข
+                  </button>
+                  {onOpenPoster && (
+                    <button
+                      type="button"
+                      id={`btn-poster-${job.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onOpenPoster(job);
+                      }}
+                      title="สร้างข้อความโพสต์โซเชียล & แบนเนอร์ (1 คลิก)"
+                      className="job-btn-edit-inline"
+                      style={{
+                        background: "var(--orange-50)",
+                        borderColor: "var(--orange-300)",
+                        color: "var(--orange-700)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      📢 โพสต์
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
