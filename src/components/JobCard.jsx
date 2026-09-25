@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "../utils/constants.js";
-import { getDisplayProvinces, daysLeft, formatDate, getTotalJobPositions } from "../utils/helpers.js";
+import { getDisplayProvinces, daysLeft, formatDate, getTotalJobPositions, getPositionCount } from "../utils/helpers.js";
 
 export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark, onOpenPoster }) {
 
@@ -230,7 +230,7 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
                 </div>
                 <div className="clean-position-right">
                   <span className="clean-position-count">
-                    {pos.count} อัตรา
+                    {getPositionCount(pos)} อัตรา
                   </span>
                 </div>
               </div>

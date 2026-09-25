@@ -5,6 +5,9 @@ import { formatDate, getTotalJobPositions, getDisplayProvinces } from "./helpers
  */
 function toIcalDate(dateStr) {
   if (!dateStr) return "";
+  if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr.replace(/-/g, "");
+  }
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "";
   const year = d.getFullYear();
@@ -17,7 +20,15 @@ function toIcalDate(dateStr) {
  * Add days to a date string and return YYYYMMDD
  */
 function addDaysToIcalDate(dateStr, days = 1) {
-  const d = new Date(dateStr);
+  if (!dateStr) return "";
+  let d;
+  if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, day] = dateStr.split("-").map(Number);
+    d = new Date(y, m - 1, day);
+  } else {
+    d = new Date(dateStr);
+  }
+  if (isNaN(d.getTime())) return "";
   d.setDate(d.getDate() + days);
   return toIcalDate(d);
 }
@@ -27,9 +38,15 @@ function addDaysToIcalDate(dateStr, days = 1) {
  */
 function toIsoDateOnly(dateStr) {
   if (!dateStr) return "";
+  if (typeof dateStr === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "";
-  return d.toISOString().split("T")[0];
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 /**

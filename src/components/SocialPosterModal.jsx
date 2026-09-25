@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import SocialShareCover from "./SocialShareCover.jsx";
 import { getTotalJobPositions, getDisplayProvinces } from "../utils/helpers.js";
 
 /**
  * Generate formatted social captions for various platforms
  */
-export function buildSocialCaption(job, format = "standard") {
+function buildSocialCaption(job, format = "standard") {
   if (!job) return "";
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "https://readytogov.th";
   const jobUrl = `${siteUrl}/job/${job.id}`;
@@ -152,10 +152,10 @@ export default function SocialPosterModal({ job, onClose, onToast }) {
   const bannerFeedRef = useRef(null);
   const bannerStoryRef = useRef(null);
 
-  // Sync caption when format tab changes
-  useEffect(() => {
-    setCaptionText(buildSocialCaption(job, selectedFormat));
-  }, [selectedFormat, job]);
+  const handleSelectFormat = (format) => {
+    setSelectedFormat(format);
+    setCaptionText(buildSocialCaption(job, format));
+  };
 
   if (!job) return null;
 
@@ -386,7 +386,7 @@ export default function SocialPosterModal({ job, onClose, onToast }) {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
                 type="button"
-                onClick={() => setSelectedFormat("standard")}
+                onClick={() => handleSelectFormat("standard")}
                 style={{
                   padding: "8px 16px",
                   borderRadius: "999px",
@@ -405,7 +405,7 @@ export default function SocialPosterModal({ job, onClose, onToast }) {
 
               <button
                 type="button"
-                onClick={() => setSelectedFormat("detailed")}
+                onClick={() => handleSelectFormat("detailed")}
                 style={{
                   padding: "8px 16px",
                   borderRadius: "999px",
@@ -424,7 +424,7 @@ export default function SocialPosterModal({ job, onClose, onToast }) {
 
               <button
                 type="button"
-                onClick={() => setSelectedFormat("short")}
+                onClick={() => handleSelectFormat("short")}
                 style={{
                   padding: "8px 16px",
                   borderRadius: "999px",

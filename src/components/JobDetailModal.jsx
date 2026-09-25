@@ -64,13 +64,6 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showPdf, isPdfFullscreen]);
 
-  // Reset loading state when switching document index or viewer engine
-  useEffect(() => {
-    if (showPdf) {
-      setIsPdfLoading(true);
-    }
-  }, [showPdf, selectedPdfIndex, useGoogleDocsViewer]);
-
   // Lock body scroll when in fullscreen reading mode
   useEffect(() => {
     if (isPdfFullscreen) {
@@ -710,6 +703,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             <button
               onClick={() => {
                 setSelectedPdfIndex(0);
+                setIsPdfLoading(true);
                 setShowPdf(true);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
@@ -809,14 +803,11 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
   if (showPdf) {
     const currentPdfUrl = pdfUrls[selectedPdfIndex] || "";
-    let embedUrl = "";
-    if (useGoogleDocsViewer) {
-      embedUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(currentPdfUrl)}&embedded=true`;
-    } else if (currentPdfUrl.includes("drive.google.com/file/d/")) {
-      embedUrl = currentPdfUrl.replace(/\/view.*$/, "/preview");
-    } else {
-      embedUrl = `${currentPdfUrl}${currentPdfUrl.includes("#") ? "&" : "#"}view=FitH`;
-    }
+    const embedUrl = useGoogleDocsViewer
+      ? `https://docs.google.com/viewer?url=${encodeURIComponent(currentPdfUrl)}&embedded=true`
+      : currentPdfUrl.includes("drive.google.com/file/d/")
+      ? currentPdfUrl.replace(/\/view.*$/, "/preview")
+      : `${currentPdfUrl}${currentPdfUrl.includes("#") ? "&" : "#"}view=FitH`;
 
     const pdfContent = (
       <div className={`doc-viewer-wrapper ${inline ? "inline-mode" : "modal-mode"} ${isPdfFullscreen ? "fullscreen-mode" : ""}`}>
@@ -940,7 +931,10 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             <span>เอกสารไม่ขึ้นหรือโหลดช้า?</span>
             <button
               type="button"
-              onClick={() => setUseGoogleDocsViewer(prev => !prev)}
+              onClick={() => {
+                setUseGoogleDocsViewer((prev) => !prev);
+                setIsPdfLoading(true);
+              }}
               className="inline-link"
               title="สลับโหมดการแสดงผลกรณีหน่วยงานตั้งค่าบล็อก Iframe"
             >
@@ -961,6 +955,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           )}
 
           <iframe
+            key={embedUrl}
             src={embedUrl}
             className="doc-viewer-iframe"
             title={`เอกสารประกาศรับสมัคร - ${job.department}`}

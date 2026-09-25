@@ -1,4 +1,3 @@
-import { formatDate } from "./helpers.js";
 
 /**
  * Clean and normalize department string for fuzzy matching
@@ -86,12 +85,9 @@ export function findDuplicateOrExtensionJob(extractedData, existingJobs = [], cu
       }
     }
 
-    let posScore = 0;
-    if (targetPositions.length > 0 && jobPositions.length > 0) {
-      posScore = matchedPositions.length / Math.max(targetPositions.length, 1);
-    } else {
-      posScore = 0.5;
-    }
+    const posScore = (targetPositions.length > 0 && jobPositions.length > 0)
+      ? matchedPositions.length / Math.max(targetPositions.length, 1)
+      : 0.5;
 
     // Total weighted score: department (60%) + position overlap (40%)
     const totalScore = deptScore * 0.6 + posScore * 0.4;

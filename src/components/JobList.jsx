@@ -26,6 +26,23 @@ const PAGE_HERO_MAP = {
 };
 
 
+function safeGetSession(key, defaultValue = "") {
+  try {
+    const val = sessionStorage.getItem(key);
+    return val !== null ? val : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+function safeSetSession(key, val) {
+  try {
+    sessionStorage.setItem(key, String(val));
+  } catch {
+    // ignore storage quota/security error
+  }
+}
+
 export default function JobList({
   jobs,
   books = [],
@@ -43,46 +60,46 @@ export default function JobList({
   onSelectProvince,
   onToast,
 }) {
-  const [searchQuery, setSearchQuery] = useState(() => sessionStorage.getItem("searchQuery") || "");
-  const [sortBy, setSortBy] = useState(() => sessionStorage.getItem("sortBy") || "deadline");
+  const [searchQuery, setSearchQuery] = useState(() => safeGetSession("searchQuery", ""));
+  const [sortBy, setSortBy] = useState(() => safeGetSession("sortBy", "deadline"));
   const [currentPage, setCurrentPage] = useState(() => {
-    const saved = sessionStorage.getItem("currentPage");
+    const saved = safeGetSession("currentPage");
     return saved ? parseInt(saved, 10) : 1;
   });
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
-  const [showBookmarksOnly, setShowBookmarksOnly] = useState(() => sessionStorage.getItem("showBookmarksOnly") === "true");
-  const [showExpired, setShowExpired] = useState(() => sessionStorage.getItem("showExpired") === "true");
-  const [filterNoOCSC, setFilterNoOCSC] = useState(() => sessionStorage.getItem("filterNoOCSC") === "true");
-  const [filterOCSC, setFilterOCSC] = useState(() => sessionStorage.getItem("filterOCSC") === "true");
+  const [showBookmarksOnly, setShowBookmarksOnly] = useState(() => safeGetSession("showBookmarksOnly") === "true");
+  const [showExpired, setShowExpired] = useState(() => safeGetSession("showExpired") === "true");
+  const [filterNoOCSC, setFilterNoOCSC] = useState(() => safeGetSession("filterNoOCSC") === "true");
+  const [filterOCSC, setFilterOCSC] = useState(() => safeGetSession("filterOCSC") === "true");
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
   const [posterJob, setPosterJob] = useState(null);
 
   useEffect(() => {
-    sessionStorage.setItem("searchQuery", searchQuery);
+    safeSetSession("searchQuery", searchQuery);
   }, [searchQuery]);
 
   useEffect(() => {
-    sessionStorage.setItem("sortBy", sortBy);
+    safeSetSession("sortBy", sortBy);
   }, [sortBy]);
 
   useEffect(() => {
-    sessionStorage.setItem("currentPage", currentPage);
+    safeSetSession("currentPage", currentPage);
   }, [currentPage]);
 
   useEffect(() => {
-    sessionStorage.setItem("showBookmarksOnly", showBookmarksOnly);
+    safeSetSession("showBookmarksOnly", showBookmarksOnly);
   }, [showBookmarksOnly]);
 
   useEffect(() => {
-    sessionStorage.setItem("showExpired", showExpired);
+    safeSetSession("showExpired", showExpired);
   }, [showExpired]);
   
   useEffect(() => {
-    sessionStorage.setItem("filterNoOCSC", filterNoOCSC);
+    safeSetSession("filterNoOCSC", filterNoOCSC);
   }, [filterNoOCSC]);
 
   useEffect(() => {
-    sessionStorage.setItem("filterOCSC", filterOCSC);
+    safeSetSession("filterOCSC", filterOCSC);
   }, [filterOCSC]);
   
   const { bookmarks = [], toggleBookmark, isBookmarked } = useBookmarks();
