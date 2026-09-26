@@ -134,7 +134,7 @@ ${defaultTags}`;
 🎓 วุฒิการศึกษา: ${eduText}
 📅 รับสมัครถึง: ${deadlineText}
 📍 สถานที่ปฏิบัติงาน: ${provText}
-${ocscText ? `✨ เงื่อนไข: ${ocscText}\n` : ""}
+${ocscText ? `${ocscText}\n` : ""}
 📌 รายละเอียดและลิงก์สมัคร:
 👉 ${jobUrl}
 
@@ -356,7 +356,7 @@ export default function SocialPosterModal({ job, onClose, onToast }) {
                 fontWeight: 600,
               }}
             >
-              ปิดรับ {new Date(job.deadline).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" })}
+              ปิดรับ {job.deadline ? new Date(job.deadline).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" }) : "ไม่ระบุ"}
             </span>
           </div>
 
@@ -543,7 +543,7 @@ export default function SocialPosterModal({ job, onClose, onToast }) {
                 <span>🐦 เปิด X (Twitter) ↗</span>
               </a>
               <a
-                href={`https://www.facebook.com`}
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.origin : "https://readytogov.th"}/job/${job.id}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -559,7 +559,7 @@ export default function SocialPosterModal({ job, onClose, onToast }) {
                   background: "#eff6ff",
                 }}
               >
-                <span>📘 เปิด Facebook Page ↗</span>
+                <span>📘 แชร์ Facebook ↗</span>
               </a>
             </div>
           </div>

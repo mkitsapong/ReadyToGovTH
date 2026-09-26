@@ -76,31 +76,13 @@ export default function JobList({
 
   useEffect(() => {
     safeSetSession("searchQuery", searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
     safeSetSession("sortBy", sortBy);
-  }, [sortBy]);
-
-  useEffect(() => {
     safeSetSession("currentPage", currentPage);
-  }, [currentPage]);
-
-  useEffect(() => {
     safeSetSession("showBookmarksOnly", showBookmarksOnly);
-  }, [showBookmarksOnly]);
-
-  useEffect(() => {
     safeSetSession("showExpired", showExpired);
-  }, [showExpired]);
-  
-  useEffect(() => {
     safeSetSession("filterNoOCSC", filterNoOCSC);
-  }, [filterNoOCSC]);
-
-  useEffect(() => {
     safeSetSession("filterOCSC", filterOCSC);
-  }, [filterOCSC]);
+  }, [searchQuery, sortBy, currentPage, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]);
   
   const { bookmarks = [], toggleBookmark, isBookmarked } = useBookmarks();
 
@@ -692,7 +674,7 @@ export default function JobList({
                 className="pagination-btn"
                 onClick={() => {
                   setCurrentPage(p => Math.max(1, p - 1));
-                  window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
+                  window.scrollTo({ top: document.querySelector('.jobs-section')?.offsetTop ?? 0 - 140, behavior: 'smooth' });
                 }}
                 disabled={currentPage === 1}
               >
@@ -710,7 +692,7 @@ export default function JobList({
                       className={`pagination-num-btn ${isActive ? "active" : ""}`}
                       onClick={() => {
                         setCurrentPage(p);
-                        window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
+                        window.scrollTo({ top: document.querySelector('.jobs-section')?.offsetTop ?? 0 - 140, behavior: 'smooth' });
                       }}
                     >
                       {p}

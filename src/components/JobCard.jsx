@@ -239,6 +239,13 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
 
         </div>
 
+        {/* More positions indicator */}
+        {job.positionList?.length > 3 && (
+          <div style={{ padding: "4px 14px 8px", fontSize: "0.78rem", color: "var(--navy-500)", fontStyle: "italic" }}>
+            +{job.positionList.length - 3} ตำแหน่งเพิ่มเติม → ดูรายละเอียด
+          </div>
+        )}
+
       </div>
 
       {/* ── Card Footer ── */}

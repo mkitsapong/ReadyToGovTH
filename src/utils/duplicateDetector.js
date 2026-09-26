@@ -85,9 +85,10 @@ export function findDuplicateOrExtensionJob(extractedData, existingJobs = [], cu
       }
     }
 
+    // Only compute position score when both sides have positions; otherwise give 0 (no signal)
     const posScore = (targetPositions.length > 0 && jobPositions.length > 0)
       ? matchedPositions.length / Math.max(targetPositions.length, 1)
-      : 0.5;
+      : 0;
 
     // Total weighted score: department (60%) + position overlap (40%)
     const totalScore = deptScore * 0.6 + posScore * 0.4;

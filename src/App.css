@@ -165,6 +165,20 @@
   color: var(--orange-300);
 }
 
+.header-date-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  font-size: 0.76rem;
+  color: var(--white);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .header-btn {
   padding: 7px 16px;
   border-radius: var(--radius-md);
@@ -2310,20 +2324,27 @@
    RESPONSIVE
    =========================== */
 
-/* ── Large tablet (≤ 1024px) ── */
+/* ── Desktop narrow / Tablet Landscape (≤ 1200px) ── */
+@media (max-width: 1200px) {
+  .header-date-badge {
+    display: none !important;
+  }
+
+  .header-inner {
+    gap: 16px;
+  }
+
+  .nav-link {
+    padding: 8px 10px;
+    font-size: 0.88rem;
+  }
+}
+
+/* ── Large tablet & iPad Portrait (≤ 1024px) ── */
 @media (max-width: 1024px) {
   .footer-grid {
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-  }
-
-  .header-inner {
-    gap: 20px;
-  }
-
-  .nav-link {
-    padding: 8px 12px;
-    font-size: 0.88rem;
   }
 
   .hero-title {
@@ -2334,41 +2355,10 @@
   .filter-ocsc-label {
     display: none;
   }
-}
 
-/* ── Tablet / narrow desktop (≤ 900px) ── */
-@media (max-width: 900px) {
-  .header-inner {
-    gap: 12px;
-  }
-
-  .nav {
-    gap: 2px;
-  }
-
-  .nav-link {
-    padding: 7px 10px;
-    font-size: 0.82rem;
-  }
-
-  /* logo text subtitle hidden */
-  .logo-text span:last-child {
-    display: none;
-  }
-
-  /* region pills can wrap */
-  .region-pills {
-    flex-wrap: wrap;
-  }
-}
-
-/* ── Tablet (≤ 768px) ── */
-@media (max-width: 768px) {
-
-  /* Header */
+  /* ── Header Tablet Collapse (iPad portrait up to 1024px) ── */
   .header {
     position: sticky;
-    /* Keep it sticky */
     top: 0;
   }
 
@@ -2379,6 +2369,7 @@
     padding: 10px 0;
     flex-wrap: wrap;
     gap: 8px;
+    justify-content: space-between;
   }
 
   .logo {
@@ -2386,7 +2377,7 @@
   }
 
   .logo-text span:first-child {
-    font-size: 0.92rem;
+    font-size: 1.05rem;
   }
 
   .logo-text span:last-child {
@@ -2397,10 +2388,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    position: absolute;
-    top: 12px;
-    right: 0;
+    margin-left: auto;
     z-index: 10;
+    position: static;
   }
 
   .mobile-menu-btn {
@@ -2410,6 +2400,10 @@
   }
 
   .desktop-theme-switch {
+    display: none !important;
+  }
+
+  .header-date-badge {
     display: none !important;
   }
 
@@ -2437,7 +2431,7 @@
     color: var(--white);
   }
 
-  /* Hide nav and actions by default on mobile */
+  /* Hide nav and actions by default on tablet & mobile */
   .nav,
   .header-actions,
   .region-search-bar {
@@ -2487,6 +2481,21 @@
 
   .header-role-badge {
     display: none;
+  }
+}
+
+/* ── Tablet / narrow desktop (≤ 900px) ── */
+@media (max-width: 900px) {
+  /* region pills can wrap */
+  .region-pills {
+    flex-wrap: wrap;
+  }
+}
+
+/* ── Mobile Phone (≤ 768px) ── */
+@media (max-width: 768px) {
+  .logo-text span:first-child {
+    font-size: 0.92rem;
   }
 
   /* ซ่อนชื่อ role ตอนแคบ */

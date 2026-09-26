@@ -153,19 +153,7 @@ export default function Header({
             </button>
 
             {/* Today Thai Date */}
-            <div className="header-date-badge" style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 14px",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "999px",
-              fontSize: "0.76rem",
-              color: "var(--white)",
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-            }}>
+            <div className="header-date-badge">
               <span style={{ color: "var(--accent)" }}>📅</span>
               <span>
                 {new Date().toLocaleDateString("th-TH", {
