@@ -21,8 +21,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [showPdf, setShowPdf] = useState(false);
   const [selectedPdfIndex, setSelectedPdfIndex] = useState(0);
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
-  const [isPdfLoading, setIsPdfLoading] = useState(true);
-  const [useGoogleDocsViewer, setUseGoogleDocsViewer] = useState(false);
+  const [useGoogleDocsViewer, setUseGoogleDocsViewer] = useState(true);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(job?.id);
   const bannerFeedRef = useRef(null);
@@ -704,6 +703,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               onClick={() => {
                 setSelectedPdfIndex(0);
                 setIsPdfLoading(true);
+                setUseGoogleDocsViewer(true);
                 setShowPdf(true);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
@@ -803,10 +803,10 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
   if (showPdf) {
     const currentPdfUrl = pdfUrls[selectedPdfIndex] || "";
-    const embedUrl = useGoogleDocsViewer
-      ? `https://docs.google.com/viewer?url=${encodeURIComponent(currentPdfUrl)}&embedded=true`
-      : currentPdfUrl.includes("drive.google.com/file/d/")
+    const embedUrl = currentPdfUrl.includes("drive.google.com/file/d/")
       ? currentPdfUrl.replace(/\/view.*$/, "/preview")
+      : useGoogleDocsViewer
+      ? `https://docs.google.com/viewer?url=${encodeURIComponent(currentPdfUrl)}&embedded=true`
       : `${currentPdfUrl}${currentPdfUrl.includes("#") ? "&" : "#"}view=FitH`;
 
     const pdfContent = (
@@ -936,10 +936,20 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 setIsPdfLoading(true);
               }}
               className="inline-link"
-              title="สลับโหมดการแสดงผลกรณีหน่วยงานตั้งค่าบล็อก Iframe"
+              title="สลับโหมดการแสดงผลกรณีต้องการเปิดไฟล์ PDF โดยตรงหรือสลับมุมมอง"
             >
-              🔄 {useGoogleDocsViewer ? "สลับกลับมุมมองปกติ" : "เปิดผ่าน Google Viewer"}
+              🔄 {useGoogleDocsViewer ? "สลับเป็นมุมมองตรง (Direct PDF)" : "เปิดผ่าน Google Viewer"}
             </button>
+            <span style={{ opacity: 0.4 }}>|</span>
+            <a
+              href={currentPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-link"
+              title="เปิดไฟล์ PDF ในแท็บใหม่ของเบราว์เซอร์โดยตรง"
+            >
+              ↗ เปิดแท็บใหม่
+            </a>
           </div>
         </div>
 
