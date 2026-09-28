@@ -22,6 +22,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [selectedPdfIndex, setSelectedPdfIndex] = useState(0);
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
   const [useGoogleDocsViewer, setUseGoogleDocsViewer] = useState(true);
+  const [isPdfLoading, setIsPdfLoading] = useState(true);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(job?.id);
   const bannerFeedRef = useRef(null);
@@ -134,7 +135,11 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   };
 
   const pdfUrls = job.announcementUrl
-    ? job.announcementUrl.split(/[\s,]+/).filter(url => url.trim().length > 0)
+    ? job.announcementUrl
+        .split(/[\s,]+/)
+        .map(url => url.trim())
+        .filter(url => url.length > 0)
+        .map(url => (url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`))
     : [];
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
   const mainMeta = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
@@ -698,8 +703,10 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           >
             🖨️ สรุป 1 หน้า (PDF)
           </button>
-          {pdfUrls.length > 0 && (
+          {pdfUrls.length > 0 ? (
             <button
+              type="button"
+              id={`btn-announcement-${job.id}`}
               onClick={() => {
                 setSelectedPdfIndex(0);
                 setIsPdfLoading(true);
@@ -711,6 +718,16 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             >
               📄 อ่านประกาศ<span className="hide-on-mobile">ฉบับเต็ม</span>
               {pdfUrls.length > 1 && ` (${pdfUrls.length})`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="btn btn-outline modal-btn-action"
+              style={{ opacity: 0.5, cursor: "not-allowed" }}
+              title="ไม่มีไฟล์แนบประกาศฉบับเต็มในระบบ"
+            >
+              📄 อ่านประกาศ<span className="hide-on-mobile">ฉบับเต็ม</span>
             </button>
           )}
           {days < 0 ? (
@@ -872,6 +889,23 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
           {/* Right: Action tools */}
           <div className="doc-viewer-right">
+            {/* Open Direct in New Tab */}
+            <a
+              href={currentPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="doc-tool-btn"
+              style={{ textDecoration: "none" }}
+              title="เปิดไฟล์ PDF ในแท็บใหม่ของเบราว์เซอร์โดยตรง (แนะนำหากหน้าจอขาว)"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              <span className="btn-label">เปิดแท็บใหม่ ↗</span>
+            </a>
+
             {/* Toggle Fullscreen Theater Mode */}
             <button
               type="button"
@@ -896,23 +930,23 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               )}
             </button>
 
-            {/* Close Cross Button for Modal or Fullscreen */}
-            {(!inline || isPdfFullscreen) && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (isPdfFullscreen) {
-                    setIsPdfFullscreen(false);
-                  } else {
-                    onClose ? onClose() : setShowPdf(false);
-                  }
-                }}
-                className="doc-tool-icon-btn"
-                title="ปิด (Esc)"
-              >
-                ✕
-              </button>
-            )}
+            {/* Close Cross Button for Modal, Inline or Fullscreen */}
+            <button
+              type="button"
+              onClick={() => {
+                if (isPdfFullscreen) {
+                  setIsPdfFullscreen(false);
+                } else if (inline) {
+                  setShowPdf(false);
+                } else {
+                  onClose ? onClose() : setShowPdf(false);
+                }
+              }}
+              className="doc-tool-icon-btn"
+              title="ปิดเอกสาร (Esc)"
+            >
+              ✕
+            </button>
           </div>
         </div>
 

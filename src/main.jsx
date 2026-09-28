@@ -15,6 +15,15 @@ import '@fontsource/plus-jakarta-sans/700.css'
 import './index.css'
 import App from './App.jsx'
 
+// Auto-clean any lingering Service Workers in development to prevent blank screen conflicts
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator && import.meta.env.DEV) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const registration of registrations) {
+      registration.unregister();
+    }
+  });
+}
+
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);

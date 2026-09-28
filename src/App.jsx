@@ -8,7 +8,7 @@ import "./App.css";
 import Header      from "./components/Header.jsx";
 import JobList     from "./components/JobList.jsx";
 import Footer      from "./components/Footer.jsx";
-import CookieBanner from "./components/CookieBanner.jsx";
+import ConsentNotice from "./components/ConsentNotice.jsx";
 import OfflineIndicator from "./components/OfflineIndicator.jsx";
 import SEO         from "./components/SEO.jsx";
 import { LoadingSpinner } from "./components/LoadingSkeleton.jsx";
@@ -374,8 +374,8 @@ export default function App() {
       {/* Toast Notifications */}
       <Toast toasts={toasts} />
       
-      {/* Cookie Banner */}
-      <CookieBanner />
+      {/* Cookie / Privacy Consent Notice */}
+      <ConsentNotice />
 
       {/* PWA Offline & Install Indicator */}
       <OfflineIndicator />

@@ -604,7 +604,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                       )}
                     </h3>
                     <p className="duplicate-detector-desc">
-                      หน่วยงาน <strong>{duplicateInfo.existingJob.department}</strong> เคยลงประกาศไว้แล้วเมื่อวันที่ {formatDate(duplicateInfo.postedDate)}
+                      หน่วยงาน <strong>{duplicateInfo.existingJob.department}</strong> มีประกาศที่ยังเปิดรับสมัครอยู่ในระบบ (หมดเขต {formatDate(duplicateInfo.oldDeadline)})
                     </p>
                   </div>
                 </div>
@@ -1362,7 +1362,14 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
               <input id="admin-field-announcement-url" className="form-input"
                 placeholder="วาง URL โดยตรง เช่น https://... (.pdf)"
                 value={form.announcementUrl}
-                onChange={(e) => handleChange("announcementUrl", e.target.value)} />
+                onChange={(e) => handleChange("announcementUrl", e.target.value)}
+                onBlur={(e) => {
+                  let val = e.target.value.trim();
+                  if (val && !val.startsWith("http://") && !val.startsWith("https://")) {
+                    handleChange("announcementUrl", `https://${val}`);
+                  }
+                }}
+              />
               <p style={{ fontSize: "0.72rem", color: "var(--gray-400)", marginTop: 4 }}>เมื่อกรอกแล้ว จะแสดงปุ่ม "ประกาศรับสมัคร" ในหน้ารายละเอียด</p>
             </div>
             <div className="form-group">

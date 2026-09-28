@@ -109,7 +109,9 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
           {/* Department Name & Badges */}
           <div className="job-dept-content">
             <h3 className="job-dept-name-title" title={job.department}>
-              {job.department}
+              <Link to={`/job/${job.id}`} style={{ color: "inherit", textDecoration: "none" }}>
+                {job.department}
+              </Link>
             </h3>
 
             {/* Badges Row (Categories only + Inline Admin Edit) */}

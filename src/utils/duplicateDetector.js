@@ -1,3 +1,4 @@
+import { daysLeft } from "./helpers.js";
 
 /**
  * Clean and normalize department string for fuzzy matching
@@ -28,11 +29,13 @@ export function normalizePositionTitle(title = "") {
  * @param {Object} extractedData - The job data extracted by AI or form
  * @param {Array} existingJobs - The list of all jobs in the system
  * @param {string|number} currentJobId - If currently editing an existing job, its ID to ignore
+ * @param {Object} options - Optional settings (e.g. includeExpired)
  * @returns {Object|null} Match result or null
  */
-export function findDuplicateOrExtensionJob(extractedData, existingJobs = [], currentJobId = null) {
+export function findDuplicateOrExtensionJob(extractedData, existingJobs = [], currentJobId = null, options = {}) {
   if (!extractedData || !existingJobs || existingJobs.length === 0) return null;
 
+  const { includeExpired = false } = options;
   const targetDept = extractedData.department?.trim();
   if (!targetDept) return null;
 
@@ -46,6 +49,11 @@ export function findDuplicateOrExtensionJob(extractedData, existingJobs = [], cu
 
   for (const job of existingJobs) {
     if (currentJobId && String(job.id) === String(currentJobId)) continue;
+
+    // ข้ามงานที่ปิดรับสมัครแล้ว (หมดเขตแล้ว) — แจ้งเตือนเฉพาะงานที่ยังไม่ปิดรับสมัครเท่านั้น
+    if (!includeExpired && job.deadline && daysLeft(job.deadline) < 0) {
+      continue;
+    }
 
     const jobDept = job.department?.trim() || "";
     const normJobDept = normalizeDepartmentName(jobDept);
