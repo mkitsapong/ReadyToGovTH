@@ -1,6 +1,6 @@
 import { forwardRef, useState } from 'react';
 import iconImage from '../assets/icon.png';
-import { getTotalJobPositions, getPositionCount, getDisplayProvinces } from '../utils/helpers.js';
+import { getTotalJobPositions, getPositionCount } from '../utils/helpers.js';
 
 const SocialShareCover = forwardRef(({ job, aspectRatio = "4:5" }, ref) => {
   const [imgError, setImgError] = useState(false);
@@ -9,7 +9,6 @@ const SocialShareCover = forwardRef(({ job, aspectRatio = "4:5" }, ref) => {
 
   const isStory = aspectRatio === "9:16";
   const totalCount = getTotalJobPositions(job);
-  const provinces = getDisplayProvinces(job);
 
   const formatShortDate = (dateStr) => {
     if (!dateStr) return "";
@@ -140,24 +139,6 @@ const SocialShareCover = forwardRef(({ job, aspectRatio = "4:5" }, ref) => {
               {job.department}
             </h1>
 
-            {/* Pills Subheader (Location, No OCSC) */}
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px", marginBottom: "16px" }}>
-              {job.isNoOCSC && (
-                <span style={{ background: "#ecfdf5", border: "1.5px solid #a7f3d0", color: "#047857", padding: "6px 18px", borderRadius: "100px", fontSize: "1.25rem", fontWeight: 800 }}>
-                  ✨ ไม่ต้องผ่าน ภาค ก
-                </span>
-              )}
-              {job.isOCSC && (
-                <span style={{ background: "#eff6ff", border: "1.5px solid #bfdbfe", color: "#1d4ed8", padding: "6px 18px", borderRadius: "100px", fontSize: "1.25rem", fontWeight: 800 }}>
-                  📘 ต้องผ่าน ภาค ก
-                </span>
-              )}
-              {provinces.length > 0 && (
-                <span style={{ background: "#f8fafc", border: "1.5px solid #e2e8f0", color: "#475569", padding: "6px 18px", borderRadius: "100px", fontSize: "1.25rem", fontWeight: 700 }}>
-                  📍 {provinces.slice(0, 3).join(", ")}{provinces.length > 3 ? ` +${provinces.length - 3}` : ""}
-                </span>
-              )}
-            </div>
 
             {/* Date Range Box */}
             <div style={{

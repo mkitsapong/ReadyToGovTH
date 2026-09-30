@@ -43,7 +43,8 @@ function generateJobPostingSchema(job) {
       }
     }
   };
-  return JSON.stringify(schema);
+  // Escape </script> to prevent XSS when injecting JSON-LD via dangerouslySetInnerHTML
+  return JSON.stringify(schema).replace(/<\/script/gi, '<\\/script');
 }
 
 export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin, onEditJob, onToast }) {

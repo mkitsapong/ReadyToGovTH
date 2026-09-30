@@ -6,6 +6,7 @@ import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
 import { getProvinces, getTotalJobPositions, daysLeft } from "../utils/helpers.js";
 import { JobCardSkeleton } from "./LoadingSkeleton.jsx";
+import { isFirebaseConfigured } from "../firebase.js";
 
 const CATEGORY_FILTER = {
   home: null,
@@ -613,6 +614,24 @@ export default function JobList({
       {/* Job Grid */}
       <section className="jobs-section">
         <div className="container">
+          {!isFirebaseConfigured && (
+            <div style={{
+              background: "#fffbeb",
+              border: "1.5px solid #fde68a",
+              borderRadius: "14px",
+              padding: "12px 18px",
+              marginBottom: "24px",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              boxShadow: "0 2px 8px rgba(245, 158, 11, 0.08)",
+            }}>
+              <span style={{ fontSize: "1.3rem" }}>💡</span>
+              <div style={{ fontSize: "0.85rem", color: "#92400e", lineHeight: 1.5 }}>
+                <strong>กำลังแสดงข้อมูลตัวอย่าง (Local Demo Mode):</strong> ยังไม่พบการตั้งค่าในไฟล์ <code>.env</code> ระบบจึงแสดงข้อมูลจำลองเพื่อความสะดวกในการทดสอบฟิลเตอร์ ค้นหางาน และสร้างภาพ AI แบนเนอร์
+              </div>
+            </div>
+          )}
 
           <div className="jobs-grid">
             {isLoading ? (
@@ -674,7 +693,7 @@ export default function JobList({
                 className="pagination-btn"
                 onClick={() => {
                   setCurrentPage(p => Math.max(1, p - 1));
-                  window.scrollTo({ top: document.querySelector('.jobs-section')?.offsetTop ?? 0 - 140, behavior: 'smooth' });
+                  window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
                 }}
                 disabled={currentPage === 1}
               >
@@ -692,7 +711,7 @@ export default function JobList({
                       className={`pagination-num-btn ${isActive ? "active" : ""}`}
                       onClick={() => {
                         setCurrentPage(p);
-                        window.scrollTo({ top: document.querySelector('.jobs-section')?.offsetTop ?? 0 - 140, behavior: 'smooth' });
+                        window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
                       }}
                     >
                       {p}
@@ -708,7 +727,7 @@ export default function JobList({
                 className="pagination-btn"
                 onClick={() => {
                   setCurrentPage(p => Math.min(totalPages, p + 1));
-                  window.scrollTo({ top: document.querySelector('.jobs-section').offsetTop - 140, behavior: 'smooth' });
+                  window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
                 }}
                 disabled={currentPage === totalPages}
               >

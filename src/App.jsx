@@ -19,6 +19,7 @@ const JobDetailPage = lazy(() => import("./components/JobDetailPage.jsx"));
 const AdminPanel    = lazy(() => import("./components/AdminPanel.jsx"));
 const AuthModal     = lazy(() => import("./components/AuthModal.jsx"));
 const PolicyPage    = lazy(() => import("./components/PolicyPage.jsx"));
+const NotFoundPage  = lazy(() => import("./components/NotFoundPage.jsx"));
 
 function ModalLoadingFallback() {
   return (
@@ -170,10 +171,9 @@ export default function App() {
     if (currentUser) {
       setUser({ name: "Admin", email: currentUser.email, role: "admin" });
       addToast(`ยินดีต้อนรับ Admin 👋`);
-      authService.subscribeToAuthState((u) => {
-        if (u) setUser({ name: "Admin", email: u.email, role: "admin" });
-        else setUser(null);
-      });
+      // Note: Do NOT re-subscribe to auth state here.
+      // The useEffect at L152 already handles auth state subscription.
+      // Subscribing again here causes memory leaks from orphaned listeners.
     }
   }, [addToast]);
 
@@ -323,6 +323,7 @@ export default function App() {
             />} />
             <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} onToast={addToast} />} />
             <Route path="/policy/:policyId" element={<PolicyPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </main>

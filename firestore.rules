@@ -8,17 +8,28 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // SECURITY: Check for admin custom claim instead of just authentication.
+    // To set custom claims, use Firebase Admin SDK:
+    //   admin.auth().setCustomUserClaims(uid, { admin: true })
+    // If you haven't set up custom claims yet, you can temporarily use
+    // email-based allowlist as a stopgap (uncomment below):
     function isAdmin() {
-      return isAuthenticated();
+      return isAuthenticated() && request.auth.token.admin == true;
     }
 
-    // Public read access for job listings, write access restricted to authenticated admins
+    // Alternative email-based allowlist (use ONLY as temporary stopgap):
+    // function isAdmin() {
+    //   return isAuthenticated() &&
+    //     request.auth.token.email in ['your-admin@gmail.com'];
+    // }
+
+    // Public read access for job listings, write access restricted to verified admins
     match /jobs_live/{jobId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    // Public read access for books / exam prep resources, write access restricted to authenticated admins
+    // Public read access for books / exam prep resources, write access restricted to verified admins
     match /books_live/{bookId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();

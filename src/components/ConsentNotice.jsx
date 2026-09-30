@@ -1,16 +1,32 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+function getConsentStatus() {
+  try {
+    return localStorage.getItem("cookieConsent");
+  } catch {
+    return null;
+  }
+}
+
+function setConsentStatus(value) {
+  try {
+    localStorage.setItem("cookieConsent", value);
+  } catch {
+    // Ignore storage errors (e.g. private browsing, quota exceeded)
+  }
+}
+
 export default function ConsentNotice() {
-  const [isVisible, setIsVisible] = useState(() => !localStorage.getItem("cookieConsent"));
+  const [isVisible, setIsVisible] = useState(() => !getConsentStatus());
 
   const handleAccept = () => {
-    localStorage.setItem("cookieConsent", "accepted");
+    setConsentStatus("accepted");
     setIsVisible(false);
   };
 
   const handleReject = () => {
-    localStorage.setItem("cookieConsent", "rejected");
+    setConsentStatus("rejected");
     setIsVisible(false);
   };
 
