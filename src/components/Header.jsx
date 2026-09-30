@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { id: "state",      label: "รัฐวิสาหกิจ" },
   { id: "temp",       label: "ลูกจ้างชั่วคราว" },
   { id: "agency",     label: "พนักงานหน่วยงานของรัฐ" },
+  { id: "stats",      label: "📊 สถิติ" },
 ];
 
 export default function Header({

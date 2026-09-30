@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { CATEGORY_MAP } from "../utils/constants.js";
 import { getDisplayProvinces, daysLeft, formatDate, getTotalJobPositions, getPositionCount } from "../utils/helpers.js";
 
-export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark, onOpenPoster }) {
+export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark, onOpenPoster, onOpenShare }) {
 
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
   const provinces = getDisplayProvinces(job);
@@ -68,7 +68,22 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
             ) : null}
           </div>
 
-          <div className="top-bar-right">
+          <div className="top-bar-right" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button
+              type="button"
+              id={`btn-share-${job.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onOpenShare?.(job);
+              }}
+              title="แชร์ประกาศนี้ (Deep Link & Dynamic OG Image)"
+              aria-label="แชร์ประกาศนี้"
+              className="job-btn-bookmark"
+              style={{ fontSize: "0.85rem", opacity: 0.85 }}
+            >
+              🔗
+            </button>
             <button
               type="button"
               id={`btn-bookmark-${job.id}`}

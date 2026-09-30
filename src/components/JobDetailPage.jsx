@@ -6,6 +6,7 @@ import SEO from "./SEO.jsx";
 import { JobDetailSkeleton } from "./LoadingSkeleton.jsx";
 
 import { getDisplayProvinces, formatDate } from "../utils/helpers.js";
+import { getJobOgImageUrl, getJobDeepLink } from "../utils/shareHelper.js";
 
 // Function to generate JSON-LD script for Google
 function generateJobPostingSchema(job) {
@@ -147,8 +148,8 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
       <SEO 
         title={`รับสมัครงาน ${job.department}`}
         description={`ประกาศรับสมัครงาน ${job.department} อัปเดตล่าสุด${job.deadline ? ` รีบสมัครก่อน ${formatDate(job.deadline)}` : ""}`}
-        url={`https://readytogov.th/job/${job.id}`}
-        imageUrl={job.logoUrl}
+        url={getJobDeepLink(job)}
+        imageUrl={getJobOgImageUrl(job)}
       />
       
       {/* Inject Structured Data */}

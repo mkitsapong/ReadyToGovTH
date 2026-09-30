@@ -640,6 +640,98 @@
   font-weight: 400;
 }
 
+.hero-stats-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.hero-stats-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px 8px 10px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-stats-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  transition: left 0.6s ease;
+}
+
+.hero-stats-btn:hover::before {
+  left: 100%;
+}
+
+.hero-stats-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(249, 115, 22, 0.7);
+  box-shadow: 0 12px 30px rgba(249, 115, 22, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.26) 0%, rgba(255, 255, 255, 0.09) 100%);
+}
+
+.hero-stats-btn-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--accent) 0%, #ea580c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.45);
+  flex-shrink: 0;
+}
+
+.hero-stats-btn-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.hero-stats-btn-main {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.01em;
+}
+
+.hero-stats-btn-sub {
+  font-size: 0.72rem;
+  color: var(--orange-200);
+  font-weight: 500;
+}
+
+.hero-stats-btn-arrow {
+  color: var(--accent);
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: transform var(--transition-fast);
+  margin-left: 2px;
+}
+
+.hero-stats-btn:hover .hero-stats-btn-arrow {
+  transform: translateX(4px);
+  color: var(--orange-300);
+}
+
 /* ===========================
    HERO EDU CARD
    =========================== */
@@ -7432,3 +7524,35 @@
   color: #000000;
   text-decoration: underline;
 }
+
+/* ===========================
+   DEEP LINK & DYNAMIC OG SHARE MODAL
+   =========================== */
+.share-modal-container {
+  box-shadow: 0 30px 70px -15px rgba(15, 23, 42, 0.45);
+  animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.job-btn-bookmark:hover {
+  transform: translateY(-1px);
+  background: rgba(249, 115, 22, 0.12);
+  color: #ea580c;
+}
+
+@media (max-width: 640px) {
+  .share-modal-container {
+    max-height: 96vh;
+    border-radius: 20px 20px 0 0;
+  }
+}

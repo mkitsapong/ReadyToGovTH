@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import SocialShareCover from "./SocialShareCover.jsx";
 import { getTotalJobPositions, getDisplayProvinces } from "../utils/helpers.js";
+import { getJobOgImageUrl } from "../utils/shareHelper.js";
 
 /**
  * Generate formatted social captions for various platforms
@@ -560,6 +561,26 @@ export default function SocialPosterModal({ job, onClose, onToast }) {
                 }}
               >
                 <span>📘 แชร์ Facebook ↗</span>
+              </a>
+              <a
+                href={getJobOgImageUrl(job)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: "0.75rem",
+                  color: "#ea580c",
+                  textDecoration: "none",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                  background: "#fff7ed",
+                  border: "1px solid #fed7aa",
+                }}
+              >
+                <span>🖼️ ดูภาพ Dynamic OG (1200×630) ↗</span>
               </a>
             </div>
           </div>

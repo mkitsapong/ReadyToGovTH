@@ -20,6 +20,7 @@ const AdminPanel    = lazy(() => import("./components/AdminPanel.jsx"));
 const AuthModal     = lazy(() => import("./components/AuthModal.jsx"));
 const PolicyPage    = lazy(() => import("./components/PolicyPage.jsx"));
 const NotFoundPage  = lazy(() => import("./components/NotFoundPage.jsx"));
+const StatsDashboard = lazy(() => import("./components/StatsDashboard.jsx"));
 
 function ModalLoadingFallback() {
   return (
@@ -56,6 +57,7 @@ function Toast({ toasts }) {
 
 // Helper to determine active page from pathname
 function getActivePage(pathname) {
+  if (pathname.includes("/stats") || pathname.includes("/dashboard")) return "stats";
   if (pathname.includes("/category/civil")) return "civil";
   if (pathname.includes("/category/government")) return "government";
   if (pathname.includes("/category/state")) return "state";
@@ -270,6 +272,11 @@ export default function App() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    if (page === "stats") {
+      navigate("/stats");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const provinceQuery = selectedProvince ? `?province=${encodeURIComponent(selectedProvince)}` : "";
     if (page === "home") navigate("/" + provinceQuery);
     else navigate(`/category/${page}${provinceQuery}`);
@@ -322,6 +329,8 @@ export default function App() {
               onToast={addToast}
             />} />
             <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} onToast={addToast} />} />
+            <Route path="/stats" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} />} />
+            <Route path="/dashboard" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} />} />
             <Route path="/policy/:policyId" element={<PolicyPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

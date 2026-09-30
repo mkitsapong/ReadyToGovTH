@@ -13,6 +13,7 @@ import {
 import JobPrintSummaryModal from "./JobPrintSummaryModal.jsx";
 import AddToCalendarModal from "./AddToCalendarModal.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
+import ShareModal from "./ShareModal.jsx";
 
 export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit, onToast }) {
   const [isCopied, setIsCopied] = useState(false);
@@ -32,6 +33,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showPosterModal, setShowPosterModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const handleQuickCalendarClick = (e) => {
     e.stopPropagation();
@@ -338,28 +340,12 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
               <button
                 type="button"
-                onClick={async () => {
-                  const url = `${window.location.origin}/job/${job.id}`;
-                  if (navigator.share) {
-                    try {
-                      await navigator.share({
-                        title: `งานราชการ: ${job.department}`,
-                        text: `ดูประกาศรับสมัครงานของ ${job.department} ได้ที่นี่`,
-                        url: url,
-                      });
-                    } catch {
-                      // user cancelled or error
-                    }
-                  } else {
-                    navigator.clipboard.writeText(url);
-                    setIsCopied(true);
-                    setTimeout(() => setIsCopied(false), 2000);
-                  }
-                }}
-                title="แชร์ลิงก์งานนี้"
+                id={`btn-modal-share-${job.id}`}
+                onClick={() => setShowShareModal(true)}
+                title="แชร์ลิงก์งานนี้ (Deep Link & Dynamic OG Image)"
                 className="btn-header-action btn-header-glass"
               >
-                {isCopied ? "✅ คัดลอกแล้ว" : "🔗 แชร์"}
+                🔗 แชร์
               </button>
 
               <button
@@ -1172,6 +1158,9 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
         {showPosterModal && (
           <SocialPosterModal job={job} onClose={() => setShowPosterModal(false)} onToast={onToast} />
         )}
+        {showShareModal && (
+          <ShareModal job={job} onClose={() => setShowShareModal(false)} onToast={onToast} />
+        )}
         {/* Off-screen Banner Containers for html2canvas */}
         <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
           <SocialShareCover job={job} aspectRatio="4:5" ref={bannerFeedRef} />
@@ -1193,6 +1182,9 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       )}
       {showPosterModal && (
         <SocialPosterModal job={job} onClose={() => setShowPosterModal(false)} onToast={onToast} />
+      )}
+      {showShareModal && (
+        <ShareModal job={job} onClose={() => setShowShareModal(false)} onToast={onToast} />
       )}
       {/* Off-screen Banner Containers for html2canvas */}
       <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>

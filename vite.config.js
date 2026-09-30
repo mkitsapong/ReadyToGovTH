@@ -1,11 +1,48 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { generateOgSvg } from './src/utils/generateOgSvg.js'
+
+function localVercelOgPlugin() {
+  return {
+    name: 'local-vercel-og-plugin',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = new URL(req.url, 'http://localhost:5173');
+        if (url.pathname === '/api/og') {
+          const dept = url.searchParams.get('dept') || '';
+          const pos = url.searchParams.get('pos') || '';
+          const count = url.searchParams.get('count') || '1';
+          const salary = url.searchParams.get('salary') || '';
+          const cat = url.searchParams.get('cat') || 'งานราชการ';
+          const deadline = url.searchParams.get('deadline') || '';
+          const days = url.searchParams.get('days') || '';
+          const ocsc = url.searchParams.get('ocsc') || '';
+          const prov = url.searchParams.get('prov') || '';
+
+          const svg = generateOgSvg({ dept, pos, count, salary, cat, deadline, days, ocsc, prov });
+          res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-cache');
+          res.end(svg);
+          return;
+        }
+        if (url.pathname === '/api/share') {
+          const jobId = url.searchParams.get('id') || '';
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.end(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/job/${encodeURIComponent(jobId)}"><script>location.replace('/job/${encodeURIComponent(jobId)}');</script></head><body>Redirecting to /job/${jobId}...</body></html>`);
+          return;
+        }
+        next();
+      });
+    },
+  };
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    localVercelOgPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {

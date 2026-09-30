@@ -20,6 +20,8 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
           <div className="footer-links-compact">
             <button onClick={() => onNavigate("home")}>ค้นหางาน</button>
             <span className="dot">•</span>
+            <button onClick={() => onNavigate("stats")}>📊 สถิติตลาดงาน</button>
+            <span className="dot">•</span>
             <button onClick={() => onNavigate("policy/privacy")}>นโยบายความเป็นส่วนตัว</button>
             <span className="dot">•</span>
             <button onClick={() => onNavigate("policy/terms")}>เงื่อนไขการให้บริการ</button>

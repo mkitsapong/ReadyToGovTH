@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import JobCard from "./JobCard.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
+import ShareModal from "./ShareModal.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
@@ -74,6 +76,7 @@ export default function JobList({
   const [filterOCSC, setFilterOCSC] = useState(() => safeGetSession("filterOCSC") === "true");
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
   const [posterJob, setPosterJob] = useState(null);
+  const [shareJob, setShareJob] = useState(null);
 
   useEffect(() => {
     safeSetSession("searchQuery", searchQuery);
@@ -343,23 +346,40 @@ export default function JobList({
               <span>{hero.title}</span>
             </h1>
             <p className="hero-subtitle">{hero.subtitle}</p>
-            <div className="hero-stats">
-              <div className="hero-stat">
-                <span className="hero-stat-number">{filtered.length}</span>
-                <span className="hero-stat-label">ประกาศรับสมัคร</span>
-              </div>
-              <div className="hero-stat">
-                <span className="hero-stat-number">{totalPositions}</span>
-                <span className="hero-stat-label">อัตราว่างทั้งหมด</span>
-              </div>
-              {selectedProvince && (
+            <div className="hero-stats-wrapper">
+              <div className="hero-stats">
                 <div className="hero-stat">
-                  <span className="hero-stat-number" style={{ fontSize: "1rem" }}>
-                    📍 {selectedProvince}
-                  </span>
-                  <span className="hero-stat-label">จังหวัดที่เลือก</span>
+                  <span className="hero-stat-number">{filtered.length}</span>
+                  <span className="hero-stat-label">ประกาศรับสมัคร</span>
                 </div>
-              )}
+                <div className="hero-stat">
+                  <span className="hero-stat-number">{totalPositions}</span>
+                  <span className="hero-stat-label">อัตราว่างทั้งหมด</span>
+                </div>
+                {selectedProvince && (
+                  <div className="hero-stat">
+                    <span className="hero-stat-number" style={{ fontSize: "1rem" }}>
+                      📍 {selectedProvince}
+                    </span>
+                    <span className="hero-stat-label">จังหวัดที่เลือก</span>
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to="/stats"
+                className="hero-stats-btn"
+                title="คลิกเพื่อดู Dashboard สถิติตลาดงานราชการภาพรวม"
+              >
+                <div className="hero-stats-btn-icon-wrap">
+                  📊
+                </div>
+                <div className="hero-stats-btn-text">
+                  <span className="hero-stats-btn-main">Dashboard สถิติ</span>
+                  <span className="hero-stats-btn-sub">ดูกราฟ & แนวโน้มงาน</span>
+                </div>
+                <span className="hero-stats-btn-arrow">→</span>
+              </Link>
             </div>
           </div>
 
@@ -667,6 +687,7 @@ export default function JobList({
                     isAdmin={isAdmin}
                     onEdit={onEditJob}
                     onOpenPoster={setPosterJob}
+                    onOpenShare={setShareJob}
                     userEducation={userEducation}
                     isBookmarked={isBookmarked(job.id)}
                     onToggleBookmark={() => {
@@ -754,6 +775,15 @@ export default function JobList({
         <SocialPosterModal
           job={posterJob}
           onClose={() => setPosterJob(null)}
+          onToast={onToast}
+        />
+      )}
+
+      {/* Deep Link Share Modal */}
+      {shareJob && (
+        <ShareModal
+          job={shareJob}
+          onClose={() => setShareJob(null)}
           onToast={onToast}
         />
       )}
