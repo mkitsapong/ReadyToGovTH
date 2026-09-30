@@ -1,15 +1,26 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore/lite";
 
-// Firebase config — all values MUST be provided via .env (VITE_FIREBASE_*)
+// Default Production Firebase config (Firebase client API keys are public client identifiers)
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD1nVRVmbSSl2z2GAuJ6yEDnKa67BrjgT8",
+  authDomain: "readytogovth-app.firebaseapp.com",
+  projectId: "readytogovth-app",
+  storageBucket: "readytogovth-app.firebasestorage.app",
+  messagingSenderId: "898699648817",
+  appId: "1:898699648817:web:69d42ba1f98f09ca065a10",
+  measurementId: "G-XPWZC3MKCL",
+};
+
+// Firebase config — reads from .env (VITE_FIREBASE_*) if provided, otherwise uses production defaults
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || DEFAULT_FIREBASE_CONFIG.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || DEFAULT_FIREBASE_CONFIG.authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || DEFAULT_FIREBASE_CONFIG.projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || DEFAULT_FIREBASE_CONFIG.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || DEFAULT_FIREBASE_CONFIG.appId,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || DEFAULT_FIREBASE_CONFIG.measurementId,
 };
 
 export const isFirebaseConfigured = Boolean(
@@ -21,7 +32,7 @@ export const isFirebaseConfigured = Boolean(
 
 if (!isFirebaseConfigured) {
   console.warn(
-    "⚠️ Firebase config is missing or unconfigured in .env. The app will run in local demo preview mode with sample data. See .env.example to connect your real Firebase project."
+    "⚠️ Firebase config is missing or unconfigured. The app will run in local demo preview mode with sample data."
   );
 }
 
