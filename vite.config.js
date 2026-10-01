@@ -32,6 +32,29 @@ function localVercelOgPlugin() {
           res.end(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/job/${encodeURIComponent(jobId)}"><script>location.replace('/job/${encodeURIComponent(jobId)}');</script></head><body>Redirecting to /job/${jobId}...</body></html>`);
           return;
         }
+        if (url.pathname === '/api/sitemap.xml') {
+          const today = new Date().toISOString().split('T')[0];
+          const staticPages = [
+            { loc: '/', priority: '1.0', freq: 'daily' },
+            { loc: '/category/civil', priority: '0.8', freq: 'daily' },
+            { loc: '/category/government', priority: '0.8', freq: 'daily' },
+            { loc: '/category/state', priority: '0.8', freq: 'daily' },
+            { loc: '/category/temp', priority: '0.8', freq: 'daily' },
+            { loc: '/category/agency', priority: '0.8', freq: 'daily' },
+            { loc: '/stats', priority: '0.6', freq: 'weekly' },
+            { loc: '/policy/privacy', priority: '0.3', freq: 'monthly' },
+            { loc: '/policy/terms', priority: '0.3', freq: 'monthly' },
+            { loc: '/policy/cookies', priority: '0.3', freq: 'monthly' },
+          ];
+          let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+          for (const p of staticPages) {
+            xml += `  <url>\n    <loc>http://localhost:5173${p.loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${p.freq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>\n`;
+          }
+          xml += `</urlset>\n`;
+          res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+          res.end(xml);
+          return;
+        }
         next();
       });
     },

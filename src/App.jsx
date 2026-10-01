@@ -194,6 +194,10 @@ export default function App() {
       queryClient.invalidateQueries({ queryKey: ["books"] });
       addToast("เพิ่มหนังสือ/คอร์สเรียบร้อยแล้ว");
     },
+    onError: (err) => {
+      console.error("addBook failed:", err);
+      addToast("เพิ่มหนังสือไม่สำเร็จ โปรดลองอีกครั้ง", "error");
+    },
   });
 
   const updateBookMutation = useMutation({
@@ -202,6 +206,10 @@ export default function App() {
       queryClient.invalidateQueries({ queryKey: ["books"] });
       addToast("อัปเดตข้อมูลหนังสือเรียบร้อยแล้ว");
     },
+    onError: (err) => {
+      console.error("updateBook failed:", err);
+      addToast("อัปเดตหนังสือไม่สำเร็จ โปรดลองอีกครั้ง", "error");
+    },
   });
 
   const deleteBookMutation = useMutation({
@@ -209,6 +217,10 @@ export default function App() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books"] });
       addToast("ลบรายการหนังสือเรียบร้อยแล้ว", "error");
+    },
+    onError: (err) => {
+      console.error("deleteBook failed:", err);
+      addToast("ลบหนังสือไม่สำเร็จ โปรดลองอีกครั้ง", "error");
     },
   });
 
@@ -219,6 +231,10 @@ export default function App() {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       addToast(`เพิ่มประกาศ "${newJob.department || newJob.title || "ใหม่"}" เรียบร้อยแล้ว ✅`);
     },
+    onError: (err) => {
+      console.error("addJob failed:", err);
+      addToast("เพิ่มประกาศไม่สำเร็จ โปรดลองอีกครั้ง", "error");
+    },
   });
 
   const updateJobMutation = useMutation({
@@ -226,6 +242,10 @@ export default function App() {
     onSuccess: (updatedJob) => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       addToast(`แก้ไขประกาศ "${updatedJob.department || updatedJob.title || "เรียบร้อย"}" เรียบร้อยแล้ว ✅`);
+    },
+    onError: (err) => {
+      console.error("updateJob failed:", err);
+      addToast("แก้ไขประกาศไม่สำเร็จ โปรดลองอีกครั้ง", "error");
     },
   });
 
@@ -235,6 +255,10 @@ export default function App() {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       addToast("ลบประกาศเรียบร้อยแล้ว 🗑️", "success");
       navigate("/");
+    },
+    onError: (err) => {
+      console.error("deleteJob failed:", err);
+      addToast("ลบประกาศไม่สำเร็จ โปรดลองอีกครั้ง", "error");
     },
   });
 

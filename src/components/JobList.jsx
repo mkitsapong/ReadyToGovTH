@@ -135,7 +135,16 @@ export default function JobList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobs]);
   const regionDropdownRef = useRef(null);
-  const ITEMS_PER_PAGE = 9;
+  const PAGE_SIZE_OPTIONS = [12, 24, 48];
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    const saved = safeGetSession("itemsPerPage");
+    const parsed = saved ? parseInt(saved, 10) : 12;
+    return PAGE_SIZE_OPTIONS.includes(parsed) ? parsed : 12;
+  });
+
+  useEffect(() => {
+    safeSetSession("itemsPerPage", itemsPerPage);
+  }, [itemsPerPage]);
 
   const closeRegionDropdown = () => {
     setIsRegionDropdownOpen(false);
@@ -293,8 +302,9 @@ export default function JobList({
     }
   }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const currentJobs = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const currentJobs = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const hasMorePages = currentPage < totalPages;
 
   return (
     <>
@@ -695,50 +705,87 @@ export default function JobList({
           {/* Pagination Controls */}
           {!isLoading && !isError && totalPages > 1 && (
             <div className="pagination-wrapper">
-              <button
-                className="pagination-btn"
-                onClick={() => {
-                  setCurrentPage(p => Math.max(1, p - 1));
-                  window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
-                }}
-                disabled={currentPage === 1}
-              >
-                ก่อนหน้า
-              </button>
+              {/* Load More Button — quick way to see more without page jump */}
+              {hasMorePages && (
+                <button
+                  className="pagination-load-more-btn"
+                  onClick={() => {
+                    setItemsPerPage(prev => {
+                      // Double the visible items up to showing all
+                      const next = Math.min(prev + 12, filtered.length);
+                      return next;
+                    });
+                  }}
+                >
+                  ดูเพิ่มอีก {Math.min(12, filtered.length - currentPage * itemsPerPage)} รายการ ↓
+                </button>
+              )}
 
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const p = i + 1;
-                // Show first, last, current, and one adjacent
-                if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
-                  const isActive = p === currentPage;
-                  return (
-                    <button
-                      key={p}
-                      className={`pagination-num-btn ${isActive ? "active" : ""}`}
-                      onClick={() => {
-                        setCurrentPage(p);
-                        window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
-                      }}
-                    >
-                      {p}
-                    </button>
-                  );
-                } else if (p === currentPage - 2 || p === currentPage + 2) {
-                  return <span key={`dots-${p}`} className="pagination-dots">...</span>;
-                }
-                return null;
-              })}
+              {/* Page Navigation */}
+              <div className="pagination-nav-row">
+                <button
+                  className="pagination-btn"
+                  onClick={() => {
+                    setCurrentPage(p => Math.max(1, p - 1));
+                    window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
+                  }}
+                  disabled={currentPage === 1}
+                >
+                  ก่อนหน้า
+                </button>
 
-              <button
-                className="pagination-btn"
-                onClick={() => {
-                  setCurrentPage(p => Math.min(totalPages, p + 1));
-                  window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
-                }}
-                disabled={currentPage === totalPages}
-              >
-                ถัดไป
-              </button>
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const p = i + 1;
+                  // Show first, last, current, and one adjacent
+                  if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+                    const isActive = p === currentPage;
+                    return (
+                      <button
+                        key={p}
+                        className={`pagination-num-btn ${isActive ? "active" : ""}`}
+                        onClick={() => {
+                          setCurrentPage(p);
+                          window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
+                        }}
+                      >
+                        {p}
+                      </button>
+                    );
+                  } else if (p === currentPage - 2 || p === currentPage + 2) {
+                    return <span key={`dots-${p}`} className="pagination-dots">...</span>;
+                  }
+                  return null;
+                })}
+
+                <button
+                  className="pagination-btn"
+                  onClick={() => {
+                    setCurrentPage(p => Math.min(totalPages, p + 1));
+                    window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
+                  }}
+                  disabled={currentPage === totalPages}
+                >
+                  ถัดไป
+                </button>
+              </div>
+
+              {/* Per-page Size Selector */}
+              <div className="pagination-per-page">
+                <span className="pagination-per-page-label">แสดงหน้าละ</span>
+                {PAGE_SIZE_OPTIONS.map(size => (
+                  <button
+                    key={size}
+                    className={`pagination-size-btn ${itemsPerPage === size ? "active" : ""}`}
+                    onClick={() => {
+                      setItemsPerPage(size);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+                <span className="pagination-per-page-label">รายการ</span>
+              </div>
             </div>
           )}
 

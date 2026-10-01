@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
 
-Sitemap: https://readytogov.th/sitemap.xml
+Sitemap: https://readytogov.th/api/sitemap.xml

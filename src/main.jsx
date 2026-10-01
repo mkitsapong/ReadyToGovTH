@@ -61,6 +61,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: true,
+      staleTime: 5 * 60 * 1000,  // 5 minutes — avoid redundant Firestore reads on rapid tab switches
+      gcTime: 15 * 60 * 1000,    // 15 minutes — keep inactive cache for quicker back-navigation
+      retry: 2,                   // Retry failed queries twice before showing error
     },
   },
 })
