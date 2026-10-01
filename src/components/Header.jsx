@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { id: "state",      label: "รัฐวิสาหกิจ" },
   { id: "temp",       label: "ลูกจ้างชั่วคราว" },
   { id: "agency",     label: "พนักงานหน่วยงานของรัฐ" },
-  { id: "stats",      label: "📊 สถิติ" },
+  { id: "stats",      label: "สถิติ" },
 ];
 
 export default function Header({
@@ -107,7 +107,7 @@ export default function Header({
             <div className="mobile-drawer-theme-wrapper">
               <div className="drawer-theme-row">
                 <span className="drawer-theme-label">
-                  {isDark ? "🌙 โหมดมืด (Dark Mode)" : "☀️ โหมดสว่าง (Light Mode)"}
+                  {isDark ? "โหมดมืด (Dark Mode)" : "โหมดสว่าง (Light Mode)"}
                 </span>
                 <button
                   type="button"
@@ -155,7 +155,6 @@ export default function Header({
 
             {/* Today Thai Date */}
             <div className="header-date-badge">
-              <span style={{ color: "var(--accent)" }}>📅</span>
               <span>
                 {new Date().toLocaleDateString("th-TH", {
                   weekday: "short",
@@ -169,7 +168,6 @@ export default function Header({
             {user && (
               <>
                 <div className={`header-role-badge ${user.role}`} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
-                  <span>👑</span>
                   <span>{user.name === "Admin" ? "ผู้ดูแลระบบ" : user.name}</span>
                 </div>
                 <button className="header-btn header-btn-logout" onClick={onLogout} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>

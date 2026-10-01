@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { trackJobBookmark } from "../services/analyticsService.js";
 
 const STORAGE_KEY = "readytogov_bookmarks";
 const FULL_JOBS_KEY = "readytogov_bookmarked_jobs_full";
@@ -89,6 +90,13 @@ export function useBookmarks() {
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent(EVENT_NAME));
     }, 0);
+
+    // Track in Firebase Analytics
+    try {
+      trackJobBookmark({ id: cleanId, ...(jobData || {}) }, !exists);
+    } catch {
+      // ignore
+    }
 
     return !exists; // true if newly bookmarked, false if unbookmarked
   }, []);

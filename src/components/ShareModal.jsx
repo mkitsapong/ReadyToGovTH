@@ -7,6 +7,7 @@ import {
   getSocialShareLinks,
 } from "../utils/shareHelper.js";
 import { getTotalJobPositions, formatDate } from "../utils/helpers.js";
+import { trackJobShare } from "../services/analyticsService.js";
 
 export default function ShareModal({ job, onClose, onToast }) {
   const [activeTab, setActiveTab] = useState("preview"); // 'preview' | 'line' | 'qrcode'
@@ -57,6 +58,7 @@ export default function ShareModal({ job, onClose, onToast }) {
     try {
       await navigator.clipboard.writeText(deepLink);
       setIsCopiedLink(true);
+      trackJobShare(job, "copy_link");
       if (onToast) onToast("คัดลอก Deep Link สำเร็จแล้ว 🔗 พร้อมส่งต่อ!", "success");
       setTimeout(() => setIsCopiedLink(false), 2500);
     } catch {
@@ -69,6 +71,7 @@ export default function ShareModal({ job, onClose, onToast }) {
     try {
       await navigator.clipboard.writeText(summaryText);
       setIsCopiedSummary(true);
+      trackJobShare(job, "copy_summary");
       if (onToast) onToast("คัดลอกข้อความสรุปพร้อมลิงก์แล้ว 📋 วางลงแชทได้ทันที!", "success");
       setTimeout(() => setIsCopiedSummary(false), 2500);
     } catch {
@@ -85,6 +88,7 @@ export default function ShareModal({ job, onClose, onToast }) {
           text: `เปิดรับสมัครงาน ${job.department} รวม ${totalCount} อัตรา ปิดรับ ${job.deadline ? formatDate(job.deadline) : "เร็วๆ นี้"}`,
           url: deepLink,
         });
+        trackJobShare(job, "native_share");
         if (onToast) onToast("แชร์สำเร็จแล้ว ✅", "success");
       } catch (err) {
         if (err.name !== "AbortError") {

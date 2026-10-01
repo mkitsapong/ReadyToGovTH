@@ -21,6 +21,8 @@ const AuthModal     = lazy(() => import("./components/AuthModal.jsx"));
 const PolicyPage    = lazy(() => import("./components/PolicyPage.jsx"));
 const NotFoundPage  = lazy(() => import("./components/NotFoundPage.jsx"));
 const StatsDashboard = lazy(() => import("./components/StatsDashboard.jsx"));
+const AdminAnalyticsDashboard = lazy(() => import("./components/AdminAnalyticsDashboard.jsx"));
+import { trackPageView } from "./services/analyticsService.js";
 
 function ModalLoadingFallback() {
   return (
@@ -140,9 +142,15 @@ export default function App() {
   const [user,             setUser]           = useState(null);
   const [showAuth,         setShowAuth]       = useState(false);
   const [showAdmin,        setShowAdmin]      = useState(false);
+  const [showAnalytics,    setShowAnalytics]  = useState(false);
   const [editingJob,       setEditingJob]     = useState(null);
   const [userEducation,    setUserEducation]  = useState(null);
   const [toasts,           setToasts]         = useState([]);
+
+  // ── Track Page Views in Firebase Analytics ──
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
 
   // Toast helper
   const addToast = useCallback((message, type = "success") => {
@@ -329,8 +337,14 @@ export default function App() {
               onToast={addToast}
             />} />
             <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} onToast={addToast} />} />
-            <Route path="/stats" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} />} />
-            <Route path="/dashboard" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} />} />
+            <Route path="/stats" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} isAdmin={isAdmin} onOpenAnalytics={() => setShowAnalytics(true)} />} />
+            <Route path="/dashboard" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} isAdmin={isAdmin} onOpenAnalytics={() => setShowAnalytics(true)} />} />
+            <Route path="/admin/analytics" element={
+              <AdminAnalyticsDashboard
+                jobs={jobs}
+                onClose={() => navigate("/stats")}
+              />
+            } />
             <Route path="/policy/:policyId" element={<PolicyPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
@@ -344,17 +358,28 @@ export default function App() {
         user={user}
       />
 
-      {/* Admin FAB — Add new */}
+      {/* Admin Quick Action Floating Buttons */}
       {isAdmin && (
-        <button
-          id="admin-fab-btn"
-          className="admin-fab"
-          onClick={() => { setEditingJob(null); setShowAdmin(true); }}
-          title="เพิ่มประกาศใหม่"
-        >
-          <span className="fab-icon">＋</span>
-          เพิ่มประกาศ
-        </button>
+        <div className="admin-fab-group">
+          <button
+            id="admin-analytics-fab-btn"
+            className="admin-fab analytics"
+            onClick={() => setShowAnalytics(true)}
+            title="ดูสถิติเชิงลึก (Firebase Analytics Dashboard)"
+          >
+            <span className="fab-icon">📈</span>
+            Analytics
+          </button>
+          <button
+            id="admin-fab-btn"
+            className="admin-fab"
+            onClick={() => { setEditingJob(null); setShowAdmin(true); }}
+            title="เพิ่มประกาศใหม่"
+          >
+            <span className="fab-icon">＋</span>
+            เพิ่มประกาศ
+          </button>
+        </div>
       )}
 
       {/* Auth Modal */}
@@ -363,6 +388,16 @@ export default function App() {
           <AuthModal
             onClose={() => setShowAuth(false)}
             onSuccess={handleAuthSuccess}
+          />
+        </Suspense>
+      )}
+
+      {/* Admin Analytics Dashboard Modal */}
+      {showAnalytics && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <AdminAnalyticsDashboard
+            jobs={jobs}
+            onClose={() => setShowAnalytics(false)}
           />
         </Suspense>
       )}

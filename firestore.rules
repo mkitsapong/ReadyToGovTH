@@ -35,6 +35,34 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Analytics: Daily statistics (public create/update for live counter increments)
+    match /analytics_daily/{dateId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    // Analytics: Job views & engagement counters
+    match /analytics_jobs/{jobId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    // Analytics: Real user search keywords
+    match /analytics_searches/{searchId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    // Analytics: Overall aggregated summary counters
+    match /analytics_summary/{docId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
     // Default deny all other paths
     match /{document=**} {
       allow read, write: if false;

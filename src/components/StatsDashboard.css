@@ -356,6 +356,25 @@
   border: 1px solid var(--border-light);
 }
 
+.stats-active-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .stats-active-status-tag {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
 /* ── Section Badge & Peak Badges ─────────────────────────────────────────── */
 .stats-card-badge-row {
   display: flex;
@@ -752,30 +771,51 @@
 @media (min-width: 1024px) {
   .stats-two-columns {
     grid-template-columns: 1fr 1fr;
+    align-items: stretch;
   }
 }
 
-/* ── Donut Chart for Categories ──────────────────────────────────────────── */
-.stats-donut-container {
+.stats-two-columns > .stats-chart-card {
+  margin-bottom: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 24px;
+  height: 100%;
+}
+
+/* ── Category Insights Card Layout (Full & Balanced) ───────────────────────── */
+.stats-category-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 1. Top Donut Showcase + Summary Highlights */
+.stats-cat-top-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 14px 18px;
+  margin-bottom: 12px;
 }
 
 @media (min-width: 640px) {
-  .stats-donut-container {
+  .stats-cat-top-showcase {
     flex-direction: row;
     align-items: center;
-    justify-content: space-around;
+    justify-content: space-between;
+    gap: 20px;
   }
 }
 
 .stats-donut-svg-wrapper {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 145px;
+  height: 145px;
   flex-shrink: 0;
+  margin: 0 auto;
 }
 
 .stats-donut-svg {
@@ -796,7 +836,7 @@
   transform: translate(-50%, -50%);
   text-align: center;
   pointer-events: none;
-  width: 110px;
+  width: 95px;
 }
 
 .stats-donut-center-active {
@@ -809,7 +849,7 @@
 }
 
 .stats-donut-center-num {
-  font-size: 1.85rem;
+  font-size: 1.7rem;
   font-weight: 800;
   color: var(--text-main);
   line-height: 1;
@@ -818,7 +858,7 @@
 }
 
 .stats-donut-center-label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
   font-weight: 600;
   margin-top: 4px;
@@ -827,20 +867,73 @@
   text-overflow: ellipsis;
 }
 
-/* Category Item Rows */
+/* Right Metrics within Top Showcase */
+.stats-cat-showcase-metrics {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.stats-cat-metric-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all var(--transition-fast);
+}
+
+.stats-cat-metric-pill:hover {
+  border-color: rgba(249, 115, 22, 0.4);
+  transform: translateX(2px);
+}
+
+.stats-cat-pill-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
+.stats-cat-pill-main {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-cat-pill-sub {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* 2. Full-Width Category List Rows */
 .stats-category-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
   flex: 1;
+  justify-content: space-between;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 .stats-cat-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 14px;
+  gap: 8px;
+  padding: 11px 15px;
   border-radius: var(--radius-lg);
   background: var(--bg-card-subtle);
   border: 1px solid var(--border-light);
@@ -853,58 +946,88 @@
   background: var(--bg-card);
   border-color: var(--accent);
   transform: translateX(4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .stats-cat-row-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
 }
 
 .stats-cat-row-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
 }
 
 .stats-cat-color-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 3px;
   flex-shrink: 0;
+}
+
+.stats-cat-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .stats-cat-name {
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stats-cat-row-right {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .stats-cat-count {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.82rem;
   color: var(--text-main);
+  white-space: nowrap;
+}
+
+.stats-cat-count strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: 'Plus Jakarta Sans', var(--font-sans);
+}
+
+.stats-cat-unit {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 2px;
 }
 
 .stats-cat-percent-badge {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: 'Plus Jakarta Sans', var(--font-sans);
+  min-width: 44px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .stats-cat-arrow {
   color: var(--accent);
   font-size: 0.85rem;
-  opacity: 0.6;
-  transition: transform var(--transition-fast);
+  opacity: 0.45;
+  transition: all var(--transition-fast);
 }
 
 .stats-cat-row:hover .stats-cat-arrow {
@@ -928,16 +1051,128 @@
 
 .stats-cat-sub-info {
   display: flex;
+  align-items: center;
   gap: 8px;
-  font-size: 0.72rem;
+  font-size: 0.73rem;
   color: var(--text-muted);
+  flex-wrap: wrap;
 }
 
-/* ── Top Provinces Leaderboard ───────────────────────────────────────────── */
+.stats-cat-bullet {
+  opacity: 0.4;
+}
+
+.stats-cat-cta-text {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.stats-cat-row:hover .stats-cat-cta-text {
+  opacity: 1;
+}
+
+/* 3. Bottom Insight Banner (Matches nationwide banner in Provinces) */
+.stats-cat-bottom-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(245, 158, 11, 0.04) 100%);
+  border: 1px dashed rgba(249, 115, 22, 0.35);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-top: auto;
+}
+
+.stats-cat-bottom-banner:hover {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.14) 0%, rgba(245, 158, 11, 0.08) 100%);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.stats-cat-bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.stats-cat-bottom-tag {
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.stats-tag-no-ocsc {
+  color: #ea580c;
+  background: rgba(234, 88, 12, 0.08);
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+[data-theme="dark"] .stats-tag-no-ocsc {
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.12);
+}
+
+.stats-cat-bottom-title {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-cat-bottom-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.stats-cat-bottom-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--accent);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Top Provinces Leaderboard (Equal Height & Proportional) ─────────────── */
+.stats-provinces-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .stats-province-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  flex: 1;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 20px;
 }
 
 .stats-province-item {
@@ -1078,7 +1313,7 @@
   background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%);
 }
 
-/* Nationwide Banner */
+/* Nationwide Banner (Anchored at Bottom) */
 .stats-nationwide-banner {
   padding: 12px 16px;
   background: rgba(249, 115, 22, 0.08);
@@ -1087,9 +1322,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 6px;
+  margin-top: auto;
   cursor: pointer;
   transition: all var(--transition-fast);
+}
+
+.stats-nationwide-icon-tag {
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--accent);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
 .stats-nationwide-banner:hover {

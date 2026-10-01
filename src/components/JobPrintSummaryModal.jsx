@@ -656,14 +656,7 @@ export default function JobPrintSummaryModal({ job, onClose }) {
                       <>ยื่นใบสมัครและหลักฐานด้วยตนเอง ณ <strong>{job.department}</strong> {provinces.length > 0 ? `(${provinces.join(", ")})` : ""} ในวันและเวลาราชการ</>
                     )}
                   </p>
-                  <div className="a4-action-links">
-                    {pdfUrl && (
-                      <span style={{ marginRight: "12px" }}>
-                        <strong>📄 ประกาศฉบับเต็ม:</strong> {pdfUrl}
-                      </span>
-                    )}
-                    <span><strong>📱 ดูสรุปใน ReadyToGovTH:</strong> {jobDetailUrl}</span>
-                  </div>
+
                   <div className="a4-action-tip">
                     💡 <strong>คำแนะนำ:</strong> {isInPerson 
                       ? "กรุณาตรวจสอบห้องรับสมัคร เอกสารที่ต้องใช้ และเวลาทำการจากประกาศฉบับเต็มก่อนเดินทางไปยื่นใบสมัคร" 

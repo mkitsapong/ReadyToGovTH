@@ -20,7 +20,7 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
           <div className="footer-links-compact">
             <button onClick={() => onNavigate("home")}>ค้นหางาน</button>
             <span className="dot">•</span>
-            <button onClick={() => onNavigate("stats")}>📊 สถิติตลาดงาน</button>
+            <button onClick={() => onNavigate("stats")}>สถิติตลาดงาน</button>
             <span className="dot">•</span>
             <button onClick={() => onNavigate("policy/privacy")}>นโยบายความเป็นส่วนตัว</button>
             <span className="dot">•</span>
@@ -38,7 +38,6 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
           <p>© 2026 ReadyToGovTH</p>
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <p style={{ display: "flex", gap: 6, alignItems: "center", margin: 0 }}>
-              <span style={{ color: "var(--accent)" }}>🇹🇭</span>
               <span>Made for Thai Civil Servants</span>
             </p>
             {!user && (
@@ -61,7 +60,7 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.6")}
               >
-                🔐 ระบบจัดการ
+                ระบบจัดการ
               </button>
             )}
           </div>

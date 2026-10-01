@@ -7,6 +7,7 @@ import { JobDetailSkeleton } from "./LoadingSkeleton.jsx";
 
 import { getDisplayProvinces, formatDate } from "../utils/helpers.js";
 import { getJobOgImageUrl, getJobDeepLink } from "../utils/shareHelper.js";
+import { trackJobView } from "../services/analyticsService.js";
 
 // Function to generate JSON-LD script for Google
 function generateJobPostingSchema(job) {
@@ -103,6 +104,13 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
   }
 
   const job = jobs.find((j) => String(j.id) === String(jobId));
+
+  // Track Job View in Firebase Analytics
+  useEffect(() => {
+    if (job) {
+      trackJobView(job);
+    }
+  }, [job]);
 
   if (!job) {
     return (

@@ -589,6 +589,16 @@
 .hero-content {
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hero-left-col {
+  flex: 1 1 300px;
+  min-width: 280px;
 }
 
 .hero-title {
@@ -663,6 +673,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .hero-stats-btn::before {
@@ -933,6 +944,75 @@
 .filter-search-clear:hover {
   background: var(--gray-200);
   color: var(--gray-700);
+}
+
+/* Smart Full-text & Fuzzy Search Typo Notice Banner */
+.search-typo-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.95), rgba(240, 249, 255, 0.95));
+  border: 1px solid rgba(199, 210, 254, 0.8);
+  border-radius: var(--radius-md, 10px);
+  padding: 8px 14px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #3730a3;
+  animation: fadeIn 0.25s ease-out;
+}
+
+[data-theme="dark"] .search-typo-notice {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #c7d2fe;
+}
+
+.search-typo-icon {
+  font-size: 0.95rem;
+}
+
+.search-typo-text {
+  font-weight: 500;
+}
+
+.search-typo-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.search-typo-badge {
+  background: #ffffff;
+  border: 1px solid #c7d2fe;
+  color: #4338ca;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(67, 56, 202, 0.08);
+}
+
+[data-theme="dark"] .search-typo-badge {
+  background: #1e1b4b;
+  border-color: #6366f1;
+  color: #a5b4fc;
+}
+
+.search-typo-badge:hover {
+  background: #4338ca;
+  color: #ffffff;
+  border-color: #4338ca;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .search-typo-badge:hover {
+  background: #4f46e5;
+  color: #ffffff;
+  border-color: #4f46e5;
 }
 
 /* Selects Row */
@@ -2170,6 +2250,20 @@
 /* ===========================
    ADMIN PANEL
    =========================== */
+.admin-fab-group {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-fab-group .admin-fab {
+  position: static;
+}
+
 .admin-fab {
   position: fixed;
   bottom: 32px;
@@ -2189,6 +2283,15 @@
   cursor: pointer;
   transition: all var(--transition-normal);
   font-family: var(--font-sans);
+}
+
+.admin-fab.analytics {
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.45);
+}
+
+.admin-fab.analytics:hover {
+  box-shadow: 0 10px 32px rgba(99, 102, 241, 0.55);
 }
 
 .admin-fab:hover {
@@ -2631,20 +2734,59 @@
     padding: 36px 0 30px;
   }
 
+  .hero-content {
+    gap: 20px;
+  }
+
+  .hero-left-col {
+    min-width: 0 !important;
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
   .hero-title {
     font-size: 1.5rem;
   }
 
   .hero-subtitle {
     font-size: 0.92rem;
+    margin-bottom: 20px;
+  }
+
+  .hero-stats-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    width: 100%;
   }
 
   .hero-stats {
-    gap: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 28px;
+    width: 100%;
   }
 
   .hero-stat-number {
     font-size: 1.4rem;
+  }
+
+  .hero-stats-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 10px 16px 10px 12px;
+    box-sizing: border-box;
+  }
+
+  .hero-stats-btn-text {
+    flex: 1;
+  }
+
+  .hero-stats-btn-arrow {
+    margin-left: auto;
+    font-size: 1.25rem;
   }
 
 
@@ -2927,19 +3069,47 @@
 
   .hero-subtitle {
     font-size: 0.85rem;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
-  .hero-stats {
+  .hero-stats-wrapper {
     gap: 12px;
   }
 
+  .hero-stats {
+    gap: 20px;
+  }
+
   .hero-stat-number {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
   }
 
   .hero-stat-label {
     font-size: 0.75rem;
+  }
+
+  .hero-stats-btn {
+    padding: 9px 14px 9px 10px;
+    border-radius: var(--radius-lg);
+  }
+
+  .hero-stats-btn-icon-wrap {
+    width: 36px;
+    height: 36px;
+    font-size: 1.05rem;
+  }
+
+  .hero-stats-btn-main {
+    font-size: 0.88rem;
+  }
+
+  .hero-stats-btn-sub {
+    font-size: 0.7rem;
+  }
+
+  .hero-stats-btn-arrow {
+    margin-left: auto;
+    font-size: 1.15rem;
   }
 
 

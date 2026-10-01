@@ -14,6 +14,7 @@ import JobPrintSummaryModal from "./JobPrintSummaryModal.jsx";
 import AddToCalendarModal from "./AddToCalendarModal.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
 import ShareModal from "./ShareModal.jsx";
+import { trackJobView, trackJobApply, trackDocView } from "../services/analyticsService.js";
 
 export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit, onToast }) {
   const [isCopied, setIsCopied] = useState(false);
@@ -78,7 +79,14 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
     };
   }, [isPdfFullscreen]);
 
-  // Guard clause: must be before any job property access
+  // Track Job View in Firebase Analytics & in-app metrics
+  useEffect(() => {
+    if (job?.id) {
+      trackJobView(job);
+    }
+  }, [job?.id]);
+
+  // Guard clause: must be after hooks
   if (!job) return null;
 
   const handleDownloadBanner = async (ratio = "4:5") => {
@@ -654,14 +662,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                     className="btn-copy-email-action"
                     title={`คัดลอกอีเมล ${detectedEmail}`}
                   >
-                    {isEmailCopied ? "✅ คัดลอกแล้ว" : "📋 คัดลอกอีเมล"}
+                    {isEmailCopied ? "คัดลอกแล้ว" : "คัดลอกอีเมล"}
                   </button>
-                  <a
-                    href={`mailto:${detectedEmail}?subject=${encodeURIComponent(emailSubject)}`}
-                    className="btn-send-email-action"
-                  >
-                    ✉️ ส่งเมลสมัครทันที
-                  </a>
                 </div>
               </div>
             )}
@@ -698,6 +700,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 setIsPdfLoading(true);
                 setUseGoogleDocsViewer(true);
                 setShowPdf(true);
+                trackDocView(job, selectedPdfIndex);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
               className="btn btn-outline modal-btn-action"
@@ -735,6 +738,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             job.applyUrl ? (
               <a
                 href={job.applyUrl}
+                onClick={() => trackJobApply(job)}
                 target={job.applyUrl.startsWith("mailto:") ? undefined : "_blank"}
                 rel="noopener noreferrer"
                 className="btn modal-btn-action"
@@ -748,49 +752,21 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               </button>
             )
           ) : effectiveApplyUrl ? (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-              <a
-                href={effectiveApplyUrl}
-                target={isEmail ? undefined : "_blank"}
-                rel="noopener noreferrer"
-                className="btn btn-primary modal-btn-action"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: isEmail ? "linear-gradient(135deg, #0284c7, #0369a1)" : undefined
-                }}
-              >
-                {isEmail ? "📧 ส่งใบสมัครทางอีเมล" : "สมัครออนไลน์ →"}
-              </a>
-              {isEmail && detectedEmail && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(detectedEmail);
-                    setIsEmailCopied(true);
-                    setTimeout(() => setIsEmailCopied(false), 2200);
-                  }}
-                  className="btn"
-                  style={{
-                    background: "var(--navy-50)",
-                    border: "1px solid var(--navy-200)",
-                    color: isEmailCopied ? "var(--accent)" : "var(--navy-700)",
-                    fontSize: "0.82rem",
-                    padding: "8px 12px",
-                    borderRadius: "var(--radius-md)",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    transition: "all 0.2s"
-                  }}
-                  title={`คัดลอกอีเมล ${detectedEmail}`}
-                >
-                  {isEmailCopied ? "✅ คัดลอกแล้ว" : `📋 คัดลอกอีเมล`}
-                </button>
-              )}
-            </div>
+            <a
+              href={effectiveApplyUrl}
+              onClick={() => trackJobApply(job)}
+              target={isEmail ? undefined : "_blank"}
+              rel="noopener noreferrer"
+              className="btn btn-primary modal-btn-action"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                background: isEmail ? "linear-gradient(135deg, #0284c7, #0369a1)" : undefined
+              }}
+            >
+              {isEmail ? "ส่งใบสมัครทางอีเมล" : "สมัครออนไลน์ →"}
+            </a>
           ) : (
             <button
               className="btn modal-btn-action"
@@ -875,22 +851,6 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
           {/* Right: Action tools */}
           <div className="doc-viewer-right">
-            {/* Open Direct in New Tab */}
-            <a
-              href={currentPdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="doc-tool-btn"
-              style={{ textDecoration: "none" }}
-              title="เปิดไฟล์ PDF ในแท็บใหม่ของเบราว์เซอร์โดยตรง (แนะนำหากหน้าจอขาว)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
-              <span className="btn-label">เปิดแท็บใหม่ ↗</span>
-            </a>
 
             {/* Toggle Fullscreen Theater Mode */}
             <button
@@ -960,16 +920,6 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             >
               🔄 {useGoogleDocsViewer ? "สลับเป็นมุมมองตรง (Direct PDF)" : "เปิดผ่าน Google Viewer"}
             </button>
-            <span style={{ opacity: 0.4 }}>|</span>
-            <a
-              href={currentPdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-link"
-              title="เปิดไฟล์ PDF ในแท็บใหม่ของเบราว์เซอร์โดยตรง"
-            >
-              ↗ เปิดแท็บใหม่
-            </a>
           </div>
         </div>
 

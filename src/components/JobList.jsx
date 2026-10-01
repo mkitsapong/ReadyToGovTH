@@ -9,6 +9,8 @@ import { regions } from "../data/provinces.js";
 import { getProvinces, getTotalJobPositions, daysLeft } from "../utils/helpers.js";
 import { JobCardSkeleton } from "./LoadingSkeleton.jsx";
 import { isFirebaseConfigured } from "../firebase.js";
+import { searchJobsLocal, getSearchEngineType } from "../services/searchService.js";
+import { trackSearchQuery } from "../services/analyticsService.js";
 
 const CATEGORY_FILTER = {
   home: null,
@@ -64,6 +66,15 @@ export default function JobList({
   onToast,
 }) {
   const [searchQuery, setSearchQuery] = useState(() => safeGetSession("searchQuery", ""));
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 120);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   const [sortBy, setSortBy] = useState(() => safeGetSession("sortBy", "deadline"));
   const [currentPage, setCurrentPage] = useState(() => {
     const saved = safeGetSession("currentPage");
@@ -155,7 +166,7 @@ export default function JobList({
   const categoryFilter = CATEGORY_FILTER[activePage];
   const hero = PAGE_HERO_MAP[activePage] || PAGE_HERO_MAP.home;
 
-  const filtered = useMemo(() => {
+  const searchData = useMemo(() => {
     let result = [...jobs];
 
     // Category filter
@@ -203,103 +214,53 @@ export default function JobList({
       }
     }
 
-    // Deep filter for Education and Search Query
-    if (userEducation || searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      
-      result = result.reduce((acc, j) => {
-        // Check if the agency/department itself matches the query or if provinces match
-        const agencyMatchesQuery = q && (
-          j.department.toLowerCase().includes(q) || 
-          getProvinces(j).some((p) => p.toLowerCase().includes(q))
-        );
-
-        // Filter positions and their units based on education and search query
-        const filteredPositions = [];
-        let hasAnyEduMatch = false; // To track if this job passes the userEducation filter
-
-        for (const p of (j.positionList || [])) {
-          // 1. Check if this position matches userEducation (for the Job-level filter)
-          const pEdus = Array.isArray(p.education) ? p.education : (p.education ? [p.education] : []);
-          let pMatchesEdu = !userEducation || pEdus.includes("ไม่จำกัดวุฒิ") || pEdus.includes(userEducation);
-
-          if (p.units && p.units.length > 0) {
-            const anyUnitMatches = p.units.some(u => {
-              const uEdus = Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []);
-              return !userEducation || uEdus.includes("ไม่จำกัดวุฒิ") || uEdus.includes(userEducation);
-            });
-            pMatchesEdu = anyUnitMatches;
-          }
-          if (pMatchesEdu) hasAnyEduMatch = true;
-
-          // If there is NO search query, we keep ALL positions intact!
-          // We DO NOT filter out positions or units that failed the education check.
-          // This allows JobCard to render them with a red dot.
-          if (!q) {
-            filteredPositions.push(p);
-            continue;
-          }
-
-          // 2. Query check: If there IS a search query, we deep-filter positions/units
-          const titleMatches = p.title && p.title.toLowerCase().includes(q);
-          const finalUnits = p.units || [];
-          
-          let queryMatchedUnits = [];
-          if (finalUnits.length > 0) {
-            queryMatchedUnits = finalUnits.filter(u => 
-              (u.name && u.name.toLowerCase().includes(q)) ||
-              (u.major && u.major.toLowerCase().includes(q)) ||
-              (u.details && u.details.toLowerCase().includes(q))
-            );
-          }
-
-          if (queryMatchedUnits.length > 0) {
-            // Specific units matched the query -> keep only those units
-            const newCount = queryMatchedUnits.reduce((s, u) => s + (Number(u.count) || 1), 0);
-            filteredPositions.push({ ...p, units: queryMatchedUnits, count: newCount });
-          } else if (titleMatches || agencyMatchesQuery) {
-            // No specific units matched, but the position title or agency matched -> keep all units
-            filteredPositions.push(p);
-          }
-        }
-
-        // Job is kept if it passes the education check AND has any matching positions left (or edge case match)
-        const passesEdu = !userEducation || hasAnyEduMatch;
-        const hasPositionsLeft = filteredPositions && filteredPositions.length > 0;
-        const edgeCaseAgencyMatch = agencyMatchesQuery && (!j.positionList || j.positionList.length === 0);
-
-        if (passesEdu && (hasPositionsLeft || edgeCaseAgencyMatch)) {
-          acc.push({ ...j, positionList: filteredPositions });
-        }
-
-
-        return acc;
-      }, []);
-    }
+    // Smart Full-text & Fuzzy Search (Thai tokenization + Typo tolerance + Gov Synonyms)
+    const searchRes = searchJobsLocal(result, debouncedSearchQuery, { userEducation });
+    let finalJobs = [...searchRes.results];
 
     // Sort
-    if (sortBy === "newest") {
-      result.sort((a, b) => {
+    if (debouncedSearchQuery.trim() && sortBy === "relevance") {
+      finalJobs.sort((a, b) => (b._searchScore || 0) - (a._searchScore || 0));
+    } else if (sortBy === "newest") {
+      finalJobs.sort((a, b) => {
         const timeA = a.postedDate ? new Date(a.postedDate).getTime() : 0;
         const timeB = b.postedDate ? new Date(b.postedDate).getTime() : 0;
         return (isNaN(timeB) ? 0 : timeB) - (isNaN(timeA) ? 0 : timeA);
       });
     } else if (sortBy === "deadline") {
-      result.sort((a, b) => {
+      finalJobs.sort((a, b) => {
         const timeA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
         const timeB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
         return (isNaN(timeA) ? Infinity : timeA) - (isNaN(timeB) ? Infinity : timeB);
       });
     } else if (sortBy === "positions") {
-      result.sort((a, b) => {
+      finalJobs.sort((a, b) => {
         const countA = getTotalJobPositions(a);
         const countB = getTotalJobPositions(b);
         return countB - countA;
       });
+    } else if (debouncedSearchQuery.trim()) {
+      // Default to relevance ranking when search query is active
+      finalJobs.sort((a, b) => (b._searchScore || 0) - (a._searchScore || 0));
     }
 
-    return result;
-  }, [jobs, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, isBookmarked, filterNoOCSC, filterOCSC]);
+    return {
+      jobs: finalJobs,
+      hasTypoCorrection: searchRes.hasTypoCorrection,
+      suggestions: searchRes.suggestions,
+    };
+  }, [jobs, categoryFilter, selectedProvince, userEducation, debouncedSearchQuery, sortBy, showBookmarksOnly, showExpired, isBookmarked, filterNoOCSC, filterOCSC]);
+
+  const filtered = searchData.jobs;
+  const hasTypoCorrection = searchData.hasTypoCorrection;
+  const typoSuggestions = searchData.suggestions;
+
+  // Track search queries for Firebase Analytics & Admin Dashboard
+  useEffect(() => {
+    if (debouncedSearchQuery && debouncedSearchQuery.trim().length >= 2) {
+      trackSearchQuery(debouncedSearchQuery.trim(), filtered.length);
+    }
+  }, [debouncedSearchQuery, filtered.length]);
 
   // Stats
   const totalPositions = filtered.reduce(
@@ -339,9 +300,9 @@ export default function JobList({
     <>
       {/* Hero */}
       <section className="page-hero">
-        <div className="container hero-content" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32, flexWrap: "wrap" }}>
+        <div className="container hero-content">
           {/* Left Column: Title & Stats */}
-          <div style={{ flex: "1 1 300px", minWidth: "280px" }}>
+          <div className="hero-left-col">
             <h1 className="hero-title">
               <span>{hero.title}</span>
             </h1>
@@ -462,7 +423,7 @@ export default function JobList({
                 <input
                   id="job-search-input"
                   type="text"
-                  placeholder="ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด..."
+                  placeholder="ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด... (รองรับคำพิมพ์ผิด/คำเหมือน)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="filter-search-input"
@@ -555,13 +516,37 @@ export default function JobList({
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                   >
-                    <option value="newest">⚡ ล่าสุดก่อน</option>
+                    {searchQuery.trim() && (
+                      <option value="relevance">🎯 ตรงที่สุดก่อน (Relevance)</option>
+                    )}
                     <option value="deadline">⏳ ใกล้ปิดรับก่อน</option>
+                    <option value="newest">⚡ ล่าสุดก่อน</option>
                     <option value="positions">👥 อัตราว่างมากก่อน</option>
                   </select>
                 </div>
               </div>
             </div>
+
+            {/* Typo Correction / Fuzzy Suggestion Banner */}
+            {hasTypoCorrection && typoSuggestions.length > 0 && searchQuery.trim() && (
+              <div className="search-typo-notice">
+                <span className="search-typo-icon">💡</span>
+                <span className="search-typo-text">ผลการค้นหาใกล้เคียง (Fuzzy Match):</span>
+                <div className="search-typo-badges">
+                  {typoSuggestions.map((sug, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setSearchQuery(sug)}
+                      className="search-typo-badge"
+                      title={`คลิกเพื่อเปลี่ยนคำค้นหาเป็น "${sug}"`}
+                    >
+                      "{sug}"
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Quick Filter Chips & Count Row */}
             <div className="filter-chips-row">
@@ -681,7 +666,7 @@ export default function JobList({
               <>
                 {currentJobs.map((job, i) => (
                   <JobCard
-                    key={job.id}
+                    key={job.id ? `${job.id}-${i}` : i}
                     job={job}
                     style={{ animationDelay: `${i * 0.05}s` }}
                     isAdmin={isAdmin}
