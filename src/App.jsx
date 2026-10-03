@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense, createContext, useContext } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Routes, Route, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import * as authService from "./services/authService.js";
 import "./index.css";
 import "./App.css";
@@ -68,9 +68,22 @@ function getActivePage(pathname) {
   return "home";
 }
 
+// ─── App Context (avoids prop drilling through MainContent) ─────────────────
+export const AppContext = createContext(null);
+
 // ─── Main Content Wrapper ───────────────────────────────────────────────────
-// This component handles the URL params/search and passes them to JobList
-function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, isBooksError, isAdmin, handleEditJob, userEducation, setUserEducation, handleAddBook, handleUpdateBook, handleDeleteBook, onSelectProvince, onToast }) {
+// Reads shared data from AppContext instead of receiving 15+ props
+function MainContent() {
+  const {
+    jobs, books,
+    isJobsLoading, isBooksLoading,
+    isJobsError, isBooksError,
+    isAdmin, handleEditJob,
+    userEducation, setUserEducation,
+    handleAddBook, handleUpdateBook, handleDeleteBook,
+    handleSelectProvince,
+    addToast,
+  } = useContext(AppContext);
   const location = useLocation();
   const [searchParams] = useSearchParams();
   
@@ -79,6 +92,9 @@ function MainContent({ jobs, books, isJobsLoading, isBooksLoading, isJobsError, 
 
   // Parse selectedProvince from query string (?province=xxx)
   const selectedProvince = searchParams.get("province");
+
+  const onSelectProvince = handleSelectProvince;
+  const onToast = addToast;
 
   // Dynamic SEO based on page and province
   const pageTitles = {
@@ -216,7 +232,7 @@ export default function App() {
     mutationFn: api.deleteBook,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["books"] });
-      addToast("ลบรายการหนังสือเรียบร้อยแล้ว", "error");
+      addToast("ลบรายการหนังสือเรียบร้อยแล้ว", "success");
     },
     onError: (err) => {
       console.error("deleteBook failed:", err);
@@ -327,7 +343,17 @@ export default function App() {
   const isAdmin = user?.role === "admin";
 
   return (
-    <>
+    <AppContext.Provider value={{
+      jobs, books,
+      isJobsLoading, isBooksLoading,
+      isJobsError, isBooksError,
+      isAdmin,
+      handleEditJob,
+      userEducation, setUserEducation,
+      handleAddBook, handleUpdateBook, handleDeleteBook,
+      handleSelectProvince,
+      addToast,
+    }}>
       {/* Header */}
       <Header
         activePage={activePage}
@@ -340,29 +366,12 @@ export default function App() {
       <main>
         <Suspense fallback={<PageLoadingFallback />}>
           <Routes>
-            <Route path="/" element={<MainContent
-              jobs={jobs} books={books}
-              isJobsLoading={isJobsLoading} isBooksLoading={isBooksLoading}
-              isJobsError={isJobsError} isBooksError={isBooksError}
-              isAdmin={isAdmin} handleEditJob={handleEditJob}
-              userEducation={userEducation} setUserEducation={setUserEducation}
-              handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
-              onSelectProvince={handleSelectProvince}
-              onToast={addToast}
-            />} />
-            <Route path="/category/:categoryId" element={<MainContent
-              jobs={jobs} books={books}
-              isJobsLoading={isJobsLoading} isBooksLoading={isBooksLoading}
-              isJobsError={isJobsError} isBooksError={isBooksError}
-              isAdmin={isAdmin} handleEditJob={handleEditJob}
-              userEducation={userEducation} setUserEducation={setUserEducation}
-              handleAddBook={handleAddBook} handleUpdateBook={handleUpdateBook} handleDeleteBook={handleDeleteBook}
-              onSelectProvince={handleSelectProvince}
-              onToast={addToast}
-            />} />
+            <Route path="/" element={<MainContent />} />
+            <Route path="/category/:categoryId" element={<MainContent />} />
             <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} onToast={addToast} />} />
             <Route path="/stats" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} isAdmin={isAdmin} onOpenAnalytics={() => setShowAnalytics(true)} />} />
-            <Route path="/dashboard" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} isAdmin={isAdmin} onOpenAnalytics={() => setShowAnalytics(true)} />} />
+            {/* /dashboard is an alias — redirect to canonical /stats */}
+            <Route path="/dashboard" element={<Navigate to="/stats" replace />} />
             <Route path="/admin/analytics" element={
               <AdminAnalyticsDashboard
                 jobs={jobs}
@@ -448,6 +457,6 @@ export default function App() {
 
       {/* PWA Offline & Install Indicator */}
       <OfflineIndicator />
-    </>
+    </AppContext.Provider>
   );
 }

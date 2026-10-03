@@ -35,31 +35,47 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // ─── Analytics Validation Helpers ───────────────────────────────────────
+    // Prevents data injection: caps document field count and string lengths.
+    function isValidAnalyticsWrite() {
+      let d = request.resource.data;
+      return d.size() <= 30
+          && (d.keys().hasAny(['date', 'views', 'count', 'query', 'jobId', 'timestamp']));
+    }
+
+    // Guards string fields from being excessively long (spam prevention).
+    function isValidSearchWrite() {
+      let d = request.resource.data;
+      return d.size() <= 15
+          && d.keys().hasAny(['query', 'count', 'timestamp'])
+          && (!('query' in d) || (d.query is string && d.query.size() <= 200));
+    }
+
     // Analytics: Daily statistics (public create/update for live counter increments)
     match /analytics_daily/{dateId} {
       allow read: if true;
-      allow create, update: if true;
+      allow create, update: if isValidAnalyticsWrite();
       allow delete: if isAdmin();
     }
 
     // Analytics: Job views & engagement counters
     match /analytics_jobs/{jobId} {
       allow read: if true;
-      allow create, update: if true;
+      allow create, update: if isValidAnalyticsWrite();
       allow delete: if isAdmin();
     }
 
     // Analytics: Real user search keywords
     match /analytics_searches/{searchId} {
       allow read: if true;
-      allow create, update: if true;
+      allow create, update: if isValidSearchWrite();
       allow delete: if isAdmin();
     }
 
     // Analytics: Overall aggregated summary counters
     match /analytics_summary/{docId} {
       allow read: if true;
-      allow create, update: if true;
+      allow create, update: if isValidAnalyticsWrite();
       allow delete: if isAdmin();
     }
 

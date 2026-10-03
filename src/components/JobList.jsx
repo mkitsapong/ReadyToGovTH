@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import JobCard from "./JobCard.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
 import ShareModal from "./ShareModal.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
 import { getProvinces, getTotalJobPositions, daysLeft } from "../utils/helpers.js";
@@ -65,7 +66,33 @@ export default function JobList({
   onSelectProvince,
   onToast,
 }) {
-  const [searchQuery, setSearchQuery] = useState(() => safeGetSession("searchQuery", ""));
+  const [urlParams, setUrlParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // ── Shareable Filter URL helpers ─────────────────────────────────────────
+  // Read initial values from URL if present, fallback to session/default
+  function getParam(key, fallback = "") {
+    const v = urlParams.get(key);
+    return v !== null ? v : fallback;
+  }
+
+  // Sync a single filter key into the URL (keeps other params intact)
+  function setFilterParam(key, value, defaultValue = "") {
+    setUrlParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (value === defaultValue || value === null || value === false) {
+        next.delete(key);
+      } else {
+        next.set(key, String(value));
+      }
+      return next;
+    }, { replace: true });
+  }
+
+  const [searchQuery, setSearchQuery] = useState(() => {
+    const fromUrl = urlParams.get("q");
+    return fromUrl !== null ? fromUrl : safeGetSession("searchQuery", "");
+  });
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
   useEffect(() => {
@@ -75,20 +102,32 @@ export default function JobList({
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  const [sortBy, setSortBy] = useState(() => safeGetSession("sortBy", "deadline"));
+  const [sortBy, setSortBy] = useState(() => {
+    return getParam("sort", safeGetSession("sortBy", "deadline"));
+  });
   const [currentPage, setCurrentPage] = useState(() => {
     const saved = safeGetSession("currentPage");
     return saved ? parseInt(saved, 10) : 1;
   });
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(() => safeGetSession("showBookmarksOnly") === "true");
-  const [showExpired, setShowExpired] = useState(() => safeGetSession("showExpired") === "true");
-  const [filterNoOCSC, setFilterNoOCSC] = useState(() => safeGetSession("filterNoOCSC") === "true");
-  const [filterOCSC, setFilterOCSC] = useState(() => safeGetSession("filterOCSC") === "true");
+  const [showExpired, setShowExpired] = useState(() => {
+    const fromUrl = urlParams.get("expired");
+    return fromUrl !== null ? fromUrl === "1" : safeGetSession("showExpired") === "true";
+  });
+  const [filterNoOCSC, setFilterNoOCSC] = useState(() => {
+    const fromUrl = urlParams.get("noocsc");
+    return fromUrl !== null ? fromUrl === "1" : safeGetSession("filterNoOCSC") === "true";
+  });
+  const [filterOCSC, setFilterOCSC] = useState(() => {
+    const fromUrl = urlParams.get("ocsc");
+    return fromUrl !== null ? fromUrl === "1" : safeGetSession("filterOCSC") === "true";
+  });
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
   const [posterJob, setPosterJob] = useState(null);
   const [shareJob, setShareJob] = useState(null);
 
+  // ── Sync filters → URL + sessionStorage ─────────────────────────────────
   useEffect(() => {
     safeSetSession("searchQuery", searchQuery);
     safeSetSession("sortBy", sortBy);
@@ -97,7 +136,21 @@ export default function JobList({
     safeSetSession("showExpired", showExpired);
     safeSetSession("filterNoOCSC", filterNoOCSC);
     safeSetSession("filterOCSC", filterOCSC);
-  }, [searchQuery, sortBy, currentPage, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]);
+    // Sync shareable params into URL
+    setUrlParams(prev => {
+      const next = new URLSearchParams(prev);
+      // keep ?province= intact
+      searchQuery ? next.set("q", searchQuery) : next.delete("q");
+      sortBy !== "deadline" ? next.set("sort", sortBy) : next.delete("sort");
+      showExpired ? next.set("expired", "1") : next.delete("expired");
+      filterNoOCSC ? next.set("noocsc", "1") : next.delete("noocsc");
+      filterOCSC ? next.set("ocsc", "1") : next.delete("ocsc");
+      return next;
+    }, { replace: true });
+  }, [searchQuery, sortBy, currentPage, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Keyboard Shortcuts ─────────────────────────────────────────────────
+  useKeyboardShortcuts({ searchInputId: "job-search-input" });
   
   const { bookmarks = [], toggleBookmark, isBookmarked } = useBookmarks();
 
@@ -135,11 +188,10 @@ export default function JobList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobs]);
   const regionDropdownRef = useRef(null);
-  const PAGE_SIZE_OPTIONS = [12, 24, 48];
   const [itemsPerPage, setItemsPerPage] = useState(() => {
     const saved = safeGetSession("itemsPerPage");
     const parsed = saved ? parseInt(saved, 10) : 12;
-    return PAGE_SIZE_OPTIONS.includes(parsed) ? parsed : 12;
+    return parsed > 0 ? parsed : 12;
   });
 
   useEffect(() => {
@@ -438,12 +490,16 @@ export default function JobList({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="filter-search-input"
                 />
+                {/* Keyboard shortcut hint — desktop only */}
+                {!searchQuery && (
+                  <kbd className="search-kbd-hint" title="กด / เพื่อค้นหา">/</kbd>
+                )}
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
                     className="filter-search-clear"
-                    title="ล้างคำค้นหา"
+                    title="ล้างคำค้นหา (Esc)"
                   >
                     ✕
                   </button>
@@ -715,6 +771,13 @@ export default function JobList({
                       const next = Math.min(prev + 12, filtered.length);
                       return next;
                     });
+                    // Scroll to top of jobs section so user sees new items
+                    setTimeout(() => {
+                      const jobsEl = document.querySelector('.jobs-section');
+                      if (jobsEl) {
+                        window.scrollTo({ top: jobsEl.offsetTop - 140, behavior: 'smooth' });
+                      }
+                    }, 50);
                   }}
                 >
                   ดูเพิ่มอีก {Math.min(12, filtered.length - currentPage * itemsPerPage)} รายการ ↓
@@ -767,24 +830,6 @@ export default function JobList({
                 >
                   ถัดไป
                 </button>
-              </div>
-
-              {/* Per-page Size Selector */}
-              <div className="pagination-per-page">
-                <span className="pagination-per-page-label">แสดงหน้าละ</span>
-                {PAGE_SIZE_OPTIONS.map(size => (
-                  <button
-                    key={size}
-                    className={`pagination-size-btn ${itemsPerPage === size ? "active" : ""}`}
-                    onClick={() => {
-                      setItemsPerPage(size);
-                      setCurrentPage(1);
-                    }}
-                  >
-                    {size}
-                  </button>
-                ))}
-                <span className="pagination-per-page-label">รายการ</span>
               </div>
             </div>
           )}

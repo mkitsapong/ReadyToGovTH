@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import { Link } from "react-router-dom";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { ModalExamPrepSection } from "./ExamResources.jsx";
@@ -35,6 +35,41 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showPosterModal, setShowPosterModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  
+  // Auto-switch: 'cards' on small screens (< 768px), 'table' on desktop/tablet
+  const [posViewMode, setPosViewMode] = useState(() => {
+    return typeof window !== "undefined" && window.innerWidth < 768 ? "cards" : "table";
+  });
+  const userSelectedModeRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(max-width: 767px)");
+    const handleScreenChange = (e) => {
+      // Auto-switch only if user hasn't manually clicked a preference in this session
+      if (!userSelectedModeRef.current) {
+        setPosViewMode(e.matches ? "cards" : "table");
+      }
+    };
+    if (mql.addEventListener) {
+      mql.addEventListener("change", handleScreenChange);
+      return () => mql.removeEventListener("change", handleScreenChange);
+    }
+  }, []);
+
+  const handleSelectViewMode = (mode) => {
+    userSelectedModeRef.current = true;
+    setPosViewMode(mode);
+  };
+
+  const [expandedRows, setExpandedRows] = useState({});
+
+  const toggleRowExpanded = (idx) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [idx]: !prev[idx]
+    }));
+  };
 
   const handleQuickCalendarClick = (e) => {
     e.stopPropagation();
@@ -234,17 +269,40 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
         <div className="detail-header-glow detail-glow-tr" />
         <div className="detail-header-glow detail-glow-bl" />
 
-        {/* Modal Close Button (Top-Right) */}
-        {!inline && (
+        {/* Top-Right Floating Controls (Bookmark + Close) */}
+        <div className="detail-header-top-actions">
           <button
             type="button"
-            className="btn-header-close"
-            onClick={onClose}
-            aria-label="ปิด"
+            id={`btn-modal-bookmark-${job.id}`}
+            onClick={() => {
+              const isNowBookmarked = toggleBookmark(job.id, job);
+              if (onToast) {
+                onToast(
+                  isNowBookmarked
+                    ? `บันทึกงาน "${job.department}" แล้ว ❤️`
+                    : `ยกเลิกการบันทึก "${job.department}" แล้ว`,
+                  isNowBookmarked ? "success" : "info"
+                );
+              }
+            }}
+            title={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+            aria-label={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+            className={`btn-floating-bookmark ${bookmarked ? "bookmarked" : ""}`}
           >
-            ✕
+            {bookmarked ? "❤️" : "🤍"}
           </button>
-        )}
+
+          {!inline && (
+            <button
+              type="button"
+              className="btn-header-close"
+              onClick={onClose}
+              aria-label="ปิด"
+            >
+              ✕
+            </button>
+          )}
+        </div>
 
         <div className="detail-header-inner">
           {/* Main Identity Logo */}
@@ -354,27 +412,6 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 className="btn-header-action btn-header-glass"
               >
                 🔗 แชร์
-              </button>
-
-              <button
-                type="button"
-                id={`btn-modal-bookmark-${job.id}`}
-                onClick={() => {
-                  const isNowBookmarked = toggleBookmark(job.id, job);
-                  if (onToast) {
-                    onToast(
-                      isNowBookmarked
-                        ? `บันทึกงาน "${job.department}" แล้ว ❤️`
-                        : `ยกเลิกการบันทึก "${job.department}" แล้ว`,
-                      isNowBookmarked ? "success" : "info"
-                    );
-                  }
-                }}
-                title={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
-                aria-label={bookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
-                className={`btn-header-bookmark ${bookmarked ? "bookmarked" : ""}`}
-              >
-                {bookmarked ? "❤️" : "🤍"}
               </button>
             </div>
           </div>
@@ -488,141 +525,383 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       {/* ── 3. Body Content ── */}
       <div className="modal-body detail-modal-body">
 
-        {/* ── Position Section Header ── */}
-        <div className="detail-section-header">
-          <div className="detail-section-title-wrap">
-            <span className="detail-section-icon">📋</span>
-            <h2 className="detail-section-title">ตำแหน่งที่เปิดรับสมัคร</h2>
-            <span className="detail-section-count-badge">({job.positionList?.length || 1} ตำแหน่ง)</span>
-          </div>
-          <div className="detail-section-total-pill">
-            รวม {totalCount} อัตรา
-          </div>
-        </div>
+        {/* ── Position Section Header with View Toggle ── */}
+        {(() => {
+          const rawPositions = job.positionList && job.positionList.length > 0
+            ? job.positionList
+            : [{
+                title: job.title || "ไม่ระบุตำแหน่ง",
+                count: job.count || 1,
+                salary: job.salary,
+                education: job.education,
+                details: job.details || job.description
+              }];
+          const allExpanded = rawPositions.length > 0 && rawPositions.every((_, i) => expandedRows[i]);
+          const toggleAllRows = () => {
+            if (allExpanded) {
+              setExpandedRows({});
+            } else {
+              const all = {};
+              rawPositions.forEach((_, i) => { all[i] = true; });
+              setExpandedRows(all);
+            }
+          };
 
-        {/* ── Position Cards ── */}
-        <div className="detail-position-list">
-          {job.positionList?.map((pos, i) => {
-            const posEdus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
-            if (pos.units && pos.units.length > 0) {
-              return (
-                <div key={i} className="detail-pos-card">
-                  {/* Group Header */}
-                  <div className="detail-pos-header">
-                    <span className="detail-pos-index">{i + 1}</span>
-                    <div className="detail-pos-title">
-                      <span className="pos-folder-icon">📁</span>
-                      {pos.title}
-                    </div>
-                    {pos.salary && (
-                      <span className="detail-pos-header-salary">
-                        💰 {pos.salary}
-                      </span>
+          return (
+            <>
+              <div className="detail-section-header">
+                <div className="detail-section-title-wrap">
+                  <span className="detail-section-icon">📋</span>
+                  <h2 className="detail-section-title">ตำแหน่งที่เปิดรับสมัคร</h2>
+                  <span className="detail-section-count-badge">({rawPositions.length} ตำแหน่ง)</span>
+                </div>
+
+                <div className="detail-section-actions">
+                  {/* View Mode Toggle: Table (default) vs Cards */}
+                  <div className="detail-view-toggle" role="group" aria-label="สลับมุมมองตำแหน่ง">
+                    <button
+                      type="button"
+                      className={`view-toggle-btn ${posViewMode === "table" ? "active" : ""}`}
+                      onClick={() => handleSelectViewMode("table")}
+                      title="มุมมองแบบตาราง (กะทัดรัด ประหยัดพื้นที่)"
+                    >
+                      <span className="view-toggle-icon">📋</span>
+                      <span className="view-toggle-text">ตาราง</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`view-toggle-btn ${posViewMode === "cards" ? "active" : ""}`}
+                      onClick={() => handleSelectViewMode("cards")}
+                      title="มุมมองแบบการ์ด (เหมาะกับมือถือ)"
+                    >
+                      <span className="view-toggle-icon">🗂️</span>
+                      <span className="view-toggle-text">การ์ด</span>
+                    </button>
+                  </div>
+
+                  <div className="detail-section-total-pill">
+                    รวม {totalCount} อัตรา
+                  </div>
+                </div>
+              </div>
+
+              {/* ── 1. Smart Table View (Default) ── */}
+              {posViewMode === "table" ? (
+                <div className="detail-table-wrapper">
+                  <div className="detail-table-meta-bar">
+                    <span className="detail-table-hint">
+                      💡 คลิกที่แถวหรือปุ่ม <strong>[ดูคุณสมบัติ]</strong> เพื่อดูเงื่อนไขและสาขาวิชา
+                    </span>
+                    {rawPositions.some(p => p.details || (p.units && p.units.length > 0)) && (
+                      <button
+                        type="button"
+                        className="detail-table-expand-all-btn"
+                        onClick={toggleAllRows}
+                      >
+                        {allExpanded ? "▴ ย่อคุณสมบัติทั้งหมด" : "▾ แสดงคุณสมบัติทั้งหมด"}
+                      </button>
                     )}
                   </div>
 
-                  {/* Units Body */}
-                  <div className="detail-units-container">
-                    {pos.units.map((unit, uIdx) => {
-                      const unitEdus = Array.isArray(unit.education) ? unit.education : (unit.education ? [unit.education] : []);
-                      return (
-                        <div key={uIdx} className="detail-unit-row">
-                          <div className="detail-unit-title-bar">
-                            <span className="unit-pin-icon">📍</span>
-                            <span className="unit-name">{unit.name}</span>
-                            <span className="unit-quota-pill">(จำนวน {unit.count} อัตรา)</span>
-                          </div>
-                          <div className="detail-unit-specs">
-                            <div className="unit-edu-row">
-                              <span className="unit-spec-title">🎓 วุฒิที่เปิดรับ:</span>
-                              {unitEdus.map((edu, eIdx) => {
-                                const eduStyle = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
-                                return (
-                                  <span key={eIdx} className="detail-edu-tag" style={{
-                                    background: eduStyle.bg, borderColor: eduStyle.border, color: eduStyle.color
-                                  }}>
-                                    {edu}
+                  <div className="detail-table-scroll">
+                    <table className="detail-smart-table">
+                      <thead>
+                        <tr>
+                          <th className="th-idx">#</th>
+                          <th className="th-title">ตำแหน่ง</th>
+                          <th className="th-quota">จำนวน</th>
+                          <th className="th-salary">เงินเดือน</th>
+                          <th className="th-edu">วุฒิที่เปิดรับ</th>
+                          <th className="th-action">คุณสมบัติเฉพาะ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rawPositions.map((pos, i) => {
+                          const posEdus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
+                          const allUnitEdus = pos.units && pos.units.length > 0
+                            ? Array.from(new Set(pos.units.flatMap(u => Array.isArray(u.education) ? u.education : (u.education ? [u.education] : []))))
+                            : [];
+                          const displayEdus = posEdus.length > 0 ? posEdus : allUnitEdus;
+                          const hasUnits = pos.units && pos.units.length > 0;
+                          const totalUnitQuota = hasUnits ? pos.units.reduce((sum, u) => sum + (parseInt(u.count, 10) || 0), 0) : null;
+                          const quotaText = pos.count ? `${pos.count} อัตรา` : (totalUnitQuota ? `${totalUnitQuota} อัตรา` : "-");
+                          const hasExpandableContent = Boolean(pos.details || hasUnits);
+                          const isExpanded = !!expandedRows[i];
+
+                          return (
+                            <Fragment key={i}>
+                              <tr
+                                className={`detail-table-row ${isExpanded ? "row-expanded" : ""} ${hasExpandableContent ? "clickable-row" : ""}`}
+                                onClick={() => hasExpandableContent && toggleRowExpanded(i)}
+                              >
+                                <td className="td-idx">
+                                  <span className="table-row-idx">{i + 1}</span>
+                                </td>
+                                <td className="td-title">
+                                  <div className="table-pos-title-wrap">
+                                    <span className="table-pos-title">
+                                      {hasUnits && <span className="pos-folder-icon" title="มีหน่วยงานย่อย">📁 </span>}
+                                      {pos.title}
+                                    </span>
+                                    {hasUnits && (
+                                      <span className="table-unit-badge">
+                                        🏢 {pos.units.length} หน่วยงาน
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="td-quota">
+                                  <span className="table-quota-badge">
+                                    🎯 {quotaText}
                                   </span>
-                                );
-                              })}
-                              {unit.major && (
-                                <span className="unit-major-name">{unit.major}</span>
+                                </td>
+                                <td className="td-salary">
+                                  {pos.salary ? (
+                                    <span className="table-salary-text">💰 {pos.salary}</span>
+                                  ) : (
+                                    <span className="table-muted-text">-</span>
+                                  )}
+                                </td>
+                                <td className="td-edu">
+                                  {displayEdus.length > 0 ? (
+                                    <div className="table-edu-tags">
+                                      {displayEdus.map((edu, eIdx) => {
+                                        const style = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+                                        return (
+                                          <span
+                                            key={eIdx}
+                                            className="detail-edu-tag table-edu-tag"
+                                            style={{
+                                              background: style.bg,
+                                              borderColor: style.border,
+                                              color: style.color,
+                                            }}
+                                          >
+                                            {edu}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <span className="table-muted-text">-</span>
+                                  )}
+                                </td>
+                                <td className="td-action" onClick={(e) => e.stopPropagation()}>
+                                  {hasExpandableContent ? (
+                                    <button
+                                      type="button"
+                                      className={`table-expand-btn ${isExpanded ? "active" : ""}`}
+                                      onClick={() => toggleRowExpanded(i)}
+                                    >
+                                      {isExpanded ? "ย่อ ▴" : "ดูคุณสมบัติ ▾"}
+                                    </button>
+                                  ) : (
+                                    <span className="table-muted-text">-</span>
+                                  )}
+                                </td>
+                              </tr>
+
+                              {/* Expandable details drawer */}
+                              {isExpanded && hasExpandableContent && (
+                                <tr className="detail-table-expand-row">
+                                  <td colSpan={6}>
+                                    <div className="table-expand-content animate-slide-down">
+                                      {/* Qualifications Text */}
+                                      {!hasUnits && pos.details && (
+                                        <div className="detail-pos-qualifications table-qualifications-box">
+                                          <div className="qualifications-header">
+                                            <span className="qualifications-icon">📌</span>
+                                            <span>คุณสมบัติเฉพาะสำหรับตำแหน่ง {pos.title}</span>
+                                          </div>
+                                          <div className="qualifications-content">
+                                            {pos.details}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Sub-units if any */}
+                                      {hasUnits && (
+                                        <div className="detail-units-container table-units-container">
+                                          <div className="table-units-header">
+                                            <span>📍 รายชื่อหน่วยงานและลักษณะงาน ({pos.units.length} หน่วยงาน):</span>
+                                          </div>
+                                          {pos.units.map((unit, uIdx) => {
+                                            const unitEdus = Array.isArray(unit.education) ? unit.education : (unit.education ? [unit.education] : []);
+                                            return (
+                                              <div key={uIdx} className="detail-unit-row">
+                                                <div className="detail-unit-title-bar">
+                                                  <span className="unit-pin-icon">📍</span>
+                                                  <span className="unit-name">{unit.name}</span>
+                                                  <span className="unit-quota-pill">(จำนวน {unit.count} อัตรา)</span>
+                                                </div>
+                                                <div className="detail-unit-specs">
+                                                  <div className="unit-edu-row">
+                                                    <span className="unit-spec-title">🎓 วุฒิที่เปิดรับ:</span>
+                                                    {unitEdus.map((edu, eIdx) => {
+                                                      const eduStyle = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+                                                      return (
+                                                        <span key={eIdx} className="detail-edu-tag" style={{
+                                                          background: eduStyle.bg, borderColor: eduStyle.border, color: eduStyle.color
+                                                        }}>
+                                                          {edu}
+                                                        </span>
+                                                      );
+                                                    })}
+                                                    {unit.major && (
+                                                      <span className="unit-major-name">{unit.major}</span>
+                                                    )}
+                                                  </div>
+                                                  {unit.details && (
+                                                    <div className="unit-work-row">
+                                                      <span className="unit-spec-title">⚙️ ลักษณะงาน:</span>
+                                                      <span className="unit-work-text">{unit.details}</span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
                               )}
+                            </Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                /* ── 2. Card View (Legacy) ── */
+                <div className="detail-position-list">
+                  {rawPositions.map((pos, i) => {
+                    const posEdus = Array.isArray(pos.education) ? pos.education : (pos.education ? [pos.education] : []);
+                    if (pos.units && pos.units.length > 0) {
+                      return (
+                        <div key={i} className="detail-pos-card">
+                          {/* Group Header */}
+                          <div className="detail-pos-header">
+                            <span className="detail-pos-index">{i + 1}</span>
+                            <div className="detail-pos-title">
+                              <span className="pos-folder-icon">📁</span>
+                              {pos.title}
                             </div>
-                            {unit.details && (
-                              <div className="unit-work-row">
-                                <span className="unit-spec-title">⚙️ ลักษณะงาน:</span>
-                                <span className="unit-work-text">{unit.details}</span>
-                              </div>
+                            {pos.salary && (
+                              <span className="detail-pos-header-salary">
+                                💰 {pos.salary}
+                              </span>
                             )}
+                          </div>
+
+                          {/* Units Body */}
+                          <div className="detail-units-container">
+                            {pos.units.map((unit, uIdx) => {
+                              const unitEdus = Array.isArray(unit.education) ? unit.education : (unit.education ? [unit.education] : []);
+                              return (
+                                <div key={uIdx} className="detail-unit-row">
+                                  <div className="detail-unit-title-bar">
+                                    <span className="unit-pin-icon">📍</span>
+                                    <span className="unit-name">{unit.name}</span>
+                                    <span className="unit-quota-pill">(จำนวน {unit.count} อัตรา)</span>
+                                  </div>
+                                  <div className="detail-unit-specs">
+                                    <div className="unit-edu-row">
+                                      <span className="unit-spec-title">🎓 วุฒิที่เปิดรับ:</span>
+                                      {unitEdus.map((edu, eIdx) => {
+                                        const eduStyle = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+                                        return (
+                                          <span key={eIdx} className="detail-edu-tag" style={{
+                                            background: eduStyle.bg, borderColor: eduStyle.border, color: eduStyle.color
+                                          }}>
+                                            {edu}
+                                          </span>
+                                        );
+                                      })}
+                                      {unit.major && (
+                                        <span className="unit-major-name">{unit.major}</span>
+                                      )}
+                                    </div>
+                                    {unit.details && (
+                                      <div className="unit-work-row">
+                                        <span className="unit-spec-title">⚙️ ลักษณะงาน:</span>
+                                        <span className="unit-work-text">{unit.details}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       );
-                    })}
-                  </div>
-                </div>
-              );
-            }
+                    }
 
-            return (
-              <div key={i} className="detail-pos-card">
-                {/* Position Header Bar */}
-                <div className="detail-pos-header">
-                  <span className="detail-pos-index">{i + 1}</span>
-                  <div className="detail-pos-title">{pos.title}</div>
-                  {pos.count && (
-                    <span className="detail-pos-quota-pill">
-                      🎯 {pos.count} อัตรา
-                    </span>
-                  )}
-                </div>
+                    return (
+                      <div key={i} className="detail-pos-card">
+                        {/* Position Header Bar */}
+                        <div className="detail-pos-header">
+                          <span className="detail-pos-index">{i + 1}</span>
+                          <div className="detail-pos-title">{pos.title}</div>
+                          {pos.count && (
+                            <span className="detail-pos-quota-pill">
+                              🎯 {pos.count} อัตรา
+                            </span>
+                          )}
+                        </div>
 
-                {/* Position Details Body */}
-                <div className="detail-pos-content">
-                  {/* Salary & Education Specs */}
-                  <div className="detail-pos-specs-bar">
-                    {pos.salary && (
-                      <div className="detail-spec-chip chip-salary">
-                        <span className="spec-label">💰 เงินเดือน:</span>
-                        <span className="spec-value">{pos.salary}</span>
-                      </div>
-                    )}
-                    {posEdus.length > 0 && (
-                      <div className="detail-spec-chip chip-education">
-                        <span className="spec-label">🎓 วุฒิ:</span>
-                        <div className="spec-edu-tags">
-                          {posEdus.map((edu, eIdx) => {
-                            const style = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
-                            return (
-                              <span key={eIdx} className="detail-edu-tag" style={{
-                                background: style.bg, borderColor: style.border, color: style.color
-                              }}>
-                                {edu}
-                              </span>
-                            );
-                          })}
+                        {/* Position Details Body */}
+                        <div className="detail-pos-content">
+                          {/* Salary & Education Specs */}
+                          <div className="detail-pos-specs-bar">
+                            {pos.salary && (
+                              <div className="detail-spec-chip chip-salary">
+                                <span className="spec-label">💰 เงินเดือน:</span>
+                                <span className="spec-value">{pos.salary}</span>
+                              </div>
+                            )}
+                            {posEdus.length > 0 && (
+                              <div className="detail-spec-chip chip-education">
+                                <span className="spec-label">🎓 วุฒิ:</span>
+                                <div className="spec-edu-tags">
+                                  {posEdus.map((edu, eIdx) => {
+                                    const style = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
+                                    return (
+                                      <span key={eIdx} className="detail-edu-tag" style={{
+                                        background: style.bg, borderColor: style.border, color: style.color
+                                      }}>
+                                        {edu}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Qualifications Note */}
+                          {pos.details && (
+                            <div className="detail-pos-qualifications">
+                              <div className="qualifications-header">
+                                <span className="qualifications-icon">📌</span>
+                                <span>คุณสมบัติเฉพาะสำหรับตำแหน่ง</span>
+                              </div>
+                              <div className="qualifications-content">
+                                {pos.details}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Qualifications Note */}
-                  {pos.details && (
-                    <div className="detail-pos-qualifications">
-                      <div className="qualifications-header">
-                        <span className="qualifications-icon">📌</span>
-                        <span>คุณสมบัติเฉพาะสำหรับตำแหน่ง</span>
-                      </div>
-                      <div className="qualifications-content">
-                        {pos.details}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* ── 4. Application Guide & Info ── */}
         {job.description && (

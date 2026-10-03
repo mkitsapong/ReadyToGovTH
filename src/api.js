@@ -1,4 +1,4 @@
-import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore/lite";
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc, query, limit } from "firebase/firestore/lite";
 import { db, isFirebaseConfigured } from "./firebase.js";
 import { SAMPLE_JOBS, SAMPLE_BOOKS } from "./data/sampleJobs.js";
 
@@ -14,7 +14,7 @@ export const fetchJobs = async () => {
   }
 
   try {
-    const snapshot = await getDocs(collection(db, "jobs_live"));
+    const snapshot = await getDocs(query(collection(db, "jobs_live"), limit(500)));
     const jobs = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 
     // If Firestore is empty (0 docs), provide sample jobs so the UI isn't completely blank
@@ -86,7 +86,7 @@ export const fetchBooks = async () => {
   }
 
   try {
-    const snapshot = await getDocs(collection(db, "books_live"));
+    const snapshot = await getDocs(query(collection(db, "books_live"), limit(500)));
     const books = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 
     if (books.length === 0) {
