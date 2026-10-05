@@ -9,6 +9,7 @@ import Header      from "./components/Header.jsx";
 import JobList     from "./components/JobList.jsx";
 import Footer      from "./components/Footer.jsx";
 import ConsentNotice from "./components/ConsentNotice.jsx";
+import ScrollToTopButton from "./components/ScrollToTopButton.jsx";
 import OfflineIndicator from "./components/OfflineIndicator.jsx";
 import SEO         from "./components/SEO.jsx";
 import { LoadingSpinner } from "./components/LoadingSkeleton.jsx";
@@ -457,6 +458,9 @@ export default function App() {
 
       {/* PWA Offline & Install Indicator */}
       <OfflineIndicator />
+
+      {/* Floating Scroll to Top Button */}
+      <ScrollToTopButton />
     </AppContext.Provider>
   );
 }

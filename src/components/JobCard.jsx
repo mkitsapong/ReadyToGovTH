@@ -79,8 +79,7 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
               }}
               title="แชร์ประกาศนี้ (Deep Link & Dynamic OG Image)"
               aria-label="แชร์ประกาศนี้"
-              className="job-btn-bookmark"
-              style={{ fontSize: "0.85rem", opacity: 0.85 }}
+              className="job-btn-bookmark job-btn-share"
             >
               🔗
             </button>

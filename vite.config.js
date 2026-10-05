@@ -4,59 +4,64 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { generateOgSvg } from './src/utils/generateOgSvg.js'
 
 function localVercelOgPlugin() {
+  const handler = (req, res, next) => {
+    const url = new URL(req.url, 'http://localhost:5173');
+    if (url.pathname === '/api/og') {
+      const dept = url.searchParams.get('dept') || '';
+      const pos = url.searchParams.get('pos') || '';
+      const count = url.searchParams.get('count') || '1';
+      const salary = url.searchParams.get('salary') || '';
+      const cat = url.searchParams.get('cat') || 'งานราชการ';
+      const deadline = url.searchParams.get('deadline') || '';
+      const days = url.searchParams.get('days') || '';
+      const ocsc = url.searchParams.get('ocsc') || '';
+      const prov = url.searchParams.get('prov') || '';
+
+      const svg = generateOgSvg({ dept, pos, count, salary, cat, deadline, days, ocsc, prov });
+      res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.end(svg);
+      return;
+    }
+    if (url.pathname === '/api/share') {
+      const jobId = url.searchParams.get('id') || '';
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.end(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/job/${encodeURIComponent(jobId)}"><script>location.replace('/job/${encodeURIComponent(jobId)}');</script></head><body>Redirecting to /job/${jobId}...</body></html>`);
+      return;
+    }
+    if (url.pathname === '/api/sitemap.xml') {
+      const today = new Date().toISOString().split('T')[0];
+      const staticPages = [
+        { loc: '/', priority: '1.0', freq: 'daily' },
+        { loc: '/category/civil', priority: '0.8', freq: 'daily' },
+        { loc: '/category/government', priority: '0.8', freq: 'daily' },
+        { loc: '/category/state', priority: '0.8', freq: 'daily' },
+        { loc: '/category/temp', priority: '0.8', freq: 'daily' },
+        { loc: '/category/agency', priority: '0.8', freq: 'daily' },
+        { loc: '/stats', priority: '0.6', freq: 'weekly' },
+        { loc: '/policy/privacy', priority: '0.3', freq: 'monthly' },
+        { loc: '/policy/terms', priority: '0.3', freq: 'monthly' },
+        { loc: '/policy/cookies', priority: '0.3', freq: 'monthly' },
+      ];
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+      for (const p of staticPages) {
+        xml += `  <url>\n    <loc>http://localhost:5173${p.loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${p.freq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>\n`;
+      }
+      xml += `</urlset>\n`;
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.end(xml);
+      return;
+    }
+    next();
+  };
+
   return {
     name: 'local-vercel-og-plugin',
     configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        const url = new URL(req.url, 'http://localhost:5173');
-        if (url.pathname === '/api/og') {
-          const dept = url.searchParams.get('dept') || '';
-          const pos = url.searchParams.get('pos') || '';
-          const count = url.searchParams.get('count') || '1';
-          const salary = url.searchParams.get('salary') || '';
-          const cat = url.searchParams.get('cat') || 'งานราชการ';
-          const deadline = url.searchParams.get('deadline') || '';
-          const days = url.searchParams.get('days') || '';
-          const ocsc = url.searchParams.get('ocsc') || '';
-          const prov = url.searchParams.get('prov') || '';
-
-          const svg = generateOgSvg({ dept, pos, count, salary, cat, deadline, days, ocsc, prov });
-          res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-          res.setHeader('Cache-Control', 'no-cache');
-          res.end(svg);
-          return;
-        }
-        if (url.pathname === '/api/share') {
-          const jobId = url.searchParams.get('id') || '';
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          res.end(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=/job/${encodeURIComponent(jobId)}"><script>location.replace('/job/${encodeURIComponent(jobId)}');</script></head><body>Redirecting to /job/${jobId}...</body></html>`);
-          return;
-        }
-        if (url.pathname === '/api/sitemap.xml') {
-          const today = new Date().toISOString().split('T')[0];
-          const staticPages = [
-            { loc: '/', priority: '1.0', freq: 'daily' },
-            { loc: '/category/civil', priority: '0.8', freq: 'daily' },
-            { loc: '/category/government', priority: '0.8', freq: 'daily' },
-            { loc: '/category/state', priority: '0.8', freq: 'daily' },
-            { loc: '/category/temp', priority: '0.8', freq: 'daily' },
-            { loc: '/category/agency', priority: '0.8', freq: 'daily' },
-            { loc: '/stats', priority: '0.6', freq: 'weekly' },
-            { loc: '/policy/privacy', priority: '0.3', freq: 'monthly' },
-            { loc: '/policy/terms', priority: '0.3', freq: 'monthly' },
-            { loc: '/policy/cookies', priority: '0.3', freq: 'monthly' },
-          ];
-          let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-          for (const p of staticPages) {
-            xml += `  <url>\n    <loc>http://localhost:5173${p.loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${p.freq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>\n`;
-          }
-          xml += `</urlset>\n`;
-          res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-          res.end(xml);
-          return;
-        }
-        next();
-      });
+      server.middlewares.use(handler);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handler);
     },
   };
 }
@@ -138,6 +143,11 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    watch: {
+      ignored: ['**/test-results/**', '**/playwright-report/**', '**/.git/**', '**/scripts/**'],
+    },
+  },
   build: {
     modulePreload: {
       resolveDependencies: (filename, deps) => {

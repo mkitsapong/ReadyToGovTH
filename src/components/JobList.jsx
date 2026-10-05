@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import JobCard from "./JobCard.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
@@ -151,6 +151,37 @@ export default function JobList({
 
   // ── Keyboard Shortcuts ─────────────────────────────────────────────────
   useKeyboardShortcuts({ searchInputId: "job-search-input" });
+
+  // ── Responsive Screen Width (for mobile UI & placeholder) ─────────────
+  const [isMobileScreen, setIsMobileScreen] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 640 : false
+  );
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth < 640);
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+    selectedProvince ||
+    userEducation ||
+    filterOCSC ||
+    filterNoOCSC ||
+    showBookmarksOnly
+  );
+
+  const handleResetFilters = useCallback(() => {
+    setSearchQuery("");
+    onSelectProvince?.(null);
+    onChangeUserEducation?.(null);
+    setFilterOCSC(false);
+    setFilterNoOCSC(false);
+    setShowBookmarksOnly(false);
+    setCurrentPage(1);
+  }, [onSelectProvince, onChangeUserEducation]);
   
   const { bookmarks = [], toggleBookmark, isBookmarked } = useBookmarks();
 
@@ -485,7 +516,7 @@ export default function JobList({
                 <input
                   id="job-search-input"
                   type="text"
-                  placeholder="ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด... (รองรับคำพิมพ์ผิด/คำเหมือน)"
+                  placeholder={isMobileScreen ? "ค้นหาตำแหน่ง, หน่วยงาน หรือจังหวัด..." : "ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด... (รองรับคำพิมพ์ผิด/คำเหมือน)"}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="filter-search-input"
@@ -726,7 +757,20 @@ export default function JobList({
               <div className="empty-state">
                 <div className="empty-state-icon">{showExpired ? "⌛" : "📭"}</div>
                 <h3>{showExpired ? "ยังไม่มีประกาศที่ปิดรับสมัครแล้ว" : "ไม่พบรายการที่ตรงกับเงื่อนไข"}</h3>
-                <p>{showExpired ? "ประกาศงานทั้งหมดในขณะนี้ยังคงเปิดรับสมัครอยู่" : "ลองเปลี่ยนคำค้นหาหรือเลือกจังหวัดใหม่"}</p>
+                <p>
+                  {showExpired
+                    ? "ประกาศงานทั้งหมดในขณะนี้ยังคงเปิดรับสมัครอยู่"
+                    : "ลองเปลี่ยนคำค้นหา ปรับระดับวุฒิ หรือเลือกภูมิภาคใหม่"}
+                </p>
+                {!showExpired && hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="empty-reset-btn"
+                  >
+                    <span>🔄</span> ล้างคำค้นหาและตัวกรองทั้งหมด
+                  </button>
+                )}
               </div>
             ) : (
               <>

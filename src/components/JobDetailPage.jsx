@@ -64,9 +64,18 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
     }
   };
 
+  const job = Array.isArray(jobs) ? jobs.find((j) => String(j.id) === String(jobId)) : null;
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [jobId]);
+
+  // Track Job View in Firebase Analytics
+  useEffect(() => {
+    if (job) {
+      trackJobView(job);
+    }
+  }, [job]);
   
   // Loading state (either query is loading or jobs array is still empty during load)
   if (isLoading || !jobs || (Array.isArray(jobs) && jobs.length === 0 && isLoading !== false)) {
@@ -102,15 +111,6 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
       </div>
     );
   }
-
-  const job = jobs.find((j) => String(j.id) === String(jobId));
-
-  // Track Job View in Firebase Analytics
-  useEffect(() => {
-    if (job) {
-      trackJobView(job);
-    }
-  }, [job]);
 
   if (!job) {
     return (

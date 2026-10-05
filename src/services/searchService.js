@@ -144,7 +144,7 @@ export function searchJobsLocal(jobs = [], rawQuery = "", options = {}) {
   const scoredJobs = [];
 
   for (const job of jobs) {
-    let jobScore = 0;
+    let jobScore;
     const matchedPositions = [];
     const jobProvinces = getProvinces(job);
     let hasAnyEduMatch = false;

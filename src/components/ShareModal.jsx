@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import QRCode from "qrcode";
 import {
   getJobOgImageUrl,
@@ -17,20 +17,19 @@ export default function ShareModal({ job, onClose, onToast }) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [isImageLoading, setIsImageLoading] = useState(true);
 
-  if (!job) return null;
-
-  const deepLink = getJobDeepLink(job, {
+  const deepLink = job ? getJobDeepLink(job, {
     utmSource: includeUtm ? "share_button" : undefined,
     utmMedium: includeUtm ? "social_deep_link" : undefined,
-  });
+  }) : "";
 
-  const ogImageUrl = getJobOgImageUrl(job);
-  const socialLinks = getSocialShareLinks(job, deepLink);
-  const summaryText = buildShareSummaryText(job, deepLink);
-  const totalCount = getTotalJobPositions(job);
+  const ogImageUrl = job ? getJobOgImageUrl(job) : "";
+  const socialLinks = job ? getSocialShareLinks(job, deepLink) : [];
+  const summaryText = job ? buildShareSummaryText(job, deepLink) : "";
+  const totalCount = job ? getTotalJobPositions(job) : 0;
 
   // Generate QR Code
   useEffect(() => {
+    if (!deepLink) return;
     let isMounted = true;
     QRCode.toDataURL(
       deepLink,
@@ -52,6 +51,8 @@ export default function ShareModal({ job, onClose, onToast }) {
       isMounted = false;
     };
   }, [deepLink]);
+
+  if (!job) return null;
 
   // Copy Deep Link
   const handleCopyLink = async () => {

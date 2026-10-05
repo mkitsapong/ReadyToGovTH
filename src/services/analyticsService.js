@@ -208,14 +208,26 @@ export function resetRealAnalytics() {
 // Asynchronous Firestore Syncing (Graceful fallback if permissions unconfigured)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Circuit-breaker flag to disable Firestore writes if rules deny access, preventing repetitive RPC request spam
+let isFirestoreSyncBlocked = false;
+let lastSyncWarningTime = 0;
+
 async function syncDocToFirestore(colName, docId, updateData) {
-  if (!isFirebaseConfigured || !db || typeof window === "undefined") return;
+  if (isFirestoreSyncBlocked || !isFirebaseConfigured || !db || typeof window === "undefined") return;
   try {
     const { doc, setDoc } = await import("firebase/firestore/lite");
     await setDoc(doc(db, colName, String(docId)), updateData, { merge: true });
   } catch (e) {
-    // Graceful silent fallback: unconfigured Firestore rules will not disrupt tracking
-    console.debug(`[Analytics Firestore Sync] ${colName}/${docId} skipped:`, e.message);
+    if (e?.code === "permission-denied" || e?.message?.includes("permission-denied")) {
+      isFirestoreSyncBlocked = true;
+      const now = Date.now();
+      if (now - lastSyncWarningTime > 60000) {
+        console.info("ℹ️ [Analytics] Remote Firestore sync paused (permission-denied / rules pending deployment). Local & GA4 tracking active.");
+        lastSyncWarningTime = now;
+      }
+    } else {
+      console.debug(`[Analytics Firestore Sync] ${colName}/${docId} skipped:`, e?.message);
+    }
   }
 }
 
