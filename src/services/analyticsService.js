@@ -73,7 +73,7 @@ const BOOKMARKS_STORAGE_KEY = "readytogov_bookmarks";
 /**
  * Generate or get a persistent anonymous visitor ID
  */
-function getVisitorId() {
+export function getVisitorId() {
   if (typeof window === "undefined") return "server";
   try {
     let vid = localStorage.getItem(VISITOR_ID_KEY);

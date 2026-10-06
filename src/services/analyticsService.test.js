@@ -3,7 +3,6 @@ import {
   getTodayKey,
   getPast7Days,
   getRealMetrics,
-  saveRealMetrics,
   resetRealAnalytics,
   trackPageView,
   trackJobView,

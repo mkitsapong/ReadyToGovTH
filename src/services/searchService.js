@@ -13,7 +13,6 @@ import {
   tokenizeThai,
   expandSynonyms,
   matchToken,
-  normalizeThai,
 } from "../utils/thaiSearch.js";
 import { getProvinces } from "../utils/helpers.js";
 
@@ -311,7 +310,6 @@ export async function executeSearch(jobs = [], query = "", options = {}) {
   if (engineType === "algolia") {
     const cloudIds = await searchAlgolia(cleanQuery);
     if (cloudIds && cloudIds.length > 0) {
-      const idSet = new Set(cloudIds.map(String));
       const ordered = cloudIds
         .map((id) => jobs.find((j) => String(j.id) === String(id)))
         .filter(Boolean);

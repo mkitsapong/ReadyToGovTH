@@ -16,8 +16,9 @@ function localVercelOgPlugin() {
       const days = url.searchParams.get('days') || '';
       const ocsc = url.searchParams.get('ocsc') || '';
       const prov = url.searchParams.get('prov') || '';
+      const logo = url.searchParams.get('logo') || '';
 
-      const svg = generateOgSvg({ dept, pos, count, salary, cat, deadline, days, ocsc, prov });
+      const svg = generateOgSvg({ dept, pos, count, salary, cat, deadline, days, ocsc, prov, logo });
       res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache');
       res.end(svg);

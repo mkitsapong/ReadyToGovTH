@@ -1,4 +1,5 @@
 import { ImageResponse } from '@vercel/og';
+import { generateOgSvg } from '../src/utils/generateOgSvg.js';
 
 export const config = {
   runtime: 'edge',
@@ -227,16 +228,23 @@ export default async function handler(request) {
                 style={{
                   width: '96px',
                   height: '96px',
-                  borderRadius: '20px',
-                  backgroundColor: 'rgba(30, 41, 59, 0.8)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '22px',
+                  backgroundColor: '#0b1222',
+                  border: '1.5px solid rgba(245, 158, 11, 0.4)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '44px',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
                 }}
               >
-                🇹🇭
+                <svg width="60" height="60" viewBox="0 0 64 64" fill="none">
+                  <path d="M32 4c-1.5 0-2.8.8-3.5 2L25 12h14l-3.5-6c-.7-1.2-2-2-3.5-2z" fill="#f59e0b"/>
+                  <path d="M32 14c-4.4 0-8 3.6-8 8 0 2 .7 3.8 2 5.2V32h12v-4.8c1.3-1.4 2-3.2 2-5.2 0-4.4-3.6-8-8-8z" fill="#fbbf24"/>
+                  <path d="M12 20c-4 0-8 3-10 8 5-1 10 1 14 4l4-5c-2.5-4-5-7-8-7zm40 0c-3 0-5.5 3-8 7l4 5c4-3 9-5 14-4-2-5-6-8-10-8z" fill="#f59e0b"/>
+                  <path d="M6 34c4 4 10 7 16 8l2-5c-6-1-12-4-16-8zm52 0c-4 4-10 7-16 8l-2-5c6-1 12-4 16-8z" fill="#f59e0b"/>
+                  <path d="M26 36l-2 16 8-4 8 4-2-16-6 4-6-4z" fill="#fbbf24"/>
+                  <path d="M20 54l12 10 12-10-4-3-8 6-8-6z" fill="#d97706"/>
+                </svg>
               </div>
             )}
 
@@ -418,61 +426,17 @@ export default async function handler(request) {
 // Fallback high-res SVG renderer in case of Edge runtime canvas failure
 function renderSvgFallback(urlStr) {
   const { searchParams } = new URL(urlStr);
-  const dept = (searchParams.get('dept') || 'ประกาศรับสมัครงานภาครัฐ').replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const pos = (searchParams.get('pos') || 'หลายตำแหน่ง').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const dept = searchParams.get('dept') || 'ประกาศรับสมัครงานภาครัฐ';
+  const pos = searchParams.get('pos') || 'หลายตำแหน่ง';
   const count = searchParams.get('count') || '1';
-  const salary = (searchParams.get('salary') || 'ตามระเบียบกำหนด').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const salary = searchParams.get('salary') || 'ตามระเบียบกำหนด';
   const cat = searchParams.get('cat') || 'งานราชการ';
   const deadline = searchParams.get('deadline') || '';
+  const days = searchParams.get('days') || '';
+  const ocsc = searchParams.get('ocsc') || '';
+  const prov = searchParams.get('prov') || '';
 
-  const svg = `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0a0f1d" />
-      <stop offset="100%" stop-color="#0f172a" />
-    </linearGradient>
-    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f97316" />
-      <stop offset="100%" stop-color="#ea580c" />
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="url(#bg)" />
-  <circle cx="1080" cy="80" r="260" fill="#f97316" opacity="0.12" filter="blur(60px)" />
-  <circle cx="100" cy="540" r="260" fill="#3b82f6" opacity="0.12" filter="blur(60px)" />
-  <rect x="40" y="40" width="1120" height="550" rx="24" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" />
-  
-  <!-- Brand -->
-  <rect x="60" y="60" width="44" height="44" rx="12" fill="url(#brand)" />
-  <text x="82" y="90" font-size="22" text-anchor="middle">🏛️</text>
-  <text x="116" y="86" font-family="Prompt, sans-serif" font-size="24" font-weight="bold" fill="#ffffff">ReadyToGov<tspan fill="#f97316">.th</tspan></text>
-  <text x="116" y="104" font-family="Prompt, sans-serif" font-size="12" fill="#94a3b8">ศูนย์รวมประกาศรับสมัครงานราชการไทย</text>
-
-  <!-- Category Badge -->
-  <rect x="1000" y="62" width="140" height="38" rx="19" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" />
-  <text x="1070" y="87" font-family="Prompt, sans-serif" font-size="15" font-weight="bold" fill="#93c5fd" text-anchor="middle">${cat}</text>
-
-  <!-- Department & Position Card -->
-  <rect x="60" y="140" width="1080" height="230" rx="20" fill="rgba(15,23,42,0.85)" stroke="rgba(255,255,255,0.12)" />
-  <text x="100" y="220" font-family="Prompt, sans-serif" font-size="38" font-weight="bold" fill="#ffffff">${dept}</text>
-  <text x="100" y="280" font-family="Prompt, sans-serif" font-size="24" font-weight="bold" fill="#f97316">📌 ตำแหน่ง: <tspan fill="#ffffff">${pos}</tspan></text>
-  <text x="100" y="325" font-family="Prompt, sans-serif" font-size="16" fill="#94a3b8">👉 แตะเพื่อดูรายละเอียดและวิธีสมัครออนไลน์</text>
-
-  <!-- Metric Badges -->
-  <rect x="60" y="390" width="340" height="120" rx="16" fill="rgba(30,41,59,0.7)" stroke="rgba(255,255,255,0.08)" />
-  <text x="84" y="426" font-family="Prompt, sans-serif" font-size="14" fill="#94a3b8">👥 จำนวนที่รับ</text>
-  <text x="84" y="475" font-family="Prompt, sans-serif" font-size="28" font-weight="bold" fill="#f97316">${count} อัตรา</text>
-
-  <rect x="430" y="390" width="340" height="120" rx="16" fill="rgba(30,41,59,0.7)" stroke="rgba(255,255,255,0.08)" />
-  <text x="454" y="426" font-family="Prompt, sans-serif" font-size="14" fill="#94a3b8">💰 อัตราเงินเดือน</text>
-  <text x="454" y="475" font-family="Prompt, sans-serif" font-size="22" font-weight="bold" fill="#34d399">${salary}</text>
-
-  <rect x="800" y="390" width="340" height="120" rx="16" fill="rgba(30,41,59,0.7)" stroke="rgba(255,255,255,0.08)" />
-  <text x="824" y="426" font-family="Prompt, sans-serif" font-size="14" fill="#94a3b8">📅 ปิดรับสมัคร</text>
-  <text x="824" y="475" font-family="Prompt, sans-serif" font-size="22" font-weight="bold" fill="#fbbf24">${deadline || 'ดูในประกาศ'}</text>
-
-  <!-- Footer -->
-  <text x="60" y="555" font-family="Prompt, sans-serif" font-size="14" fill="#94a3b8">🔗 deep link: readytogov.th/job</text>
-</svg>`;
+  const svg = generateOgSvg({ dept, pos, count, salary, cat, deadline, days, ocsc, prov });
 
   return new Response(svg, {
     status: 200,

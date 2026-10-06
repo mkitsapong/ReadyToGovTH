@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
 import {
   getAdminAnalyticsData,
   fetchLiveAdminAnalyticsData,
@@ -351,7 +350,12 @@ export default function AdminAnalyticsDashboard({ jobs = [], onClose, onSelectJo
                   {sortedPopularJobs.map((job, idx) => {
                     const rankMedal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
                     return (
-                      <tr key={job.id} className="popular-row">
+                      <tr
+                        key={job.id}
+                        className={`popular-row ${onSelectJob ? "clickable" : ""}`}
+                        onClick={() => onSelectJob?.(job)}
+                        style={{ cursor: onSelectJob ? "pointer" : "default" }}
+                      >
                         <td className="rank-cell">
                           <span className={`rank-badge ${idx < 3 ? "top-three" : ""}`}>{rankMedal}</span>
                         </td>

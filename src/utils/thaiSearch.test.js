@@ -6,7 +6,6 @@ import {
   expandSynonyms,
   levenshteinDistance,
   matchToken,
-  THAI_GOV_SYNONYMS,
 } from "./thaiSearch.js";
 import { searchJobsLocal } from "../services/searchService.js";
 

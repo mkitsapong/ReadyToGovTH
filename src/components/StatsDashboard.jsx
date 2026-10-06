@@ -74,11 +74,27 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
   };
 
   const handleSelectProvinceClick = (province) => {
+    if (onSelectProvince) {
+      onSelectProvince(province);
+    }
     if (province === "ทั่วประเทศ") {
       navigate("/?province=ทั่วประเทศ");
     } else {
       navigate(`/?province=${encodeURIComponent(province)}`);
     }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSelectRegionClick = (regionName) => {
+    if (onSelectProvince) {
+      onSelectProvince(regionName);
+    }
+    navigate(`/?province=${encodeURIComponent(regionName)}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSelectEduClick = (eduName) => {
+    navigate(`/?q=${encodeURIComponent(eduName)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -218,7 +234,11 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
           {/* ── 3. High-level KPI Metric Cards ── */}
           <div className="stats-kpi-grid">
             {/* Total Announcements */}
-            <div className="stats-kpi-card stats-kpi-blue">
+            <div
+              className="stats-kpi-card stats-kpi-blue clickable"
+              onClick={() => { navigate("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              title="คลิกเพื่อดูประกาศงานทั้งหมด"
+            >
               <div className="stats-kpi-glow" />
               <div className="stats-kpi-top">
                 <div className="stats-kpi-icon">
@@ -228,7 +248,7 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                   </svg>
                 </div>
                 <span className="stats-kpi-tag">
-                  กำลังเปิดรับ
+                  กำลังเปิดรับ ↗
                 </span>
               </div>
               <div className="stats-kpi-middle">
@@ -241,7 +261,11 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
             </div>
 
             {/* Total Positions */}
-            <div className="stats-kpi-card stats-kpi-emerald">
+            <div
+              className="stats-kpi-card stats-kpi-emerald clickable"
+              onClick={() => { navigate("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              title="คลิกเพื่อดูประกาศงานทั้งหมด"
+            >
               <div className="stats-kpi-glow" />
               <div className="stats-kpi-top">
                 <div className="stats-kpi-icon">
@@ -253,7 +277,7 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                   </svg>
                 </div>
                 <span className="stats-kpi-tag">
-                  อัตรากำลัง
+                  อัตรากำลัง ↗
                 </span>
               </div>
               <div className="stats-kpi-middle">
@@ -268,7 +292,11 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
             </div>
 
             {/* No OCSC Ratio */}
-            <div className="stats-kpi-card stats-kpi-orange">
+            <div
+              className="stats-kpi-card stats-kpi-orange clickable"
+              onClick={() => { navigate("/?noocsc=1"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              title="คลิกเพื่อกรองเฉพาะงานที่ไม่ต้องผ่าน ภาค ก"
+            >
               <div className="stats-kpi-glow" />
               <div className="stats-kpi-top">
                 <div className="stats-kpi-icon">
@@ -278,7 +306,7 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                   </svg>
                 </div>
                 <span className="stats-kpi-tag">
-                  ไม่ต้องสอบ ก.พ.
+                  ไม่ต้องสอบ ก.พ. ↗
                 </span>
               </div>
               <div className="stats-kpi-middle">
@@ -291,7 +319,11 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
             </div>
 
             {/* Top Education Requirement */}
-            <div className="stats-kpi-card stats-kpi-purple">
+            <div
+              className="stats-kpi-card stats-kpi-purple clickable"
+              onClick={() => handleSelectEduClick(overviewKPIs.topEducation)}
+              title={`คลิกเพื่อค้นหางานวุฒิ ${overviewKPIs.topEducation}`}
+            >
               <div className="stats-kpi-glow" />
               <div className="stats-kpi-top">
                 <div className="stats-kpi-icon">
@@ -301,7 +333,7 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                   </svg>
                 </div>
                 <span className="stats-kpi-tag">
-                  วุฒิยอดนิยม
+                  วุฒิยอดนิยม ↗
                 </span>
               </div>
               <div className="stats-kpi-middle">
@@ -635,8 +667,16 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
 
               <div className="stats-region-grid">
                 {regionStats.map((r, i) => (
-                  <div key={i} className="stats-region-card">
-                    <span className="stats-region-title">{r.name}</span>
+                  <div
+                    key={i}
+                    className="stats-region-card clickable"
+                    onClick={() => handleSelectRegionClick(r.name)}
+                    title={`คลิกเพื่อดูประกาศงานใน ${r.name}`}
+                  >
+                    <div className="stats-region-card-top">
+                      <span className="stats-region-title">{r.name}</span>
+                      <span className="stats-region-arrow">↗</span>
+                    </div>
                     <span className="stats-region-num">
                       {r.jobCount}{" "}
                       <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-muted)" }}>
@@ -659,16 +699,21 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                   <span>วุฒิการศึกษาที่เป็นที่ต้องการ</span>
                 </h3>
                 <p className="stats-card-subtitle">
-                  ระดับการศึกษาที่หน่วยงานภาครัฐระบุเปิดรับสมัครบ่อยที่สุด
+                  ระดับการศึกษาที่หน่วยงานภาครัฐระบุเปิดรับสมัครบ่อยที่สุด (คลิกเพื่อค้นหางาน)
                 </p>
               </div>
 
               <div className="stats-edu-list">
                 {(overviewKPIs.educationBreakdown || []).map((item, idx) => (
-                  <div key={idx} className="stats-edu-row">
+                  <div
+                    key={idx}
+                    className="stats-edu-row clickable"
+                    onClick={() => handleSelectEduClick(item.edu)}
+                    title={`คลิกเพื่อค้นหางานวุฒิ ${item.edu}`}
+                  >
                     <div className="stats-edu-info">
                       <span className="stats-edu-label">{item.edu}</span>
-                      <span className="stats-edu-count">{item.count} ตำแหน่ง ({item.percent}%)</span>
+                      <span className="stats-edu-count">{item.count} ตำแหน่ง ({item.percent}%) ↗</span>
                     </div>
                     <div className="stats-edu-bar-track">
                       <div

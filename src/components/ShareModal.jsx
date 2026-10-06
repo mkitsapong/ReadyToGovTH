@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import QRCode from "qrcode";
+import "./ShareModal.css";
 import {
   getJobOgImageUrl,
   getJobDeepLink,
@@ -9,11 +10,62 @@ import {
 import { getTotalJobPositions, formatDate } from "../utils/helpers.js";
 import { trackJobShare } from "../services/analyticsService.js";
 
+// Clean Vector SVGs for crisp, modern rendering
+const SvgShare = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+  </svg>
+);
+
+const SvgLine = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19.365 9.864c0-4.04-4.2-7.327-9.365-7.327S.635 5.824.635 9.864c0 3.618 3.22 6.643 7.575 7.185.295.064.697.195.798.448.092.23.06.59.03.823l-.13 1.056c-.04.32-.2 1.25.9 0 .88-1 4.74-5.59 6.47-7.58 1.95-2.22 3.087-.93 3.087-1.932zm-12.7 1.554h-1.63a.47.47 0 0 1-.47-.47V7.63c0-.26.21-.47.47-.47h1.63c.26 0 .47.21.47.47v.47a.47.47 0 0 1-.47.47h-1.16v.63h1.16c.26 0 .47.21.47.47v.47a.47.47 0 0 1-.47.47zm2.74 0h-.63a.47.47 0 0 1-.47-.47V7.63c0-.26.21-.47.47-.47h.63c.26 0 .47.21.47.47v3.318a.47.47 0 0 1-.47.47zm3.84 0h-.63a.47.47 0 0 1-.47-.47l-1.63-2.31v2.31a.47.47 0 0 1-.47.47h-.63a.47.47 0 0 1-.47-.47V7.63c0-.26.21-.47.47-.47h.63c.26 0 .47.21.47.47l1.63 2.32V7.63c0-.26.21-.47.47-.47h.63c.26 0 .47.21.47.47v3.318a.47.47 0 0 1-.47.47zm3.32-2.388h-1.39v.47h1.39c.26 0 .47.21.47.47v.47a.47.47 0 0 1-.47.47h-2.02a.47.47 0 0 1-.47-.47V7.63c0-.26.21-.47.47-.47h2.02c.26 0 .47.21.47.47v.47a.47.47 0 0 1-.47.47h-1.39v.47h1.39c.26 0 .47.21.47.47v.47a.47.47 0 0 1-.47.47z" />
+  </svg>
+);
+
+const SvgFacebook = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+  </svg>
+);
+
+const SvgX = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+const SvgSystemShare = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+    <polyline points="16 6 12 2 8 6" />
+    <line x1="12" y1="2" x2="12" y2="15" />
+  </svg>
+);
+
+const SvgCheck = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const SvgCopy = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </svg>
+);
+
 export default function ShareModal({ job, onClose, onToast }) {
   const [activeTab, setActiveTab] = useState("preview"); // 'preview' | 'line' | 'qrcode'
   const [includeUtm, setIncludeUtm] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
   const [isCopiedSummary, setIsCopiedSummary] = useState(false);
+  const [isCaptionOpen, setIsCaptionOpen] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [isImageLoading, setIsImageLoading] = useState(true);
 
@@ -27,14 +79,14 @@ export default function ShareModal({ job, onClose, onToast }) {
   const summaryText = job ? buildShareSummaryText(job, deepLink) : "";
   const totalCount = job ? getTotalJobPositions(job) : 0;
 
-  // Generate QR Code
+  // Generate QR Code with high resolution & custom color
   useEffect(() => {
     if (!deepLink) return;
     let isMounted = true;
     QRCode.toDataURL(
       deepLink,
       {
-        width: 320,
+        width: 360,
         margin: 2,
         color: {
           dark: "#0f172a",
@@ -113,261 +165,118 @@ export default function ShareModal({ job, onClose, onToast }) {
 
   return (
     <div
-      className="modal-overlay"
-      style={{ zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+      className="share-modal-overlay"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-modal="true"
     >
-      <div
-        className="modal animate-fade-up share-modal-container"
-        style={{
-          maxWidth: 680,
-          width: "100%",
-          maxHeight: "92vh",
-          display: "flex",
-          flexDirection: "column",
-          borderRadius: "24px",
-          overflow: "hidden",
-          background: "var(--card-bg, #ffffff)",
-          boxShadow: "0 25px 60px -10px rgba(15, 23, 42, 0.4)",
-          border: "1px solid var(--border-color, rgba(226, 232, 240, 0.8))",
-        }}
-      >
+      <div className="share-modal-container">
+        
         {/* Modal Header */}
-        <div
-          style={{
-            padding: "18px 24px",
-            background: "linear-gradient(135deg, #090e1a 0%, #0f172a 60%, #1e293b 100%)",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div
-              style={{
-                width: 42,
-                height: 42,
-                borderRadius: "14px",
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.3rem",
-                boxShadow: "0 4px 14px rgba(249, 115, 22, 0.4)",
-              }}
-            >
-              🔗
+        <div className="share-modal-header">
+          <div className="share-header-left">
+            <div className="share-header-icon-badge">
+              <SvgShare />
             </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#ffffff", display: "flex", alignItems: "center", gap: 8 }}>
-                แชร์ประกาศงาน (Deep Link & Dynamic OG)
-              </h2>
-              <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "#94a3b8" }}>
-                แชร์ลิงก์ตรงไปยังตำแหน่งนี้ พร้อมการ์ดภาพพรีวิวอัตโนมัติบน LINE และ Facebook
+            <div className="share-header-title-wrap">
+              <div className="share-header-title-row">
+                <h2 className="share-header-title">แชร์ประกาศงาน</h2>
+                <span className="share-header-badge">✨ Dynamic Preview</span>
+              </div>
+              <p className="share-header-subtitle">
+                สร้างลิงก์ตรงและภาพพรีวิวความคมชัดสูง ส่งต่อบน LINE, Facebook หรือ QR Code
               </p>
             </div>
           </div>
           <button
             type="button"
+            className="share-modal-close-btn"
             onClick={onClose}
-            style={{
-              background: "rgba(255, 255, 255, 0.08)",
-              border: "none",
-              color: "#cbd5e1",
-              width: 34,
-              height: 34,
-              borderRadius: "50%",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1rem",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"; e.currentTarget.style.color = "#ffffff"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)"; e.currentTarget.style.color = "#cbd5e1"; }}
+            title="ปิดหน้าต่าง (Esc)"
+            aria-label="ปิด"
           >
             ✕
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 20 }}>
+        <div className="share-modal-body">
           
-          {/* Target Department Quick Pill */}
-          <div
-            style={{
-              padding: "10px 16px",
-              background: "var(--gray-50, #f8fafc)",
-              borderRadius: "14px",
-              border: "1px solid var(--border-color, #e2e8f0)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-              <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>🏛️</span>
-              <div style={{ minWidth: 0 }}>
-                <strong style={{ fontSize: "0.92rem", color: "var(--navy-900, #0f172a)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {/* Target Department Hero Card */}
+          <div className="share-dept-hero-card">
+            <div className="share-dept-hero-left">
+              <div className="share-dept-avatar">🏛️</div>
+              <div className="share-dept-info">
+                <div className="share-dept-name" title={job.department}>
                   {job.department}
-                </strong>
-                <div style={{ fontSize: "0.76rem", color: "var(--navy-500, #64748b)" }}>
-                  รวม {totalCount} อัตรา • ปิดรับ {job.deadline ? formatDate(job.deadline) : "ไม่ระบุ"}
+                </div>
+                <div className="share-dept-meta-row">
+                  <span>รวม {totalCount} อัตรา</span>
+                  <span>•</span>
+                  <span>ปิดรับ {job.deadline ? formatDate(job.deadline) : "ไม่ระบุ"}</span>
                 </div>
               </div>
             </div>
-            <span
-              style={{
-                fontSize: "0.74rem",
-                padding: "3px 10px",
-                borderRadius: "999px",
-                background: "var(--orange-100, #ffedd5)",
-                color: "var(--orange-800, #9a3412)",
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
-            >
+            <span className="share-dept-badge">
               {job.categories?.[0] || job.category || "งานราชการ"}
             </span>
           </div>
 
-          {/* Preview View Tabs */}
+          {/* Segmented Control Bar */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--navy-800, #0f172a)" }}>
-                ภาพพรีวิวการแชร์ (Dynamic Open Graph):
+            <div className="share-preview-header">
+              <label className="share-preview-label">
+                <span>ภาพพรีวิวการแชร์ (Dynamic Preview)</span>
               </label>
-              <div style={{ display: "flex", gap: 6 }}>
+              <div className="share-segmented-tabs">
                 <button
                   type="button"
+                  className={`share-segmented-tab ${activeTab === "preview" ? "active" : ""}`}
                   onClick={() => setActiveTab("preview")}
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: "8px",
-                    fontSize: "0.76rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    border: "1px solid",
-                    background: activeTab === "preview" ? "var(--navy-700, #1e293b)" : "transparent",
-                    color: activeTab === "preview" ? "#ffffff" : "var(--navy-600, #475569)",
-                    borderColor: activeTab === "preview" ? "var(--navy-700, #1e293b)" : "var(--border-color, #cbd5e1)",
-                  }}
                 >
-                  🖼️ การ์ด OG (1200×630)
+                  <span>🖼️</span>
+                  <span>การ์ด OG HD</span>
                 </button>
                 <button
                   type="button"
+                  className={`share-segmented-tab ${activeTab === "line" ? "active" : ""}`}
                   onClick={() => setActiveTab("line")}
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: "8px",
-                    fontSize: "0.76rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    border: "1px solid",
-                    background: activeTab === "line" ? "var(--navy-700, #1e293b)" : "transparent",
-                    color: activeTab === "line" ? "#ffffff" : "var(--navy-600, #475569)",
-                    borderColor: activeTab === "line" ? "var(--navy-700, #1e293b)" : "var(--border-color, #cbd5e1)",
-                  }}
                 >
-                  💬 พรีวิวในแชท LINE
+                  <span>💬</span>
+                  <span>แชท LINE</span>
                 </button>
                 <button
                   type="button"
+                  className={`share-segmented-tab ${activeTab === "qrcode" ? "active" : ""}`}
                   onClick={() => setActiveTab("qrcode")}
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: "8px",
-                    fontSize: "0.76rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    border: "1px solid",
-                    background: activeTab === "qrcode" ? "var(--navy-700, #1e293b)" : "transparent",
-                    color: activeTab === "qrcode" ? "#ffffff" : "var(--navy-600, #475569)",
-                    borderColor: activeTab === "qrcode" ? "var(--navy-700, #1e293b)" : "var(--border-color, #cbd5e1)",
-                  }}
                 >
-                  🔳 QR Code
+                  <span>📱</span>
+                  <span>QR Code</span>
                 </button>
               </div>
             </div>
 
             {/* TAB 1: OG Card Full Preview */}
             {activeTab === "preview" && (
-              <div
-                style={{
-                  position: "relative",
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  border: "1px solid var(--border-color, #cbd5e1)",
-                  background: "#0a0f1d",
-                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2)",
-                  aspectRatio: "1200 / 630",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <div className="share-og-preview-card">
                 {isImageLoading && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                      color: "#94a3b8",
-                      fontSize: "0.85rem",
-                      background: "rgba(10, 15, 29, 0.9)",
-                      zIndex: 2,
-                    }}
-                  >
-                    <div style={{ fontSize: "1.8rem", animation: "spin 1s linear infinite" }}>⚡</div>
-                    <span>กำลังสร้างภาพ Dynamic OG Image...</span>
+                  <div className="share-og-loading-overlay">
+                    <div className="share-spinner-glow" />
+                    <span>กำลังประมวลผลการ์ดภาพคมชัดระดับ HD...</span>
                   </div>
                 )}
                 <img
                   src={ogImageUrl}
                   alt={`Open Graph preview for ${job.department}`}
+                  className="share-og-preview-img"
                   onLoad={() => setIsImageLoading(false)}
                   onError={() => setIsImageLoading(false)}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    display: "block",
-                  }}
                 />
                 <a
                   href={ogImageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{
-                    position: "absolute",
-                    bottom: 12,
-                    right: 12,
-                    padding: "6px 14px",
-                    borderRadius: "8px",
-                    background: "rgba(15, 23, 42, 0.8)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    color: "#ffffff",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    backdropFilter: "blur(8px)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    zIndex: 3,
-                  }}
+                  className="share-og-hd-btn"
                 >
                   <span>🔍 ดูภาพขนาดเต็ม HD (1200×630)</span>
                 </a>
@@ -376,40 +285,34 @@ export default function ShareModal({ job, onClose, onToast }) {
 
             {/* TAB 2: LINE / Social Chat Bubble Simulation */}
             {activeTab === "line" && (
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#79c294", // LINE green ambient
-                  borderRadius: "16px",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <div
-                  style={{
-                    maxWidth: 380,
-                    width: "100%",
-                    borderRadius: "16px",
-                    overflow: "hidden",
-                    background: "#ffffff",
-                    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
-                    border: "1px solid #e2e8f0",
-                  }}
-                >
+              <div className="share-line-chat-canvas">
+                <div className="share-line-chat-bubble">
+                  <div className="share-line-sender-bar">
+                    <div className="share-line-sender-info">
+                      <div className="share-line-avatar">RG</div>
+                      <span className="share-line-sender-name">
+                        ReadyToGov.th
+                        <span className="share-line-verified" title="Official Verified">✓</span>
+                      </span>
+                    </div>
+                    <span className="share-line-time">12:20 น.</span>
+                  </div>
                   <img
                     src={ogImageUrl}
                     alt="Social Card Preview"
                     style={{ width: "100%", aspectRatio: "1200 / 630", objectFit: "cover", display: "block" }}
                   />
-                  <div style={{ padding: "12px 14px" }}>
-                    <div style={{ fontSize: "0.7rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>
-                      readytogov.th
+                  <div className="share-line-card-content">
+                    <div className="share-line-domain">readytogov.th</div>
+                    <div className="share-line-title">
+                      รับสมัครงาน: {job.department}
                     </div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#0f172a", marginTop: 2, lineHeight: 1.3 }}>
-                      รับสมัครงาน {job.department}
+                    <div className="share-line-desc">
+                      เปิดรับสมัครรวม {totalCount} อัตรา ดูคุณสมบัติ หลักสูตรวิชาสอบ และวิธีสมัครออนไลน์
                     </div>
-                    <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: 4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      เปิดรับสมัครรวม {totalCount} อัตรา ดูคุณสมบัติ หลักสูตรวิชาสอบ และวิธีสมัครออนไลน์คลิกที่นี่
+                    <div className="share-line-action-btn">
+                      <span>เปิดดูประกาศฉบับเต็ม</span>
+                      <span>›</span>
                     </div>
                   </div>
                 </div>
@@ -418,60 +321,26 @@ export default function ShareModal({ job, onClose, onToast }) {
 
             {/* TAB 3: QR Code Generator */}
             {activeTab === "qrcode" && (
-              <div
-                style={{
-                  padding: "24px",
-                  background: "var(--gray-50, #f8fafc)",
-                  borderRadius: "16px",
-                  border: "1px solid var(--border-color, #e2e8f0)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 14,
-                }}
-              >
-                {qrCodeDataUrl ? (
-                  <div
-                    style={{
-                      padding: 12,
-                      background: "#ffffff",
-                      borderRadius: 16,
-                      boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-                      border: "1px solid #e2e8f0",
-                    }}
-                  >
-                    <img src={qrCodeDataUrl} alt="QR Code Deep Link" style={{ width: 180, height: 180, display: "block" }} />
-                  </div>
-                ) : (
-                  <div style={{ width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    กำลังสร้าง QR Code...
-                  </div>
-                )}
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--navy-900, #0f172a)" }}>
-                    สแกนเพื่อเปิดประกาศงานนี้ทันทีบนมือถือ
-                  </div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--navy-400, #94a3b8)", marginTop: 2 }}>
-                    เหมาะสำหรับนำไปฉายบนสไลด์ นามบัตร หรือพิมพ์ติดบอร์ดประชาสัมพันธ์
+              <div className="share-qr-canvas">
+                <div className="share-qr-frame">
+                  {qrCodeDataUrl ? (
+                    <img src={qrCodeDataUrl} alt="QR Code Deep Link" className="share-qr-img" />
+                  ) : (
+                    <div style={{ width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div className="share-spinner-glow" />
+                    </div>
+                  )}
+                </div>
+                <div className="share-qr-text-wrap">
+                  <div className="share-qr-title">สแกนเพื่อเปิดบนมือถือได้ทันที</div>
+                  <div className="share-qr-subtitle">
+                    เหมาะสำหรับฉายบนจอโปรเจกเตอร์ หรือพรินต์ใส่ใบประกาศประชาสัมพันธ์
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleDownloadQr}
-                  style={{
-                    padding: "8px 18px",
-                    borderRadius: "10px",
-                    background: "var(--navy-800, #0f172a)",
-                    color: "#ffffff",
-                    border: "none",
-                    fontSize: "0.82rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
+                  className="share-qr-download-btn"
                 >
                   <span>💾</span>
                   <span>บันทึกรูป QR Code (PNG)</span>
@@ -482,69 +351,39 @@ export default function ShareModal({ job, onClose, onToast }) {
 
           {/* Deep Link URL Box */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-              <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--navy-800, #0f172a)" }}>
-                Deep Link URL ตรง:
+            <div className="share-link-header">
+              <label className="share-link-label">
+                <span>🔗 Deep Link URL ตรง</span>
               </label>
-              <label style={{ fontSize: "0.76rem", color: "var(--navy-500, #64748b)", display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <label
+                className={`share-utm-toggle ${includeUtm ? "active" : ""}`}
+                title="เพิ่มพารามิเตอร์ UTM เพื่อวัดผลการเปิดอ่านผ่านเครื่องมือวิเคราะห์สถิติ"
+              >
                 <input
                   type="checkbox"
                   checked={includeUtm}
                   onChange={(e) => setIncludeUtm(e.target.checked)}
-                  style={{ cursor: "pointer" }}
                 />
-                <span>ใส่แท็กวิเคราะห์สถิติ (UTM Tracking)</span>
+                <span className="share-utm-switch-dot" />
+                <span>แท็กสถิติ UTM</span>
               </label>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                background: "var(--gray-50, #f8fafc)",
-                border: "1px solid var(--border-color, #cbd5e1)",
-                borderRadius: "14px",
-                padding: "6px 8px 6px 14px",
-                gap: 8,
-              }}
-            >
-              <span style={{ color: "var(--navy-400, #94a3b8)", fontSize: "0.9rem" }}>🔗</span>
+            <div className="share-link-box">
+              <span className="share-link-icon">🔗</span>
               <input
                 type="text"
                 readOnly
                 value={deepLink}
-                style={{
-                  flex: 1,
-                  background: "transparent",
-                  border: "none",
-                  outline: "none",
-                  fontSize: "0.85rem",
-                  fontFamily: "monospace",
-                  color: "var(--navy-800, #0f172a)",
-                }}
+                className="share-link-input"
                 onClick={(e) => e.target.select()}
               />
               <button
                 type="button"
                 onClick={handleCopyLink}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "10px",
-                  border: "none",
-                  background: isCopiedLink ? "var(--green-600, #16a34a)" : "var(--primary-600, #f97316)",
-                  color: "#ffffff",
-                  fontSize: "0.82rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  transition: "all 0.2s",
-                  flexShrink: 0,
-                  boxShadow: isCopiedLink ? "0 4px 12px rgba(22, 163, 74, 0.4)" : "0 4px 12px rgba(249, 115, 22, 0.35)",
-                }}
+                className={`share-copy-btn ${isCopiedLink ? "copied" : ""}`}
               >
-                <span>{isCopiedLink ? "✅" : "📋"}</span>
+                {isCopiedLink ? <SvgCheck /> : <SvgCopy />}
                 <span>{isCopiedLink ? "คัดลอกแล้ว!" : "คัดลอกลิงก์"}</span>
               </button>
             </div>
@@ -552,35 +391,20 @@ export default function ShareModal({ job, onClose, onToast }) {
 
           {/* 1-Click Social Sharing Intent Buttons */}
           <div>
-            <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--navy-800, #0f172a)", display: "block", marginBottom: 10 }}>
-              แชร์ด่วน 1 คลิก ไปยังโซเชียลมีเดีย:
+            <label className="share-link-label" style={{ marginBottom: 10 }}>
+              <span>🚀 แชร์ด่วน 1 คลิก ไปยังโซเชียลมีเดีย</span>
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
+            <div className="share-social-grid">
               
               {/* LINE */}
               <a
                 href={socialLinks.line}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "12px",
-                  background: "#06C755",
-                  color: "#ffffff",
-                  textDecoration: "none",
-                  fontSize: "0.84rem",
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  boxShadow: "0 4px 12px rgba(6, 199, 85, 0.3)",
-                  transition: "transform 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
+                className="share-social-btn share-social-btn-line"
+                title="ส่งต่อไปยังแชทหรือกลุ่ม LINE"
               >
-                <span>💬</span>
+                <SvgLine />
                 <span>ส่งเข้า LINE</span>
               </a>
 
@@ -589,25 +413,10 @@ export default function ShareModal({ job, onClose, onToast }) {
                 href={socialLinks.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "12px",
-                  background: "#1877F2",
-                  color: "#ffffff",
-                  textDecoration: "none",
-                  fontSize: "0.84rem",
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  boxShadow: "0 4px 12px rgba(24, 119, 242, 0.3)",
-                  transition: "transform 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
+                className="share-social-btn share-social-btn-fb"
+                title="แชร์ลง Facebook หน้าฟีดหรือกลุ่ม"
               >
-                <span>📘</span>
+                <SvgFacebook />
                 <span>Facebook</span>
               </a>
 
@@ -616,25 +425,10 @@ export default function ShareModal({ job, onClose, onToast }) {
                 href={socialLinks.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "12px",
-                  background: "#0f172a",
-                  color: "#ffffff",
-                  textDecoration: "none",
-                  fontSize: "0.84rem",
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.3)",
-                  transition: "transform 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
+                className="share-social-btn share-social-btn-x"
+                title="โพสต์ทวีตบน X"
               >
-                <span>𝕏</span>
+                <SvgX />
                 <span>ทวีตบน X</span>
               </a>
 
@@ -642,102 +436,68 @@ export default function ShareModal({ job, onClose, onToast }) {
               <button
                 type="button"
                 onClick={handleNativeShare}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "12px",
-                  background: "linear-gradient(135deg, #6366f1, #4f46e5)",
-                  color: "#ffffff",
-                  border: "none",
-                  fontSize: "0.84rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
-                  transition: "transform 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
+                className="share-social-btn share-social-btn-native"
+                title="แชร์ผ่านระบบปฏิบัติการมือถือ/คอมพิวเตอร์"
               >
-                <span>📲</span>
-                <span>แชร์ผ่านระบบ</span>
+                <SvgSystemShare />
+                <span>แชร์อื่นๆ</span>
               </button>
             </div>
           </div>
 
-          {/* Quick Summary Text Caption Box */}
-          <div
-            style={{
-              padding: "14px 16px",
-              background: "var(--gray-50, #f8fafc)",
-              borderRadius: "14px",
-              border: "1px solid var(--border-color, #e2e8f0)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--navy-800, #0f172a)" }}>
-                📝 ข้อความสรุปสำหรับส่งในแชท / กลุ่ม:
-              </span>
-              <button
-                type="button"
-                onClick={handleCopySummary}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: isCopiedSummary ? "var(--green-600, #16a34a)" : "var(--primary-600, #ea580c)",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <span>{isCopiedSummary ? "✅" : "📋"}</span>
-                <span>{isCopiedSummary ? "คัดลอกข้อความแล้ว" : "คัดลอกข้อความ + ลิงก์"}</span>
-              </button>
-            </div>
-            <pre
-              style={{
-                margin: 0,
-                fontSize: "0.78rem",
-                color: "var(--navy-600, #475569)",
-                whiteSpace: "pre-wrap",
-                fontFamily: "inherit",
-                lineHeight: 1.5,
-              }}
+          {/* Quick Summary Text Caption Box (Collapsible) */}
+          <div className="share-caption-card">
+            <div
+              className="share-caption-header"
+              onClick={() => setIsCaptionOpen((prev) => !prev)}
             >
-              {summaryText}
-            </pre>
+              <span className="share-caption-title">
+                <span>📝</span>
+                <span>ข้อความสรุปสำหรับส่งในกลุ่มแชท</span>
+              </span>
+              <div className="share-caption-actions">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCopySummary();
+                  }}
+                  className={`share-caption-copy-btn ${isCopiedSummary ? "copied" : ""}`}
+                >
+                  {isCopiedSummary ? <SvgCheck /> : <SvgCopy />}
+                  <span>{isCopiedSummary ? "คัดลอกแล้ว" : "คัดลอกข้อความ"}</span>
+                </button>
+                <span className={`share-caption-chevron ${isCaptionOpen ? "expanded" : ""}`}>
+                  ▼
+                </span>
+              </div>
+            </div>
+            {isCaptionOpen && (
+              <div className="share-caption-content">
+                <pre className="share-caption-pre">
+                  {summaryText}
+                </pre>
+              </div>
+            )}
           </div>
 
         </div>
 
         {/* Modal Footer */}
-        <div
-          style={{
-            padding: "14px 24px",
-            background: "var(--gray-50, #f8fafc)",
-            borderTop: "1px solid var(--border-color, #e2e8f0)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span style={{ fontSize: "0.76rem", color: "var(--navy-400, #94a3b8)" }}>
-            ⚡ รองรับการพรีวิวอัตโนมัติบนทุกแพลตฟอร์ม
-          </span>
+        <div className="share-modal-footer">
+          <div className="share-footer-status">
+            <span className="share-footer-dot" />
+            <span>รองรับการ์ดพรีวิวอัตโนมัติบนทุกแพลตฟอร์ม</span>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="btn btn-secondary"
-            style={{ padding: "8px 20px", fontSize: "0.85rem", borderRadius: "10px" }}
+            className="share-footer-close-btn"
           >
             ปิด
           </button>
         </div>
+
       </div>
     </div>
   );

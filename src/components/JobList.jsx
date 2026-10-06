@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import JobCard from "./JobCard.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
 import ShareModal from "./ShareModal.jsx";
@@ -10,7 +10,7 @@ import { regions } from "../data/provinces.js";
 import { getProvinces, getTotalJobPositions, daysLeft } from "../utils/helpers.js";
 import { JobCardSkeleton } from "./LoadingSkeleton.jsx";
 import { isFirebaseConfigured } from "../firebase.js";
-import { searchJobsLocal, getSearchEngineType } from "../services/searchService.js";
+import { searchJobsLocal } from "../services/searchService.js";
 import { trackSearchQuery } from "../services/analyticsService.js";
 
 const CATEGORY_FILTER = {
@@ -67,26 +67,12 @@ export default function JobList({
   onToast,
 }) {
   const [urlParams, setUrlParams] = useSearchParams();
-  const navigate = useNavigate();
 
   // ── Shareable Filter URL helpers ─────────────────────────────────────────
   // Read initial values from URL if present, fallback to session/default
   function getParam(key, fallback = "") {
     const v = urlParams.get(key);
     return v !== null ? v : fallback;
-  }
-
-  // Sync a single filter key into the URL (keeps other params intact)
-  function setFilterParam(key, value, defaultValue = "") {
-    setUrlParams(prev => {
-      const next = new URLSearchParams(prev);
-      if (value === defaultValue || value === null || value === false) {
-        next.delete(key);
-      } else {
-        next.set(key, String(value));
-      }
-      return next;
-    }, { replace: true });
   }
 
   const [searchQuery, setSearchQuery] = useState(() => {
@@ -147,7 +133,7 @@ export default function JobList({
       filterOCSC ? next.set("ocsc", "1") : next.delete("ocsc");
       return next;
     }, { replace: true });
-  }, [searchQuery, sortBy, currentPage, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchQuery, sortBy, currentPage, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC, setUrlParams]);
 
   // ── Keyboard Shortcuts ─────────────────────────────────────────────────
   useKeyboardShortcuts({ searchInputId: "job-search-input" });
@@ -521,10 +507,6 @@ export default function JobList({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="filter-search-input"
                 />
-                {/* Keyboard shortcut hint — desktop only */}
-                {!searchQuery && (
-                  <kbd className="search-kbd-hint" title="กด / เพื่อค้นหา">/</kbd>
-                )}
                 {searchQuery && (
                   <button
                     type="button"

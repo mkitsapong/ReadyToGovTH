@@ -1478,6 +1478,156 @@
   margin: 0 auto 20px auto;
 }
 
+/* ── Interactive Clickable KPI Cards ─────────────────────────────────────── */
+.stats-kpi-card.clickable {
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.stats-kpi-card.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.25);
+  border-color: var(--accent);
+}
+
+/* ── Regional Distribution & Education Breakdown (Sub-Analytics Grid) ────── */
+.stats-sub-analytics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+@media (min-width: 1024px) {
+  .stats-sub-analytics {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+}
+
+/* Region Cards Grid */
+.stats-region-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.stats-region-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+}
+
+.stats-region-card.clickable {
+  cursor: pointer;
+}
+
+.stats-region-card.clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  background: var(--bg-card-hover, var(--bg-card));
+  box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.15);
+}
+
+.stats-region-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.stats-region-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.stats-region-arrow {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.stats-region-card.clickable:hover .stats-region-arrow {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+
+.stats-region-num {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--accent);
+  font-family: 'Plus Jakarta Sans', var(--font-sans);
+  line-height: 1.2;
+  margin-bottom: 3px;
+}
+
+/* Education Demand List */
+.stats-edu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stats-edu-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.stats-edu-row.clickable {
+  cursor: pointer;
+}
+
+.stats-edu-row.clickable:hover {
+  background: var(--bg-card-hover, var(--bg-card));
+  border-color: #8b5cf6;
+  transform: translateX(3px);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.15);
+}
+
+.stats-edu-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stats-edu-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.stats-edu-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.stats-edu-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--border-light);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.stats-edu-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%);
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
 /* ── Print Styles ────────────────────────────────────────────────────────── */
 @media print {
   .header, .footer, .stats-hero-actions, .stats-filter-bar, .stats-top-nav, .admin-fab {

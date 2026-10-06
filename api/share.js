@@ -16,9 +16,9 @@ export default async function handler(request) {
   const siteUrl = `${url.protocol}//${url.host}`;
 
   // If query params are provided directly (e.g. from share helper)
-  const dept = url.searchParams.get('dept') || '';
-  const pos = url.searchParams.get('pos') || '';
-  const cat = url.searchParams.get('cat') || 'งานราชการ';
+  const dept = url.searchParams.get('dept') || SAMPLE_FALLBACK.department;
+  const pos = url.searchParams.get('pos') || SAMPLE_FALLBACK.title;
+  const cat = url.searchParams.get('cat') || SAMPLE_FALLBACK.category;
   const count = url.searchParams.get('count') || '';
   const salary = url.searchParams.get('salary') || '';
   const deadline = url.searchParams.get('deadline') || '';

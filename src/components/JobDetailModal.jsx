@@ -17,7 +17,6 @@ import ShareModal from "./ShareModal.jsx";
 import { trackJobView, trackJobApply, trackDocView } from "../services/analyticsService.js";
 
 export default function JobDetailModal({ job, books = [], onClose, inline = false, isAdmin = false, onEdit, onToast }) {
-  const [isCopied, setIsCopied] = useState(false);
   const [isEmailCopied, setIsEmailCopied] = useState(false);
   const [isGeneratingBanner, setIsGeneratingBanner] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
@@ -119,7 +118,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
     if (job?.id) {
       trackJobView(job);
     }
-  }, [job?.id]);
+  }, [job]);
 
   // Guard clause: must be after hooks
   if (!job) return null;

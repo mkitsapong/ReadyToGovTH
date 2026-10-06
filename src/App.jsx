@@ -70,7 +70,7 @@ function getActivePage(pathname) {
 }
 
 // ─── App Context (avoids prop drilling through MainContent) ─────────────────
-export const AppContext = createContext(null);
+const AppContext = createContext(null);
 
 // ─── Main Content Wrapper ───────────────────────────────────────────────────
 // Reads shared data from AppContext instead of receiving 15+ props

@@ -416,45 +416,6 @@ ul {
   animation: slideDown 0.25s ease both;
 }
 
-/* ── Keyboard Shortcut Hint Badge (".search-kbd-hint") ─────────────────────
-   Shows "/" inside the search box on desktop as a subtle hint.
-   Hidden on mobile where keyboard shortcuts don't apply.                    */
-.search-kbd-hint {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 5px;
-  border-radius: 5px;
-  border: 1.5px solid var(--gray-300, #cbd5e1);
-  background: var(--gray-100, #f1f5f9);
-  color: var(--gray-500, #64748b);
-  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0;
-  pointer-events: none;
-  user-select: none;
-  flex-shrink: 0;
-  transition: opacity 0.2s ease;
-  opacity: 0.7;
-}
-
-[data-theme="dark"] .search-kbd-hint {
-  border-color: var(--navy-500, #374151);
-  background: var(--navy-600, #1F2937);
-  color: var(--gray-400, #94a3b8);
-}
-
-/* Hide shortcut hint on mobile (touch devices don't have "/" shortcut) */
-@media (max-width: 768px) {
-  .search-kbd-hint {
-    display: none;
-  }
-}
-
 /* ── keyboard-focused: pulse ring animation on "/" press ───────────────────
    A brief amber glow flashes on the search input to confirm activation.    */
 @keyframes kbdFocusPulse {
