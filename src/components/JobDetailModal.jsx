@@ -5,11 +5,6 @@ import { ModalExamPrepSection } from "./ExamResources.jsx";
 import SocialShareCover from "./SocialShareCover.jsx";
 import { CATEGORY_MAP, EDU_COLORS } from "../utils/constants.js";
 import { formatDate, daysLeft, getDisplayProvinces, getTotalJobPositions } from "../utils/helpers.js";
-import {
-  buildCalendarEventData,
-  openNativeMobileCalendar,
-  getDevicePlatform,
-} from "../utils/calendarHelper.js";
 import JobPrintSummaryModal from "./JobPrintSummaryModal.jsx";
 import AddToCalendarModal from "./AddToCalendarModal.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
@@ -68,21 +63,6 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       ...prev,
       [idx]: !prev[idx]
     }));
-  };
-
-  const handleQuickCalendarClick = (e) => {
-    e.stopPropagation();
-    const { isMobile } = getDevicePlatform();
-    if (isMobile) {
-      // 1-Tap: Directly trigger the native Calendar app on the mobile phone!
-      const eventData = buildCalendarEventData(job, {
-        eventType: "deadline",
-        reminderDays: [1, 3],
-      });
-      openNativeMobileCalendar(eventData, onToast);
-    } else {
-      setShowCalendarModal(true);
-    }
   };
 
   // Keyboard listener for Escape key to close document viewer or exit fullscreen
@@ -456,20 +436,6 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                       <span className="stat-pill-icon">{days === 0 ? "🚨" : days <= 5 ? "🔥" : "⏳"}</span>
                       <span>{days === 0 ? "ปิดรับวันนี้!" : `เหลือ ${days} วัน`}</span>
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleQuickCalendarClick}
-                      className="btn-stat-calendar-quick"
-                      title="บันทึกเตือนวันปิดรับสมัครลงปฏิทินในมือถือ / คอมพิวเตอร์"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                      </svg>
-                      <span>เตือนปฏิทิน</span>
-                    </button>
                   </div>
                 </>
               ) : (
