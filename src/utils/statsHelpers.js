@@ -331,9 +331,13 @@ export function calculateProvinceStats(jobs, topLimit = 10) {
     ratioPercent: Math.round((p.jobCount / maxJobCount) * 100),
   }));
 
-  const sortedRegions = Array.from(regionMap.values()).sort(
-    (a, b) => b.jobCount - a.jobCount
-  );
+  const sortedRegions = Array.from(regionMap.values()).sort((a, b) => {
+    const isASpecial = a.name.includes("ส่วนกลาง") || a.name.includes("ทั่วประเทศ");
+    const isBSpecial = b.name.includes("ส่วนกลาง") || b.name.includes("ทั่วประเทศ");
+    if (isASpecial && !isBSpecial) return 1;
+    if (!isASpecial && isBSpecial) return -1;
+    return b.jobCount - a.jobCount || b.positionCount - a.positionCount;
+  });
 
   return {
     topProvinces: enrichedTopProvinces,

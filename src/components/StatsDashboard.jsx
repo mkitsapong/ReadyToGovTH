@@ -529,7 +529,7 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                 >
                   <div className="stats-cat-bottom-left">
                     <span className="stats-cat-bottom-tag">INSIGHT</span>
-                    <div>
+                    <div className="stats-cat-bottom-info">
                       <strong className="stats-cat-bottom-title">
                         หมวดหมู่ที่เปิดรับมากที่สุด: {topCategory.name}
                       </strong>
@@ -629,13 +629,13 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                       onClick={() => handleSelectProvinceClick("ทั่วประเทศ")}
                       title="คลิกดูกลุ่มงานที่เปิดรับทั่วประเทศ / ส่วนกลาง"
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div className="stats-nationwide-left">
                         <span className="stats-nationwide-icon-tag">ALL</span>
-                        <div>
-                          <strong style={{ color: "var(--text-main)", fontSize: "0.88rem" }}>
+                        <div className="stats-nationwide-info">
+                          <strong className="stats-nationwide-title">
                             เปิดรับทุกจังหวัด / ทั่วประเทศ / ส่วนกลาง
                           </strong>
-                          <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                          <div className="stats-nationwide-desc">
                             ตำแหน่งที่เปิดรับครอบคลุมทุกพื้นที่และหน่วยงานส่วนกลาง
                           </div>
                         </div>
@@ -666,28 +666,74 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
               </div>
 
               <div className="stats-region-grid">
-                {regionStats.map((r, i) => (
-                  <div
-                    key={i}
-                    className="stats-region-card clickable"
-                    onClick={() => handleSelectRegionClick(r.name)}
-                    title={`คลิกเพื่อดูประกาศงานใน ${r.name}`}
-                  >
-                    <div className="stats-region-card-top">
-                      <span className="stats-region-title">{r.name}</span>
-                      <span className="stats-region-arrow">↗</span>
-                    </div>
-                    <span className="stats-region-num">
-                      {r.jobCount}{" "}
-                      <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-muted)" }}>
-                        ประกาศ
+                {regionStats.map((r, i) => {
+                  const isSpecial =
+                    r.name.includes("ส่วนกลาง") ||
+                    r.name.includes("ทั่วประเทศ") ||
+                    (regionStats.length % 3 === 1 && i === regionStats.length - 1);
+
+                  if (isSpecial) {
+                    return (
+                      <div
+                        key={i}
+                        className="stats-region-card stats-region-card-special clickable"
+                        onClick={() => handleSelectRegionClick(r.name)}
+                        title={`คลิกเพื่อดูประกาศงานใน ${r.name}`}
+                      >
+                        <div className="stats-region-special-left">
+                          <div className="stats-region-special-icon-wrap">
+                            <span className="stats-region-special-icon">🌐</span>
+                          </div>
+                          <div className="stats-region-special-info">
+                            <div className="stats-region-special-title-row">
+                              <span className="stats-region-special-title">{r.name}</span>
+                              <span className="stats-region-special-tag">ส่วนกลาง / ทั่วประเทศ</span>
+                            </div>
+                            <span className="stats-region-special-sub">
+                              ตำแหน่งที่เปิดรับครอบคลุมทุกพื้นที่และหน่วยงานส่วนกลาง
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="stats-region-special-right">
+                          <div className="stats-region-special-metrics">
+                            <span className="stats-region-num">
+                              {r.jobCount}{" "}
+                              <span className="stats-region-unit">ประกาศ</span>
+                            </span>
+                            <span className="stats-region-pos-tag">
+                              {r.positionCount.toLocaleString()} อัตรากำลัง
+                            </span>
+                          </div>
+                          <span className="stats-region-arrow">↗</span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={i}
+                      className="stats-region-card clickable"
+                      onClick={() => handleSelectRegionClick(r.name)}
+                      title={`คลิกเพื่อดูประกาศงานใน ${r.name}`}
+                    >
+                      <div className="stats-region-card-top">
+                        <span className="stats-region-title">{r.name}</span>
+                        <span className="stats-region-arrow">↗</span>
+                      </div>
+                      <span className="stats-region-num">
+                        {r.jobCount}{" "}
+                        <span className="stats-region-unit">
+                          ประกาศ
+                        </span>
                       </span>
-                    </span>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                      {r.positionCount.toLocaleString()} อัตรากำลัง
-                    </span>
-                  </div>
-                ))}
+                      <span className="stats-region-pos-text">
+                        {r.positionCount.toLocaleString()} อัตรากำลัง
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

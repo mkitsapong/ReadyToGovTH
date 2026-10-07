@@ -8,12 +8,18 @@
   background: var(--bg-app);
   color: var(--text-main);
   transition: background-color var(--transition-normal);
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .stats-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 /* ── Top Navigation Bar (Breadcrumb & Micro Chips) ────────────────────────── */
@@ -408,20 +414,22 @@
 /* ── Top KPI Grid ────────────────────────────────────────────────────────── */
 .stats-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+  width: 100%;
+  min-width: 0;
 }
 
 @media (min-width: 640px) {
   .stats-kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (min-width: 1024px) {
   .stats-kpi-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -438,6 +446,8 @@
   gap: 12px;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
   overflow: hidden;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stats-kpi-glow {
@@ -533,6 +543,9 @@
   margin-bottom: 24px;
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .stats-chart-card:hover {
@@ -557,6 +570,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  width: 100%;
 }
 
 .stats-card-title {
@@ -567,6 +582,8 @@
   align-items: center;
   gap: 10px;
   letter-spacing: -0.02em;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .stats-card-subtitle {
@@ -574,6 +591,8 @@
   color: var(--text-muted);
   margin: 0;
   line-height: 1.5;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .stats-chart-controls {
@@ -763,14 +782,16 @@
 /* ── Two Columns Grid for Categories & Provinces ─────────────────────────── */
 .stats-two-columns {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   margin-bottom: 24px;
+  width: 100%;
+  min-width: 0;
 }
 
 @media (min-width: 1024px) {
   .stats-two-columns {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: stretch;
   }
 }
@@ -780,6 +801,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* ── Category Insights Card Layout (Full & Balanced) ───────────────────────── */
@@ -787,6 +810,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* 1. Top Donut Showcase + Summary Highlights */
@@ -799,6 +824,8 @@
   border-radius: var(--radius-xl);
   padding: 14px 18px;
   margin-bottom: 12px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
@@ -886,6 +913,8 @@
   flex-direction: column;
   gap: 2px;
   transition: all var(--transition-fast);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stats-cat-metric-pill:hover {
@@ -916,6 +945,8 @@
   font-size: 0.73rem;
   color: var(--text-muted);
   line-height: 1.3;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* 2. Full-Width Category List Rows */
@@ -927,6 +958,7 @@
   justify-content: space-between;
   width: 100%;
   margin-bottom: 20px;
+  min-width: 0;
 }
 
 .stats-cat-row {
@@ -939,6 +971,8 @@
   border: 1px solid var(--border-light);
   cursor: pointer;
   transition: all var(--transition-fast);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stats-cat-row:hover,
@@ -954,6 +988,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
 }
 
 .stats-cat-row-left {
@@ -1056,6 +1091,7 @@
   font-size: 0.73rem;
   color: var(--text-muted);
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .stats-cat-bullet {
@@ -1088,6 +1124,8 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   margin-top: auto;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stats-cat-bottom-banner:hover {
@@ -1098,21 +1136,29 @@
 
 .stats-cat-bottom-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   min-width: 0;
+  flex: 1;
+  width: 100%;
+}
+
+.stats-cat-bottom-info {
+  min-width: 0;
+  flex: 1;
 }
 
 .stats-cat-bottom-tag {
   background: rgba(249, 115, 22, 0.15);
   color: var(--accent);
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 6px;
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .stats-tag-no-ocsc {
@@ -1131,17 +1177,20 @@
 
 .stats-cat-bottom-title {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   color: var(--text-main);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .stats-cat-bottom-desc {
   font-size: 0.74rem;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 3px;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .stats-cat-bottom-badge {
@@ -1185,6 +1234,8 @@
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition-fast);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stats-province-item:hover {
@@ -1198,12 +1249,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 
 .stats-province-name-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .stats-rank-badge {
@@ -1217,6 +1272,7 @@
   font-weight: 800;
   background: var(--border-light);
   color: var(--text-body);
+  flex-shrink: 0;
 }
 
 .stats-rank-1 {
@@ -1241,6 +1297,10 @@
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .stats-province-region {
@@ -1250,6 +1310,7 @@
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
 
 .stats-province-counts {
@@ -1258,6 +1319,7 @@
   gap: 8px;
   font-size: 0.8rem;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .stats-province-highlight {
@@ -1325,6 +1387,9 @@
   margin-top: auto;
   cursor: pointer;
   transition: all var(--transition-fast);
+  min-width: 0;
+  box-sizing: border-box;
+  gap: 12px;
 }
 
 .stats-nationwide-icon-tag {
@@ -1342,6 +1407,38 @@
   background: rgba(249, 115, 22, 0.14);
   border-color: rgba(249, 115, 22, 0.45);
   transform: translateY(-2px);
+}
+
+.stats-nationwide-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+  width: 100%;
+}
+
+.stats-nationwide-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.stats-nationwide-title {
+  display: block;
+  color: var(--text-main);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.stats-nationwide-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .stats-nationwide-badge {
@@ -1390,65 +1487,6 @@
   font-family: 'Plus Jakarta Sans', var(--font-sans);
 }
 
-/* ── Education Breakdown Section ─────────────────────────────────────────── */
-.stats-sub-analytics {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-@media (min-width: 768px) {
-  .stats-sub-analytics {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.stats-edu-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.stats-edu-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.stats-edu-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.stats-edu-label {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.stats-edu-count {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.stats-edu-bar-track {
-  width: 100%;
-  height: 8px;
-  background: var(--bg-card-subtle);
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-}
-
-.stats-edu-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-  border-radius: 999px;
-  transition: width 0.6s ease;
-}
 
 /* ── Empty State ─────────────────────────────────────────────────────────── */
 .stats-empty-state {
@@ -1493,33 +1531,47 @@
 /* ── Regional Distribution & Education Breakdown (Sub-Analytics Grid) ────── */
 .stats-sub-analytics {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   margin-top: 24px;
+  width: 100%;
+  min-width: 0;
 }
 
 @media (min-width: 1024px) {
   .stats-sub-analytics {
-    grid-template-columns: 1fr 1fr;
-    align-items: stretch;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 }
 
 /* Region Cards Grid */
 .stats-region-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 860px) {
+  .stats-region-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .stats-region-card {
   display: flex;
   flex-direction: column;
-  padding: 14px 16px;
+  justify-content: space-between;
+  padding: 13px 15px;
   background: var(--bg-card-subtle);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   transition: all var(--transition-fast);
+  min-width: 0;
+  min-height: 94px;
+  box-sizing: border-box;
 }
 
 .stats-region-card.clickable {
@@ -1535,21 +1587,28 @@
 
 .stats-region-card-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 6px;
   margin-bottom: 6px;
+  min-width: 0;
 }
 
 .stats-region-title {
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 700;
   color: var(--text-main);
+  line-height: 1.3;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .stats-region-arrow {
   font-size: 0.8rem;
   color: var(--text-muted);
   transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .stats-region-card.clickable:hover .stats-region-arrow {
@@ -1563,7 +1622,134 @@
   color: var(--accent);
   font-family: 'Plus Jakarta Sans', var(--font-sans);
   line-height: 1.2;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
+}
+
+.stats-region-unit {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.stats-region-pos-text {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+}
+
+/* ── Full-Width Region Banner Card (Spans across all columns, eliminating empty space) ── */
+.stats-region-card-special {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 18px;
+  min-height: auto;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border: 1px dashed rgba(249, 115, 22, 0.35);
+}
+
+.stats-region-card-special:hover {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.14) 0%, rgba(59, 130, 246, 0.09) 100%);
+  border-color: var(--accent);
+}
+
+.stats-region-special-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.stats-region-special-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: rgba(249, 115, 22, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.stats-region-special-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stats-region-special-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stats-region-special-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.stats-region-special-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.stats-region-special-sub {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.stats-region-special-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.stats-region-special-metrics {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.stats-region-pos-tag {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .stats-region-card-special {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .stats-region-special-right {
+    justify-content: space-between;
+    width: 100%;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(249, 115, 22, 0.2);
+  }
+
+  .stats-region-special-metrics {
+    align-items: flex-start;
+  }
 }
 
 /* Education Demand List */
@@ -1571,6 +1757,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 
 .stats-edu-row {
@@ -1582,6 +1770,8 @@
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .stats-edu-row.clickable {
@@ -1599,18 +1789,26 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 
 .stats-edu-label {
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .stats-edu-count {
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .stats-edu-bar-track {
@@ -1626,6 +1824,296 @@
   background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%);
   border-radius: 999px;
   transition: width 0.5s ease;
+}
+
+/* ── Mobile Responsive Styles ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .stats-page {
+    padding: 16px 0 60px 0;
+  }
+
+  .stats-container {
+    padding: 0 14px;
+  }
+
+  .stats-top-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .stats-back-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stats-top-badges {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .stats-hero {
+    padding: 24px 18px;
+    border-radius: var(--radius-xl);
+    margin-bottom: 18px;
+  }
+
+  .stats-hero-title {
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+
+  .stats-hero-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .stats-hero-chips {
+    gap: 8px;
+  }
+
+  .stats-hero-chip {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
+  .stats-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .stats-btn-action {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+
+  .stats-filter-bar {
+    padding: 10px 14px;
+    gap: 10px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 18px;
+  }
+
+  .stats-filter-group {
+    width: 100%;
+    justify-content: space-between;
+    font-size: 0.8rem;
+  }
+
+  .stats-active-status-tag {
+    font-size: 0.76rem;
+    padding: 4px 10px;
+    white-space: normal;
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .stats-kpi-grid {
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .stats-kpi-card {
+    padding: 18px 16px;
+    border-radius: var(--radius-lg);
+  }
+
+  .stats-kpi-num {
+    font-size: 1.85rem;
+  }
+
+  .stats-two-columns {
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .stats-chart-card {
+    padding: 18px 14px;
+    border-radius: var(--radius-xl);
+    margin-bottom: 18px;
+  }
+
+  .stats-card-header {
+    margin-bottom: 16px;
+  }
+
+  .stats-card-title {
+    font-size: 1.18rem;
+  }
+
+  .stats-cat-top-showcase {
+    padding: 14px 12px;
+    gap: 14px;
+  }
+
+  .stats-donut-svg-wrapper {
+    width: 130px;
+    height: 130px;
+  }
+
+  .stats-cat-metric-pill {
+    padding: 8px 12px;
+  }
+
+  .stats-cat-pill-main {
+    font-size: 0.88rem;
+  }
+
+  .stats-cat-pill-sub {
+    font-size: 0.72rem;
+  }
+
+  .stats-cat-row {
+    padding: 10px 12px;
+  }
+
+  .stats-cat-name {
+    font-size: 0.84rem;
+  }
+
+  .stats-cat-sub-info {
+    font-size: 0.7rem;
+    gap: 4px 6px;
+  }
+
+  /* Hide hover-only cta on touch/mobile to prevent horizontal space consumption */
+  .stats-cat-cta-text {
+    display: none !important;
+  }
+
+  .stats-province-cta {
+    display: none !important;
+  }
+
+  .stats-province-item {
+    padding: 9px 12px;
+  }
+
+  .stats-province-counts {
+    font-size: 0.74rem;
+    gap: 4px;
+  }
+
+  .stats-cat-bottom-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .stats-cat-bottom-title {
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  .stats-cat-bottom-desc {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .stats-cat-bottom-badge {
+    align-self: flex-end;
+  }
+
+  .stats-nationwide-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .stats-nationwide-title {
+    font-size: 0.84rem;
+    line-height: 1.35;
+  }
+
+  .stats-nationwide-desc {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .stats-nationwide-badge {
+    align-self: flex-end;
+  }
+
+  .stats-sub-analytics {
+    gap: 18px;
+    margin-top: 18px;
+  }
+
+  .stats-region-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stats-region-card {
+    padding: 12px;
+  }
+
+  .stats-region-num {
+    font-size: 1.18rem;
+  }
+
+  .stats-edu-row {
+    padding: 9px 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .stats-container {
+    padding: 0 10px;
+  }
+
+  .stats-chart-card {
+    padding: 16px 12px;
+    border-radius: var(--radius-lg);
+  }
+
+  .stats-hero {
+    padding: 18px 14px;
+  }
+
+  .stats-hero-title {
+    font-size: 1.35rem;
+  }
+
+  .stats-province-counts {
+    font-size: 0.7rem;
+  }
+
+  .stats-province-name {
+    font-size: 0.85rem;
+  }
+
+  .stats-cat-row-right {
+    gap: 5px;
+  }
+
+  .stats-cat-percent-badge {
+    min-width: 36px;
+    padding: 2px 5px;
+    font-size: 0.7rem;
+  }
+
+  .stats-cat-bottom-title {
+    font-size: 0.78rem;
+  }
+
+  .stats-cat-bottom-desc {
+    font-size: 0.68rem;
+  }
+
+  .stats-nationwide-title {
+    font-size: 0.8rem;
+  }
+
+  .stats-nationwide-desc {
+    font-size: 0.68rem;
+  }
 }
 
 /* ── Print Styles ────────────────────────────────────────────────────────── */
