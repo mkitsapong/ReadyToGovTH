@@ -333,10 +333,13 @@ export default function App() {
   }
 
   function handleSelectProvince(province) {
+    const basePath = (location.pathname === "/" || location.pathname.startsWith("/category/"))
+      ? location.pathname
+      : "/";
     if (!province) {
-      navigate(location.pathname);
+      navigate(basePath);
     } else {
-      navigate(`${location.pathname}?province=${encodeURIComponent(province)}`);
+      navigate(`${basePath}?province=${encodeURIComponent(province)}`);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -377,6 +380,9 @@ export default function App() {
               <AdminAnalyticsDashboard
                 jobs={jobs}
                 onClose={() => navigate("/stats")}
+                onSelectJob={(job) => {
+                  navigate(`/job/${job.id}`);
+                }}
               />
             } />
             <Route path="/policy/:policyId" element={<PolicyPage />} />
@@ -432,6 +438,10 @@ export default function App() {
           <AdminAnalyticsDashboard
             jobs={jobs}
             onClose={() => setShowAnalytics(false)}
+            onSelectJob={(job) => {
+              setShowAnalytics(false);
+              navigate(`/job/${job.id}`);
+            }}
           />
         </Suspense>
       )}

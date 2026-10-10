@@ -76,11 +76,12 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
   const handleSelectProvinceClick = (province) => {
     if (onSelectProvince) {
       onSelectProvince(province);
-    }
-    if (province === "ทั่วประเทศ") {
-      navigate("/?province=ทั่วประเทศ");
     } else {
-      navigate(`/?province=${encodeURIComponent(province)}`);
+      if (province === "ทั่วประเทศ") {
+        navigate("/?province=ทั่วประเทศ");
+      } else {
+        navigate(`/?province=${encodeURIComponent(province)}`);
+      }
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -88,8 +89,9 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
   const handleSelectRegionClick = (regionName) => {
     if (onSelectProvince) {
       onSelectProvince(regionName);
+    } else {
+      navigate(`/?province=${encodeURIComponent(regionName)}`);
     }
-    navigate(`/?province=${encodeURIComponent(regionName)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
