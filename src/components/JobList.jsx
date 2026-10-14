@@ -12,6 +12,7 @@ import { JobCardSkeleton } from "./LoadingSkeleton.jsx";
 import { isFirebaseConfigured } from "../firebase.js";
 import { searchJobsLocal } from "../services/searchService.js";
 import { trackSearchQuery } from "../services/analyticsService.js";
+import { EDUCATION_LEVELS } from "../utils/constants.js";
 
 const CATEGORY_FILTER = {
   home: null,
@@ -47,6 +48,30 @@ function safeSetSession(key, val) {
   } catch {
     // ignore storage quota/security error
   }
+}
+
+// Jobs shown per page / per "load more" click
+const PAGE_SIZE = 12;
+
+function jobMatchesCategory(job, categoryFilter) {
+  if (!categoryFilter) return true;
+  const cats = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  return cats.includes(categoryFilter);
+}
+
+function jobMatchesProvince(job, selectedProvince) {
+  if (!selectedProvince) return true;
+  const jobProvinces = getProvinces(job);
+  if (jobProvinces.includes("ทุกจังหวัด") || jobProvinces.includes("ทั่วประเทศ")) return true;
+  const regionMatch = regions.find((r) => r.name === selectedProvince);
+  if (regionMatch) {
+    return jobProvinces.includes(regionMatch.name) || jobProvinces.some((p) => regionMatch.provinces.includes(p));
+  }
+  return jobProvinces.includes(selectedProvince);
+}
+
+function isJobActive(job) {
+  return !job.deadline || daysLeft(job.deadline) >= 0;
 }
 
 export default function JobList({
@@ -91,9 +116,10 @@ export default function JobList({
   const [sortBy, setSortBy] = useState(() => {
     return getParam("sort", safeGetSession("sortBy", "deadline"));
   });
+  // Visible page range [startPage, currentPage]. "Load more" extends currentPage,
   const [currentPage, setCurrentPage] = useState(() => {
-    const saved = safeGetSession("currentPage");
-    return saved ? parseInt(saved, 10) : 1;
+    const saved = parseInt(safeGetSession("currentPage"), 10);
+    return saved > 0 ? saved : 1;
   });
   const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(() => safeGetSession("showBookmarksOnly") === "true");
@@ -106,6 +132,10 @@ export default function JobList({
     return fromUrl !== null ? fromUrl === "1" : safeGetSession("filterNoOCSC") === "true";
   });
   const [filterOCSC, setFilterOCSC] = useState(() => {
+    // "No OCSC" and "OCSC" are mutually exclusive — if both arrive (e.g. ?ocsc=1&noocsc=1), "no" wins
+    const noFromUrl = urlParams.get("noocsc");
+    const noActive = noFromUrl !== null ? noFromUrl === "1" : safeGetSession("filterNoOCSC") === "true";
+    if (noActive) return false;
     const fromUrl = urlParams.get("ocsc");
     return fromUrl !== null ? fromUrl === "1" : safeGetSession("filterOCSC") === "true";
   });
@@ -127,13 +157,28 @@ export default function JobList({
       const next = new URLSearchParams(prev);
       // keep ?province= intact
       searchQuery ? next.set("q", searchQuery) : next.delete("q");
-      sortBy !== "deadline" ? next.set("sort", sortBy) : next.delete("sort");
+      sortBy !== "deadline" && sortBy !== "relevance" ? next.set("sort", sortBy) : next.delete("sort");
+      userEducation ? next.set("edu", userEducation) : next.delete("edu");
       showExpired ? next.set("expired", "1") : next.delete("expired");
       filterNoOCSC ? next.set("noocsc", "1") : next.delete("noocsc");
       filterOCSC ? next.set("ocsc", "1") : next.delete("ocsc");
       return next;
     }, { replace: true });
-  }, [searchQuery, sortBy, currentPage, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC, setUrlParams]);
+  }, [searchQuery, sortBy, currentPage, userEducation, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC, setUrlParams]);
+
+  // ── Auto relevance sort while searching ──────────────────────────────────────
+  // When the user starts typing, switch the default sort (deadline) to relevance.
+  // When the query is cleared, fall back to deadline. Explicit choices are kept.
+  const hasSearchQuery = searchQuery.trim().length > 0;
+  const prevHasSearchQueryRef = useRef(false);
+  useEffect(() => {
+    if (!hasSearchQuery) {
+      setSortBy((s) => (s === "relevance" ? "deadline" : s));
+    } else if (!prevHasSearchQueryRef.current) {
+      setSortBy((s) => (s === "deadline" ? "relevance" : s));
+    }
+    prevHasSearchQueryRef.current = hasSearchQuery;
+  }, [hasSearchQuery]);
 
   // ── Keyboard Shortcuts ─────────────────────────────────────────────────
   useKeyboardShortcuts({ searchInputId: "job-search-input" });
@@ -156,7 +201,8 @@ export default function JobList({
     userEducation ||
     filterOCSC ||
     filterNoOCSC ||
-    showBookmarksOnly
+    showBookmarksOnly ||
+    showExpired
   );
 
   const handleResetFilters = useCallback(() => {
@@ -166,6 +212,7 @@ export default function JobList({
     setFilterOCSC(false);
     setFilterNoOCSC(false);
     setShowBookmarksOnly(false);
+    setShowExpired(false);
     setCurrentPage(1);
   }, [onSelectProvince, onChangeUserEducation]);
   
@@ -205,15 +252,6 @@ export default function JobList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobs]);
   const regionDropdownRef = useRef(null);
-  const [itemsPerPage, setItemsPerPage] = useState(() => {
-    const saved = safeGetSession("itemsPerPage");
-    const parsed = saved ? parseInt(saved, 10) : 12;
-    return parsed > 0 ? parsed : 12;
-  });
-
-  useEffect(() => {
-    safeSetSession("itemsPerPage", itemsPerPage);
-  }, [itemsPerPage]);
 
   const closeRegionDropdown = () => {
     setIsRegionDropdownOpen(false);
@@ -249,18 +287,15 @@ export default function JobList({
 
     // Category filter
     if (categoryFilter) {
-      result = result.filter((j) => {
-        const cats = j.categories && j.categories.length > 0 ? j.categories : (j.category ? [j.category] : []);
-        return cats.includes(categoryFilter);
-      });
+      result = result.filter((j) => jobMatchesCategory(j, categoryFilter));
     }
 
     // Expired vs Active filter
     if (showExpired) {
-      result = result.filter((j) => j.deadline && daysLeft(j.deadline) < 0);
+      result = result.filter((j) => !isJobActive(j));
     } else if (!showBookmarksOnly) {
       // Default view: Show only currently active jobs
-      result = result.filter((j) => !j.deadline || daysLeft(j.deadline) >= 0);
+      result = result.filter(isJobActive);
     }
     
     // Bookmarks Filter
@@ -278,18 +313,7 @@ export default function JobList({
 
     // Province / Region filter
     if (selectedProvince) {
-      const regionMatch = regions.find((r) => r.name === selectedProvince);
-      if (regionMatch) {
-        result = result.filter((j) => {
-          const jobProvinces = getProvinces(j);
-          return jobProvinces.includes(regionMatch.name) || jobProvinces.some((p) => regionMatch.provinces.includes(p) || p === "ทุกจังหวัด" || p === "ทั่วประเทศ");
-        });
-      } else {
-        result = result.filter((j) => {
-          const jobProvinces = getProvinces(j);
-          return jobProvinces.includes(selectedProvince) || jobProvinces.includes("ทุกจังหวัด") || jobProvinces.includes("ทั่วประเทศ");
-        });
-      }
+      result = result.filter((j) => jobMatchesProvince(j, selectedProvince));
     }
 
     // Smart Full-text & Fuzzy Search (Thai tokenization + Typo tolerance + Gov Synonyms)
@@ -340,11 +364,22 @@ export default function JobList({
     }
   }, [debouncedSearchQuery, filtered.length]);
 
-  // Stats
+  // Stats (result-level, shown next to the filter count)
   const totalPositions = filtered.reduce(
     (sum, j) => sum + getTotalJobPositions(j),
     0
   );
+
+  // Hero stats: overall open jobs for this category/province (not affected by search/chips)
+  const heroStats = useMemo(() => {
+    const base = (jobs || []).filter(
+      (j) => jobMatchesCategory(j, categoryFilter) && isJobActive(j) && jobMatchesProvince(j, selectedProvince)
+    );
+    return {
+      count: base.length,
+      positions: base.reduce((sum, j) => sum + getTotalJobPositions(j), 0),
+    };
+  }, [jobs, categoryFilter, selectedProvince]);
 
   // Reset page when filters change
   const prevFiltersRef = useRef({
@@ -371,9 +406,36 @@ export default function JobList({
     }
   }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]);
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const currentJobs = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const hasMorePages = currentPage < totalPages;
+  // ── Pagination (Clean Classic) ──────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const currentJobs = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const rangeFrom = filtered.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const rangeTo = Math.min(safePage * PAGE_SIZE, filtered.length);
+
+  // Persist clamped values once data is loaded
+  useEffect(() => {
+    if (isLoading || !jobs || jobs.length === 0) return;
+    if (currentPage !== safePage) setCurrentPage(safePage);
+  }, [isLoading, jobs, currentPage, safePage]);
+
+  const scrollToJobs = () => {
+    const jobsEl = document.querySelector(".jobs-section");
+    window.scrollTo({ top: (jobsEl?.offsetTop ?? 0) - 140, behavior: "smooth" });
+  };
+
+  const goToPage = (p) => {
+    const page = Math.min(Math.max(1, p), totalPages);
+    setCurrentPage(page);
+    scrollToJobs();
+  };
+
+  // OCSC (ภาค ก) tri-state: all / no / yes
+  const ocscMode = filterNoOCSC ? "no" : filterOCSC ? "yes" : "all";
+  const setOcscMode = (mode) => {
+    setFilterNoOCSC(mode === "no");
+    setFilterOCSC(mode === "yes");
+  };
 
   return (
     <>
@@ -389,12 +451,12 @@ export default function JobList({
             <div className="hero-stats-wrapper">
               <div className="hero-stats">
                 <div className="hero-stat">
-                  <span className="hero-stat-number">{filtered.length}</span>
-                  <span className="hero-stat-label">ประกาศรับสมัคร</span>
+                  <span className="hero-stat-number">{isLoading ? "–" : heroStats.count.toLocaleString()}</span>
+                  <span className="hero-stat-label">ประกาศที่เปิดรับอยู่</span>
                 </div>
                 <div className="hero-stat">
-                  <span className="hero-stat-number">{totalPositions}</span>
-                  <span className="hero-stat-label">อัตราว่างทั้งหมด</span>
+                  <span className="hero-stat-number">{isLoading ? "–" : heroStats.positions.toLocaleString()}</span>
+                  <span className="hero-stat-label">อัตราว่างรวม</span>
                 </div>
                 {selectedProvince && (
                   <div className="hero-stat">
@@ -451,7 +513,7 @@ export default function JobList({
             <div className="hero-edu-pills">
               {/* แถวที่ 1: ม.3, ม.6, ปวช., ปวส. */}
               <div className="hero-edu-row">
-                {["ม.3", "ม.6", "ปวช.", "ปวส."].map((edu) => {
+                {EDUCATION_LEVELS.slice(0, 4).map((edu) => {
                   const isActive = userEducation === edu;
                   return (
                     <button
@@ -468,7 +530,7 @@ export default function JobList({
 
               {/* แถวที่ 2: ปริญญาตรี, ปริญญาโท, ปริญญาเอก */}
               <div className="hero-edu-row">
-                {["ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก"].map((edu) => {
+                {EDUCATION_LEVELS.slice(4).map((edu) => {
                   const isActive = userEducation === edu;
                   return (
                     <button
@@ -506,6 +568,7 @@ export default function JobList({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="filter-search-input"
+                  aria-label="ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด"
                 />
                 {searchQuery && (
                   <button
@@ -519,8 +582,24 @@ export default function JobList({
                 )}
               </div>
 
-              {/* Selects Row: Region + Sort */}
+              {/* Selects Row: Education (mobile) + Region + Sort */}
               <div className="filter-selects-row">
+                {/* Education select — replaces hero edu card on mobile */}
+                <div className="filter-edu-wrap">
+                  <select
+                    id="job-edu-select"
+                    className={`filter-sort-select filter-edu-select ${userEducation ? "active" : ""}`}
+                    value={userEducation || ""}
+                    onChange={(e) => onChangeUserEducation(e.target.value || null)}
+                    aria-label="กรองตามวุฒิการศึกษา"
+                  >
+                    <option value="">🎓 ทุกวุฒิการศึกษา</option>
+                    {EDUCATION_LEVELS.map((edu) => (
+                      <option key={edu} value={edu}>🎓 {edu}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Region Dropdown */}
                 <div className="custom-region-dropdown" ref={regionDropdownRef}>
                   <button
@@ -594,9 +673,10 @@ export default function JobList({
                     className="filter-sort-select"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
+                    aria-label="เรียงลำดับประกาศ"
                   >
-                    {searchQuery.trim() && (
-                      <option value="relevance">🎯 ตรงที่สุดก่อน (Relevance)</option>
+                    {(searchQuery.trim() || sortBy === "relevance") && (
+                      <option value="relevance">🎯 ตรงที่สุดก่อน</option>
                     )}
                     <option value="deadline">⏳ ใกล้ปิดรับก่อน</option>
                     <option value="newest">⚡ ล่าสุดก่อน</option>
@@ -666,29 +746,33 @@ export default function JobList({
                   )}
                 </button>
                 
-                {/* OCSC Quick Filters */}
-                <button
-                  type="button"
-                  onClick={() => { setFilterNoOCSC(!filterNoOCSC); setFilterOCSC(false); }}
-                  className={`filter-chip-btn ${filterNoOCSC ? 'active-orange' : ''}`}
-                >
-                  <span className="chip-icon">✨</span>
-                  <span>ไม่ต้องผ่าน ภาค ก</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => { setFilterOCSC(!filterOCSC); setFilterNoOCSC(false); }}
-                  className={`filter-chip-btn ${filterOCSC ? 'active-blue' : ''}`}
-                >
-                  <span className="chip-icon">📝</span>
-                  <span>ต้องผ่าน ภาค ก</span>
-                </button>
+                {/* OCSC (ภาค ก) Segmented Control */}
+                <div className="filter-segment" role="group" aria-label="เงื่อนไข ภาค ก">
+                  <span className="filter-segment-label">ภาค ก</span>
+                  {[
+                    { mode: "all", label: "ทั้งหมด" },
+                    { mode: "no",  label: "✨ ไม่ต้องผ่าน" },
+                    { mode: "yes", label: "📝 ต้องผ่าน" },
+                  ].map(({ mode, label }) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      id={`filter-ocsc-${mode}`}
+                      onClick={() => setOcscMode(mode)}
+                      aria-pressed={ocscMode === mode}
+                      className={`filter-segment-btn seg-${mode} ${ocscMode === mode ? "active" : ""}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Result Count Badge */}
-              <div className="filter-count-badge">
-                พบ <strong>{filtered.length}</strong> ประกาศ{showExpired ? " (ปิดรับสมัครแล้ว)" : ""}
+              <div className="filter-count-badge" aria-live="polite">
+                พบ <strong>{filtered.length.toLocaleString()}</strong> ประกาศ
+                {filtered.length > 0 && <> · <strong>{totalPositions.toLocaleString()}</strong> อัตรา</>}
+                {showExpired ? " (ปิดรับสมัครแล้ว)" : ""}
               </div>
             </div>
           </div>
@@ -699,19 +783,9 @@ export default function JobList({
       <section className="jobs-section">
         <div className="container">
           {!isFirebaseConfigured && (
-            <div style={{
-              background: "#fffbeb",
-              border: "1.5px solid #fde68a",
-              borderRadius: "14px",
-              padding: "12px 18px",
-              marginBottom: "24px",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              boxShadow: "0 2px 8px rgba(245, 158, 11, 0.08)",
-            }}>
-              <span style={{ fontSize: "1.3rem" }}>💡</span>
-              <div style={{ fontSize: "0.85rem", color: "#92400e", lineHeight: 1.5 }}>
+            <div className="demo-mode-notice">
+              <span className="demo-mode-notice-icon">💡</span>
+              <div className="demo-mode-notice-text">
                 <strong>กำลังแสดงข้อมูลตัวอย่าง (Local Demo Mode):</strong> ยังไม่พบการตั้งค่าในไฟล์ <code>.env</code> ระบบจึงแสดงข้อมูลจำลองเพื่อความสะดวกในการทดสอบฟิลเตอร์ ค้นหางาน และสร้างภาพ AI แบนเนอร์
               </div>
             </div>
@@ -723,14 +797,14 @@ export default function JobList({
                 <JobCardSkeleton key={i} />
               ))
             ) : isError ? (
-              <div className="empty-state">
-                <div className="empty-state-icon" style={{ color: "#ef4444" }}>⚠️</div>
-                <h3 style={{ color: "#ef4444" }}>เกิดข้อผิดพลาดในการโหลดข้อมูล</h3>
+              <div className="empty-state empty-state-error">
+                <div className="empty-state-icon">⚠️</div>
+                <h3>เกิดข้อผิดพลาดในการโหลดข้อมูล</h3>
                 <p>โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง</p>
                 <button
-                  className="btn-primary"
+                  type="button"
+                  className="btn-primary empty-retry-btn"
                   onClick={() => window.location.reload()}
-                  style={{ marginTop: 16, padding: "10px 24px" }}
                 >
                   โหลดใหม่
                 </button>
@@ -744,13 +818,13 @@ export default function JobList({
                     ? "ประกาศงานทั้งหมดในขณะนี้ยังคงเปิดรับสมัครอยู่"
                     : "ลองเปลี่ยนคำค้นหา ปรับระดับวุฒิ หรือเลือกภูมิภาคใหม่"}
                 </p>
-                {!showExpired && hasActiveFilters && (
+                {hasActiveFilters && (
                   <button
                     type="button"
                     onClick={handleResetFilters}
                     className="empty-reset-btn"
                   >
-                    <span>🔄</span> ล้างคำค้นหาและตัวกรองทั้งหมด
+                    <span>🔄</span> {showExpired ? "กลับไปดูงานที่เปิดรับอยู่" : "ล้างคำค้นหาและตัวกรองทั้งหมด"}
                   </button>
                 )}
               </div>
@@ -758,9 +832,9 @@ export default function JobList({
               <>
                 {currentJobs.map((job, i) => (
                   <JobCard
-                    key={job.id ? `${job.id}-${i}` : i}
+                    key={job.id ?? `idx-${i}`}
                     job={job}
-                    style={{ animationDelay: `${i * 0.05}s` }}
+                    style={{ animationDelay: `${(i % PAGE_SIZE) * 0.05}s` }}
                     isAdmin={isAdmin}
                     onEdit={onEditJob}
                     onOpenPoster={setPosterJob}
@@ -784,84 +858,73 @@ export default function JobList({
             )}
           </div>
 
-          {/* Pagination Controls */}
+          {/* Clean Classic Pagination Controls */}
           {!isLoading && !isError && totalPages > 1 && (
-            <div className="pagination-wrapper">
-              {/* Load More Button — quick way to see more without page jump */}
-              {hasMorePages && (
-                <button
-                  className="pagination-load-more-btn"
-                  onClick={() => {
-                    setItemsPerPage(prev => {
-                      // Double the visible items up to showing all
-                      const next = Math.min(prev + 12, filtered.length);
-                      return next;
-                    });
-                    // Scroll to top of jobs section so user sees new items
-                    setTimeout(() => {
-                      const jobsEl = document.querySelector('.jobs-section');
-                      if (jobsEl) {
-                        window.scrollTo({ top: jobsEl.offsetTop - 140, behavior: 'smooth' });
-                      }
-                    }, 50);
-                  }}
-                >
-                  ดูเพิ่มอีก {Math.min(12, filtered.length - currentPage * itemsPerPage)} รายการ ↓
-                </button>
-              )}
+            <nav className="pagination-wrapper" aria-label="การแบ่งหน้าประกาศ">
+              <div className="pagination-info-badge">
+                <span className="pagination-info-dot" />
+                <span>
+                  แสดง <strong>{rangeFrom.toLocaleString()}–{rangeTo.toLocaleString()}</strong> จาก <strong>{filtered.length.toLocaleString()}</strong> ประกาศ
+                </span>
+                <span className="pagination-info-sep">•</span>
+                <span className="pagination-info-page">
+                  หน้า <strong>{safePage}</strong> / {totalPages}
+                </span>
+              </div>
 
-              {/* Page Navigation */}
-              <div className="pagination-nav-row">
+              <div className="pagination-nav-capsule">
                 <button
-                  className="pagination-btn"
-                  onClick={() => {
-                    setCurrentPage(p => Math.max(1, p - 1));
-                    window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
-                  }}
-                  disabled={currentPage === 1}
+                  type="button"
+                  id="pagination-prev-btn"
+                  className="pagination-btn pagination-btn-prev"
+                  onClick={() => goToPage(safePage - 1)}
+                  disabled={safePage === 1}
+                  aria-label="ไปยังหน้าก่อนหน้า"
                 >
-                  ก่อนหน้า
+                  <span className="pagination-arrow" aria-hidden="true">←</span>
+                  <span className="pagination-btn-text">ก่อนหน้า</span>
                 </button>
 
-                {Array.from({ length: totalPages }).map((_, i) => {
-                  const p = i + 1;
-                  // Show first, last, current, and one adjacent
-                  if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
-                    const isActive = p === currentPage;
-                    return (
-                      <button
-                        key={p}
-                        className={`pagination-num-btn ${isActive ? "active" : ""}`}
-                        onClick={() => {
-                          setCurrentPage(p);
-                          window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
-                        }}
-                      >
-                        {p}
-                      </button>
-                    );
-                  } else if (p === currentPage - 2 || p === currentPage + 2) {
-                    return <span key={`dots-${p}`} className="pagination-dots">...</span>;
-                  }
-                  return null;
-                })}
+                <div className="pagination-numbers-group">
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    const p = i + 1;
+                    if (p === 1 || p === totalPages || (p >= safePage - 1 && p <= safePage + 1)) {
+                      const isActive = p === safePage;
+                      return (
+                        <button
+                          type="button"
+                          key={p}
+                          className={`pagination-num-btn ${isActive ? "active" : ""}`}
+                          aria-current={isActive ? "page" : undefined}
+                          onClick={() => goToPage(p)}
+                        >
+                          {p}
+                        </button>
+                      );
+                    } else if (p === safePage - 2 || p === safePage + 2) {
+                      return <span key={`dots-${p}`} className="pagination-dots">…</span>;
+                    }
+                    return null;
+                  })}
+                </div>
 
                 <button
-                  className="pagination-btn"
-                  onClick={() => {
-                    setCurrentPage(p => Math.min(totalPages, p + 1));
-                    window.scrollTo({ top: (document.querySelector('.jobs-section')?.offsetTop ?? 0) - 140, behavior: 'smooth' });
-                  }}
-                  disabled={currentPage === totalPages}
+                  type="button"
+                  id="pagination-next-btn"
+                  className="pagination-btn pagination-btn-next"
+                  onClick={() => goToPage(safePage + 1)}
+                  disabled={safePage === totalPages}
+                  aria-label="ไปยังหน้าถัดไป"
                 >
-                  ถัดไป
+                  <span className="pagination-btn-text">ถัดไป</span>
+                  <span className="pagination-arrow" aria-hidden="true">→</span>
                 </button>
               </div>
-            </div>
+            </nav>
           )}
 
           {/* Banner แนะนำหนังสือ & คอร์สเตรียมสอบ */}
-          <div style={{ marginTop: 40 }}>
+          <div className="exam-prep-wrap">
             <ExamPrepBanner
               books={books}
               isAdmin={isAdmin}

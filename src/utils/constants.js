@@ -20,3 +20,7 @@ export const EDU_COLORS = {
   "ปริญญาเอก":  { bg: "#fce7f3", border: "#f9a8d4", color: "#831843" },
   "ไม่จำกัดวุฒิ": { bg: "#dcfce7", border: "#86efac", color: "#14532d" },
 };
+
+// Education levels selectable in the job filter (order matters for UI)
+// Used by: App (URL ?edu= validation), JobList (hero pills + mobile select)
+export const EDUCATION_LEVELS = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก"];

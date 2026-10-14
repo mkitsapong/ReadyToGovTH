@@ -14,6 +14,7 @@ import OfflineIndicator from "./components/OfflineIndicator.jsx";
 import SEO         from "./components/SEO.jsx";
 import { LoadingSpinner } from "./components/LoadingSkeleton.jsx";
 import * as api    from "./api.js";
+import { EDUCATION_LEVELS } from "./utils/constants.js";
 
 // 🚀 Dynamic Lazy-loaded Components (Code Splitting)
 const JobDetailPage = lazy(() => import("./components/JobDetailPage.jsx"));
@@ -46,12 +47,14 @@ function PageLoadingFallback() {
 }
 
 // ─── Toast ───────────────────────────────────────────────────────────────────
+const TOAST_ICONS = { success: "✅", info: "ℹ️", error: "❌" };
+
 function Toast({ toasts }) {
   return (
-    <div className="toast-container">
+    <div className="toast-container" role="status" aria-live="polite">
       {toasts.map((t) => (
         <div key={t.id} className={`toast toast-${t.type}`}>
-          {t.type === "success" ? "✅" : "❌"} {t.message}
+          {TOAST_ICONS[t.type] ?? "ℹ️"} {t.message}
         </div>
       ))}
     </div>
@@ -161,7 +164,15 @@ export default function App() {
   const [showAdmin,        setShowAdmin]      = useState(false);
   const [showAnalytics,    setShowAnalytics]  = useState(false);
   const [editingJob,       setEditingJob]     = useState(null);
-  const [userEducation,    setUserEducation]  = useState(null);
+  // Restore education filter from shareable URL (?edu=ปริญญาตรี)
+  const [userEducation,    setUserEducation]  = useState(() => {
+    try {
+      const edu = new URLSearchParams(window.location.search).get("edu");
+      return EDUCATION_LEVELS.includes(edu) ? edu : null;
+    } catch {
+      return null;
+    }
+  });
   const [toasts,           setToasts]         = useState([]);
 
   // ── Track Page Views in Firebase Analytics ──
@@ -333,14 +344,14 @@ export default function App() {
   }
 
   function handleSelectProvince(province) {
-    const basePath = (location.pathname === "/" || location.pathname.startsWith("/category/"))
-      ? location.pathname
-      : "/";
-    if (!province) {
-      navigate(basePath);
-    } else {
-      navigate(`${basePath}?province=${encodeURIComponent(province)}`);
-    }
+    const isListPage = location.pathname === "/" || location.pathname.startsWith("/category/");
+    const basePath = isListPage ? location.pathname : "/";
+    // Keep other shareable filters (q, edu, noocsc, ...) when already on a list page
+    const params = new URLSearchParams(isListPage ? location.search : "");
+    if (province) params.set("province", province);
+    else params.delete("province");
+    const qs = params.toString();
+    navigate(qs ? `${basePath}?${qs}` : basePath);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 

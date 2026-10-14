@@ -5070,99 +5070,155 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  margin-top: 3rem;
+  margin-top: 3.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.pagination-load-more-btn {
-  width: 100%;
-  max-width: 400px;
-  padding: 12px 24px;
-  border: 2px dashed var(--gray-300);
-  border-radius: var(--radius-lg);
-  background: var(--white);
-  color: var(--navy-700);
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.25s;
-  letter-spacing: 0.01em;
-}
-
-.pagination-load-more-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(249, 115, 22, 0.04);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.1);
-}
-
-.pagination-nav-row {
-  display: flex;
-  justify-content: center;
+/* Info badge above pagination */
+.pagination-info-badge {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  padding: 6px 18px;
+  background: var(--navy-50, #f8fafc);
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: 9999px;
+  font-size: 0.84rem;
+  color: var(--navy-600, #475569);
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.pagination-info-badge strong {
+  color: var(--navy-900, #0f172a);
+  font-weight: 700;
+}
+
+.pagination-info-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #f97316);
+  flex-shrink: 0;
+}
+
+.pagination-info-sep {
+  opacity: 0.3;
+}
+
+.pagination-info-page {
+  color: var(--navy-700, #334155);
+}
+
+/* Unified floating capsule */
+.pagination-nav-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: var(--white, #ffffff);
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.pagination-numbers-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 16px;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  background: var(--white);
-  color: var(--navy-700);
+  height: 40px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--navy-700, #334155);
   font-weight: 600;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: var(--gray-50);
-  border-color: var(--gray-300);
-  color: var(--navy-900);
+  background: var(--navy-50, #f1f5f9);
+  color: var(--navy-900, #0f172a);
+  border-color: var(--border-light, #e2e8f0);
+}
+
+.pagination-btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .pagination-btn:disabled {
-  background: var(--gray-50);
-  border-color: var(--gray-200);
-  color: var(--gray-400);
+  opacity: 0.35;
   cursor: not-allowed;
+  color: var(--gray-400, #94a3b8);
+}
+
+.pagination-arrow {
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.pagination-btn-prev:hover:not(:disabled) .pagination-arrow {
+  transform: translateX(-2px);
+}
+
+.pagination-btn-next:hover:not(:disabled) .pagination-arrow {
+  transform: translateX(2px);
 }
 
 .pagination-num-btn {
-  width: 40px;
+  min-width: 40px;
   height: 40px;
-  display: flex;
+  padding: 0 8px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--gray-200);
-  background: var(--white);
-  color: var(--navy-700);
-  font-weight: 500;
-  font-size: 0.88rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--navy-700, #334155);
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .pagination-num-btn:hover:not(.active) {
-  background: var(--gray-50);
-  border-color: var(--navy-300);
-  color: var(--navy-900);
+  background: var(--navy-50, #f1f5f9);
+  color: var(--navy-900, #0f172a);
+}
+
+.pagination-num-btn:active:not(.active) {
+  transform: scale(0.95);
 }
 
 .pagination-num-btn.active {
-  border: none;
-  background: linear-gradient(135deg, var(--navy-700), var(--navy-900));
-  color: #fff;
+  background: linear-gradient(135deg, var(--navy-800, #0f172a), var(--navy-900, #1e293b));
+  color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(13, 31, 60, 0.25);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+  cursor: default;
 }
 
 .pagination-dots {
-  padding: 0 4px;
-  color: var(--gray-400);
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 40px;
+  color: var(--gray-400, #94a3b8);
+  font-weight: 700;
+  user-select: none;
 }
 
 .pagination-per-page {
@@ -5548,34 +5604,49 @@
 }
 
 /* Pagination in Dark Mode */
-[data-theme="dark"] .pagination-btn {
+[data-theme="dark"] .pagination-info-badge {
   background: #141e33;
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .pagination-info-badge strong {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .pagination-nav-capsule {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .pagination-btn {
+  background: transparent;
+  border-color: transparent;
   color: #cbd5e1;
 }
 
 [data-theme="dark"] .pagination-btn:hover:not(:disabled) {
-  background: #1c2842;
-  border-color: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 [data-theme="dark"] .pagination-btn:disabled {
-  background: #0d1527;
-  border-color: rgba(255, 255, 255, 0.06);
+  background: transparent;
+  border-color: transparent;
   color: #475569;
 }
 
 [data-theme="dark"] .pagination-num-btn {
-  background: #141e33;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  border-color: transparent;
   color: #cbd5e1;
 }
 
 [data-theme="dark"] .pagination-num-btn:hover:not(.active) {
-  background: #1c2842;
-  border-color: rgba(255, 255, 255, 0.25);
-  color: #fff;
+  background: #1e293b;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .pagination-num-btn.active {
@@ -5586,18 +5657,6 @@
 
 [data-theme="dark"] .pagination-dots {
   color: #64748b;
-}
-
-[data-theme="dark"] .pagination-load-more-btn {
-  background: #141e33;
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
-}
-
-[data-theme="dark"] .pagination-load-more-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(249, 115, 22, 0.08);
 }
 
 [data-theme="dark"] .pagination-per-page-label {
@@ -8631,4 +8690,194 @@
     width: 44px;
     height: 44px;
   }
+}
+
+/* ===========================
+   HOME UX REFINEMENTS
+   =========================== */
+
+/* ── OCSC (ภาค ก) Segmented Control ── */
+.filter-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--gray-50, #f8fafc);
+  border: 1px solid var(--gray-200, #e2e8f0);
+  box-sizing: border-box;
+}
+
+.filter-segment-label {
+  padding: 0 8px 0 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gray-500, #64748b);
+  white-space: nowrap;
+}
+
+.filter-segment-btn {
+  height: 100%;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gray-600, #475569);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-segment-btn:hover {
+  color: var(--navy-800, #1e293b);
+}
+
+.filter-segment-btn.active {
+  background: #fff;
+  color: var(--navy-800, #1e293b);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+.filter-segment-btn.seg-no.active  { color: #ea580c; }
+.filter-segment-btn.seg-yes.active { color: #2563eb; }
+
+.filter-segment-btn:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 1px;
+}
+
+[data-theme="dark"] .filter-segment {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .filter-segment-label { color: #94a3b8; }
+[data-theme="dark"] .filter-segment-btn { color: #cbd5e1; }
+[data-theme="dark"] .filter-segment-btn:hover { color: #fff; }
+
+[data-theme="dark"] .filter-segment-btn.active {
+  background: #1c2842;
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .filter-segment-btn.seg-no.active  { color: #fdba74; }
+[data-theme="dark"] .filter-segment-btn.seg-yes.active { color: #93c5fd; }
+
+/* ── Education select (mobile only; desktop uses hero card) ── */
+.filter-edu-wrap {
+  display: none;
+}
+
+.filter-edu-select.active {
+  border-color: #f97316;
+  color: #c2410c;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .filter-edu-select.active {
+  color: #fdba74;
+}
+
+/* ── Clickable job card ── */
+.job-card-clickable {
+  cursor: pointer;
+}
+
+.job-more-positions {
+  padding: 4px 14px 8px;
+  font-size: 0.78rem;
+  color: var(--navy-500, #64748b);
+  font-style: italic;
+  transition: color 0.2s ease;
+}
+
+.job-card-clickable:hover .job-more-positions {
+  color: #ea580c;
+}
+
+/* ── Pagination range text ── */
+.pagination-range-text {
+  margin: 0 0 4px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--gray-500, #64748b);
+}
+
+[data-theme="dark"] .pagination-range-text {
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  /* Shorter hero on mobile — edu filter moves into the filter bar */
+  .hero-edu-card {
+    display: none;
+  }
+
+  .filter-selects-row {
+    flex-wrap: wrap;
+  }
+
+  .filter-edu-wrap {
+    display: block;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .filter-edu-select {
+    width: 100%;
+  }
+
+  /* Segmented control spans the full chip grid row */
+  .filter-segment {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .filter-segment-btn {
+    flex: 1;
+    padding: 0 6px;
+    font-size: 0.76rem;
+  }
+}
+
+/* ─── Home page: former inline styles (JobList) ─── */
+.demo-mode-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 12px 18px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+}
+
+.demo-mode-notice-icon {
+  font-size: 1.3rem;
+}
+
+.demo-mode-notice-text {
+  font-size: 0.85rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.empty-state-error .empty-state-icon,
+.empty-state-error h3 {
+  color: #ef4444;
+}
+
+.empty-retry-btn {
+  margin-top: 16px;
+  padding: 10px 24px;
+}
+
+.exam-prep-wrap {
+  margin-top: 40px;
 }

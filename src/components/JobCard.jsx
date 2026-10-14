@@ -1,19 +1,38 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { CATEGORY_MAP } from "../utils/constants.js";
 import { getDisplayProvinces, daysLeft, formatDate, getTotalJobPositions, getPositionCount } from "../utils/helpers.js";
 
 export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark, onOpenPoster, onOpenShare }) {
+  const navigate = useNavigate();
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  // Whole card is clickable — except interactive children and while selecting text
+  const handleCardClick = (e) => {
+    if (e.defaultPrevented) return;
+    if (e.target.closest("a, button, input, select, textarea, label")) return;
+    if (window.getSelection?.()?.toString()) return;
+    if (e.metaKey || e.ctrlKey) {
+      window.open(`/job/${job.id}`, "_blank", "noopener");
+      return;
+    }
+    navigate(`/job/${job.id}`);
+  };
 
   const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
   const provinces = getDisplayProvinces(job);
   const mainMeta = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
-  const days = daysLeft(job.deadline);
-  const urgent = days <= 7 && days >= 0;
-  const expired = days < 0;
+  // daysLeft() returns 0 for missing/invalid dates — guard so such jobs aren't shown as "closing today"
+  const hasDeadline = Boolean(job.deadline) && !isNaN(new Date(job.deadline).getTime());
+  const days = hasDeadline ? daysLeft(job.deadline) : null;
+  const urgent = hasDeadline && days <= 7 && days >= 0;
+  const expired = hasDeadline && days < 0;
   const totalCount = getTotalJobPositions(job);
 
   const displayStartDate = job.startDate || job.postedDate;
-  const dateText = displayStartDate 
+  const dateText = !hasDeadline
+    ? (displayStartDate ? `เปิดรับ ${formatDate(displayStartDate)} – ไม่ระบุวันปิดรับ` : "ไม่ระบุวันปิดรับ")
+    : displayStartDate
     ? `เปิดรับ ${formatDate(displayStartDate)} – ${formatDate(job.deadline)}`
     : `ปิดรับ ${formatDate(job.deadline)}`;
   const dateTextExpired = displayStartDate 
@@ -45,7 +64,7 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
   }
 
   return (
-    <div className="job-card" style={style}>
+    <div className="job-card job-card-clickable" style={style} onClick={handleCardClick}>
       {/* ── Card Header ── */}
       <div className="job-card-header-modern">
         {/* Subtle decorative glow & ambient lights */}
@@ -104,15 +123,13 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
         <div className="job-header-main-row">
           {/* Logo */}
           <div className="job-logo-box">
-            {job.logoUrl ? (
+            {job.logoUrl && !logoFailed ? (
               <img
                 src={job.logoUrl}
                 alt={job.department}
                 referrerPolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.style.display = 'none';
-                }}
+                loading="lazy"
+                onError={() => setLogoFailed(true)}
                 className="job-logo-img"
               />
             ) : (
@@ -188,7 +205,9 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
         </div>
 
         <div className="job-countdown-pill-wrap">
-          {expired ? (
+          {!hasDeadline ? (
+            <span className="pill-badge pill-normal">📌 ดูกำหนดในประกาศ</span>
+          ) : expired ? (
             <span className="pill-badge pill-expired">⚠️ หมดเขต</span>
           ) : days === 0 ? (
             <span className="pill-badge pill-today">🚨 ปิดรับวันนี้!</span>
@@ -257,7 +276,7 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
 
         {/* More positions indicator */}
         {job.positionList?.length > 3 && (
-          <div style={{ padding: "4px 14px 8px", fontSize: "0.78rem", color: "var(--navy-500)", fontStyle: "italic" }}>
+          <div className="job-more-positions">
             +{job.positionList.length - 3} ตำแหน่งเพิ่มเติม → ดูรายละเอียด
           </div>
         )}
