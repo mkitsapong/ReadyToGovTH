@@ -138,6 +138,18 @@ describe("StatsDashboard Component", () => {
     expect(handleOpenAnalytics).toHaveBeenCalledTimes(1);
   });
 
+  it("navigates to /?edu= when clicking an education requirement", () => {
+    render(
+      <MemoryRouter>
+        <StatsDashboard jobs={mockJobs} />
+      </MemoryRouter>
+    );
+
+    const eduCards = screen.getAllByTitle(/คลิกเพื่อค้นหางานวุฒิ/);
+    expect(eduCards.length).toBeGreaterThan(0);
+    fireEvent.click(eduCards[0]);
+  });
+
   it("invokes window.print when print report button is clicked", () => {
     const printSpy = vi.spyOn(window, "print").mockImplementation(() => {});
 

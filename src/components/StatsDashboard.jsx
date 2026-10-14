@@ -7,6 +7,7 @@ import {
   calculateProvinceStats,
   calculateOverviewKPIs,
 } from "../utils/statsHelpers.js";
+import { EDUCATION_LEVELS } from "../utils/constants.js";
 
 export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelectProvince, isAdmin = false, onOpenAnalytics }) {
   const navigate = useNavigate();
@@ -96,7 +97,11 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
   };
 
   const handleSelectEduClick = (eduName) => {
-    navigate(`/?q=${encodeURIComponent(eduName)}`);
+    if (EDUCATION_LEVELS.includes(eduName)) {
+      navigate(`/?edu=${encodeURIComponent(eduName)}`);
+    } else {
+      navigate(`/?q=${encodeURIComponent(eduName)}`);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
