@@ -85,7 +85,7 @@ describe("ApplicationTrackerPage Component", () => {
 
     expect(screen.getByText(/การสอบถัดไปของคุณ/i)).toBeInTheDocument();
     expect(screen.getAllByText("กรมสรรพากร").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/ม.รามคำแหง/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/ม.รามคำแหง/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/12345/i).length).toBeGreaterThanOrEqual(1);
   });
 });

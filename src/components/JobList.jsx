@@ -443,9 +443,15 @@ export default function JobList({
     <>
       {/* Hero */}
       <section className="page-hero">
+        <div className="hero-glow-1" />
+        <div className="hero-glow-2" />
         <div className="container hero-content">
           {/* Left Column: Title & Stats */}
           <div className="hero-left-col">
+            <div className="hero-badge-pill">
+              <span className="badge-sparkle">✨</span>
+              <span>ศูนย์รวมงานราชการไทย 77 จังหวัด</span>
+            </div>
             <h1 className="hero-title">
               <span>{hero.title}</span>
             </h1>

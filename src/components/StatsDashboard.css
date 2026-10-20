@@ -4,7 +4,7 @@
 
 .stats-page {
   min-height: calc(100vh - 140px);
-  padding: 24px 0 64px 0;
+  padding: 0 0 64px 0;
   background: var(--bg-app);
   color: var(--text-main);
   transition: background-color var(--transition-normal);
@@ -22,91 +22,19 @@
   min-width: 0;
 }
 
-/* ── Top Navigation Bar (Breadcrumb & Micro Chips) ────────────────────────── */
-.stats-top-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+.stats-body {
+  padding-top: 32px;
 }
 
-.stats-back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  font-weight: 600;
-  text-decoration: none;
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  transition: all var(--transition-fast);
-}
-
-.stats-back-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  transform: translateX(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.stats-back-arrow {
-  transition: transform var(--transition-fast);
-}
-
-.stats-back-btn:hover .stats-back-arrow {
-  transform: translateX(-2px);
-}
-
-.stats-top-badges {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.stats-micro-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  padding: 4px 10px;
-  border-radius: 999px;
-}
-
-.stats-live-dot {
-  width: 7px;
-  height: 7px;
-  background: #10b981;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #10b981;
-}
-
-/* ── Hero / Header Section ───────────────────────────────────────────────── */
-.stats-hero {
-  position: relative;
-  background: linear-gradient(135deg, rgba(8, 13, 26, 0.96) 0%, rgba(17, 24, 39, 0.92) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-2xl);
-  padding: 38px 36px;
-  margin-bottom: 24px;
-  overflow: hidden;
-  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-[data-theme="light"] .stats-hero {
-  background: linear-gradient(135deg, #090e1a 0%, #172033 100%);
-  color: #ffffff;
+/* ── Hero / Header Section (Unified Full-Width) ───────────────────────────── */
+.page-hero.stats-hero {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  margin-bottom: 0;
+  padding: 36px 0 46px;
+  box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.4);
 }
 
 .stats-hero-grid-pattern {

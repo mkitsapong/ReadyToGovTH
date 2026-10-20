@@ -123,89 +123,81 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
       />
 
       <div className="stats-page">
-        <div className="stats-container">
-          {/* Breadcrumb Back Link */}
-          <div className="stats-top-nav">
-            <Link to="/" className="stats-back-btn">
-              <span className="stats-back-arrow">←</span>
-              <span>กลับสู่หน้ารายการประกาศงาน</span>
-            </Link>
+        {/* ── 1. Full-Width Hero Section ── */}
+        <section className="page-hero stats-hero">
+          <div className="hero-glow-1" />
+          <div className="hero-glow-2" />
+          <div className="container">
+            {/* Breadcrumb Back Link & Live Status */}
+            <div className="hero-top-nav">
+              <Link to="/" className="hero-back-btn" title="กลับสู่หน้ารายการประกาศงาน">
+                <span className="hero-back-arrow">←</span>
+                <span>กลับสู่หน้ารายการประกาศงาน</span>
+              </Link>
 
-            <div className="stats-top-badges">
-              <span className="stats-micro-chip">
-                <span className="stats-live-dot" />
-                อัปเดตแบบเรียลไทม์
-              </span>
-              <span className="stats-micro-chip">
-                ครอบคลุม 77 จังหวัด
-              </span>
+              <div className="hero-top-badges">
+                <span className="hero-micro-chip">
+                  <span className="hero-live-dot" />
+                  อัปเดตแบบเรียลไทม์
+                </span>
+                <span className="hero-micro-chip">
+                  ครอบคลุม 77 จังหวัด
+                </span>
+              </div>
             </div>
-          </div>
 
-          {/* ── 1. Hero Section ── */}
-          <div className="stats-hero">
-            <div className="stats-hero-glow-1" />
-            <div className="stats-hero-glow-2" />
-            <div className="stats-hero-grid-pattern" />
-
-            <div className="stats-hero-inner">
-              <div className="stats-hero-main">
-                <div className="stats-badge-pill">
-                  <span className="stats-badge-pulse" />
+            <div className="hero-inner">
+              <div className="hero-text-col">
+                <div className="hero-badge-pill">
+                  <span className="badge-sparkle">✨</span>
                   <span>ReadyToGov TH Data & Market Intelligence</span>
                 </div>
-                <h1 className="stats-hero-title">
-                  Dashboard สถิติตลาดงานภาครัฐ
+                <h1 className="hero-title">
+                  <span>Dashboard สถิติตลาดงานภาครัฐ</span>
                 </h1>
-                <p className="stats-hero-subtitle">
+                <p className="hero-subtitle">
                   ระบบวิเคราะห์ข้อมูลประกาศรับสมัครงานภาครัฐ สัดส่วนประเภทตำแหน่งงานยอดนิยม
                   และการกระจายตัวของพื้นที่ที่มีการเปิดรับสมัครอัตรากำลังสูงสุดทั่วประเทศ
                 </p>
 
                 {/* Hero Stats Mini Chips */}
-                <div className="stats-hero-chips">
-                  <div className="stats-hero-chip">
-                    <span className="stats-chip-label">เปิดรับสมัคร:</span>
-                    <strong className="stats-chip-val">{overviewKPIs.totalJobs} ประกาศ</strong>
+                <div className="hero-stats-chips">
+                  <div className="hero-stats-chip">
+                    <span className="chip-label">เปิดรับสมัคร:</span>
+                    <strong className="chip-val">{overviewKPIs.totalJobs} ประกาศ</strong>
                   </div>
-                  <div className="stats-hero-chip">
-                    <span className="stats-chip-label">อัตรากำลัง:</span>
-                    <strong className="stats-chip-val">{overviewKPIs.totalPositions.toLocaleString()} อัตรา</strong>
+                  <div className="hero-stats-chip">
+                    <span className="chip-label">อัตรากำลัง:</span>
+                    <strong className="chip-val">{overviewKPIs.totalPositions.toLocaleString()} อัตรา</strong>
                   </div>
-                  <div className="stats-hero-chip">
-                    <span className="stats-chip-label">ไม่ต้องผ่าน ก.พ.:</span>
-                    <strong className="stats-chip-val" style={{ color: "var(--orange-300)" }}>
+                  <div className="hero-stats-chip">
+                    <span className="chip-label">ไม่ต้องผ่าน ก.พ.:</span>
+                    <strong className="chip-val" style={{ color: "var(--orange-300, #fdba74)" }}>
                       {overviewKPIs.noOcscPercent}%
                     </strong>
                   </div>
                 </div>
               </div>
 
-              <div className="stats-hero-actions">
+              <div className="hero-actions-col">
                 {isAdmin && (
                   <button
                     type="button"
                     onClick={onOpenAnalytics}
-                    className="stats-btn-action stats-btn-analytics"
-                    style={{
-                      background: "linear-gradient(135deg, #2563eb, #7c3aed)",
-                      color: "#ffffff",
-                      border: "none",
-                      boxShadow: "0 4px 14px rgba(37, 99, 235, 0.35)",
-                    }}
+                    className="hero-btn-action hero-btn-analytics"
                     title="เปิดดูสถิติ Pageviews, งานยอดนิยม และ User Engagement ใน Firebase Analytics"
                   >
                     <span>📈 Analytics (Admin)</span>
                   </button>
                 )}
-                <Link to="/" className="stats-btn-action stats-btn-primary">
+                <Link to="/" className="hero-btn-action hero-btn-primary">
                   <span>ค้นหางานตามสถิติ</span>
-                  <span className="stats-btn-icon-right">→</span>
+                  <span className="hero-btn-arrow">→</span>
                 </Link>
                 <button
                   type="button"
                   onClick={handlePrint}
-                  className="stats-btn-action stats-btn-glass"
+                  className="hero-btn-action hero-btn-glass"
                   title="พิมพ์หรือบันทึกรายงานสถิติเป็น PDF"
                 >
                   <span>พิมพ์รายงาน</span>
@@ -213,6 +205,9 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
               </div>
             </div>
           </div>
+        </section>
+
+        <div className="stats-container stats-body">
 
           {/* ── 2. Information Bar ── */}
           <div className="stats-filter-bar">
