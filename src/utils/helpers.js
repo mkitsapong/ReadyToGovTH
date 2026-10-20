@@ -89,3 +89,60 @@ export function getEduMatchStatus(positionList, userEdu) {
   if (matchCount > 0) return "some";
   return "none";
 }
+
+/**
+ * Calculate countdown and details for an exam date.
+ */
+export function getExamCountdown(examDate) {
+  if (!examDate) return null;
+  const days = daysLeft(examDate);
+  const formatted = formatDate(examDate);
+
+  if (days > 1) {
+    return {
+      days,
+      text: `อีก ${days} วัน`,
+      label: `อีก ${days} วันสอบ (${formatted})`,
+      status: "upcoming",
+      isToday: false,
+      isTomorrow: false,
+      isUrgent: days <= 5,
+      formattedDate: formatted,
+    };
+  } else if (days === 1) {
+    return {
+      days,
+      text: "พรุ่งนี้สอบ!",
+      label: `สอบพรุ่งนี้! (${formatted})`,
+      status: "tomorrow",
+      isToday: false,
+      isTomorrow: true,
+      isUrgent: true,
+      formattedDate: formatted,
+    };
+  } else if (days === 0) {
+    return {
+      days,
+      text: "🎯 วันนี้วันสอบ!",
+      label: "🎯 วันนี้คือวันสอบ! ขอให้โชคดี",
+      status: "today",
+      isToday: true,
+      isTomorrow: false,
+      isUrgent: true,
+      formattedDate: formatted,
+    };
+  } else {
+    const passedDays = Math.abs(days);
+    return {
+      days,
+      text: "สอบเสร็จแล้ว",
+      label: `สอบผ่านไปแล้วเมื่อ ${passedDays} วันก่อน`,
+      status: "past",
+      isToday: false,
+      isTomorrow: false,
+      isUrgent: false,
+      formattedDate: formatted,
+    };
+  }
+}
+

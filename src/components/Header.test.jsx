@@ -28,6 +28,7 @@ describe("Header Component", () => {
     expect(screen.getByText("ลูกจ้างชั่วคราว")).toBeInTheDocument();
     expect(screen.getByText("พนักงานหน่วยงานของรัฐ")).toBeInTheDocument();
     expect(screen.getByText("สถิติ")).toBeInTheDocument();
+    expect(screen.getByText("ติดตามงาน")).toBeInTheDocument();
   });
 
   it("renders logo with brand name", () => {

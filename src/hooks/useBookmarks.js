@@ -6,7 +6,7 @@ const FULL_JOBS_KEY = "readytogov_bookmarked_jobs_full";
 const OFFLINE_JOBS_KEY = "readytogov_offline_jobs";
 const EVENT_NAME = "readytogov_bookmarks_updated";
 
-function getStoredBookmarks() {
+export function getStoredBookmarks() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return [];
@@ -19,6 +19,8 @@ function getStoredBookmarks() {
   }
 }
 
+export const getStoredBookmarksSafe = getStoredBookmarks;
+
 export function getBookmarkedJobsFull() {
   try {
     const raw = localStorage.getItem(FULL_JOBS_KEY);
@@ -27,6 +29,9 @@ export function getBookmarkedJobsFull() {
     return [];
   }
 }
+
+export const getBookmarkedJobsFullSafe = getBookmarkedJobsFull;
+
 
 export function useBookmarks() {
   const [bookmarks, setBookmarks] = useState(getStoredBookmarks);

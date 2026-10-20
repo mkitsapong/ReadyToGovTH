@@ -23,6 +23,7 @@ const AuthModal     = lazy(() => import("./components/AuthModal.jsx"));
 const PolicyPage    = lazy(() => import("./components/PolicyPage.jsx"));
 const NotFoundPage  = lazy(() => import("./components/NotFoundPage.jsx"));
 const StatsDashboard = lazy(() => import("./components/StatsDashboard.jsx"));
+const ApplicationTrackerPage = lazy(() => import("./components/ApplicationTrackerPage.jsx"));
 const AdminAnalyticsDashboard = lazy(() => import("./components/AdminAnalyticsDashboard.jsx"));
 import { trackPageView } from "./services/analyticsService.js";
 
@@ -63,6 +64,7 @@ function Toast({ toasts }) {
 
 // Helper to determine active page from pathname
 function getActivePage(pathname) {
+  if (pathname.includes("/tracker")) return "tracker";
   if (pathname.includes("/stats") || pathname.includes("/dashboard")) return "stats";
   if (pathname.includes("/category/civil")) return "civil";
   if (pathname.includes("/category/government")) return "government";
@@ -337,6 +339,11 @@ export default function App() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    if (page === "tracker") {
+      navigate("/tracker");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const provinceQuery = selectedProvince ? `?province=${encodeURIComponent(selectedProvince)}` : "";
     if (page === "home") navigate("/" + provinceQuery);
     else navigate(`/category/${page}${provinceQuery}`);
@@ -385,6 +392,7 @@ export default function App() {
             <Route path="/category/:categoryId" element={<MainContent />} />
             <Route path="/job/:jobId" element={<JobDetailPage jobs={jobs} books={books} isLoading={isJobsLoading} isAdmin={isAdmin} onEditJob={handleEditJob} onToast={addToast} />} />
             <Route path="/stats" element={<StatsDashboard jobs={jobs} onNavigateCategory={handleNavigate} onSelectProvince={handleSelectProvince} isAdmin={isAdmin} onOpenAnalytics={() => setShowAnalytics(true)} />} />
+            <Route path="/tracker" element={<ApplicationTrackerPage jobs={jobs} onToast={addToast} />} />
             {/* /dashboard is an alias — redirect to canonical /stats */}
             <Route path="/dashboard" element={<Navigate to="/stats" replace />} />
             <Route path="/admin/analytics" element={

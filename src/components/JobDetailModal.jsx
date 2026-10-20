@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, Fragment } from "react";
 import { Link } from "react-router-dom";
 import { useBookmarks } from "../hooks/useBookmarks.js";
+import { useApplicationTracker } from "../hooks/useApplicationTracker.js";
+import ApplicationTrackerPanel from "./ApplicationTrackerPanel.jsx";
 import { ModalExamPrepSection } from "./ExamResources.jsx";
 import SocialShareCover from "./SocialShareCover.jsx";
-import { CATEGORY_MAP, EDU_COLORS } from "../utils/constants.js";
+import { CATEGORY_MAP, EDU_COLORS, STATUS_CONFIG } from "../utils/constants.js";
 import { formatDate, daysLeft, getDisplayProvinces, getTotalJobPositions } from "../utils/helpers.js";
 import JobPrintSummaryModal from "./JobPrintSummaryModal.jsx";
 import AddToCalendarModal from "./AddToCalendarModal.jsx";
@@ -21,6 +23,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [isPdfLoading, setIsPdfLoading] = useState(true);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(job?.id);
+  const { getJobTracking, updateJobTracking } = useApplicationTracker(job ? [job] : []);
+  const tracking = getJobTracking(job?.id);
   const bannerFeedRef = useRef(null);
   const bannerStoryRef = useRef(null);
   const [showBannerModal, setShowBannerModal] = useState(false);
@@ -29,6 +33,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showPosterModal, setShowPosterModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showTrackerModal, setShowTrackerModal] = useState(false);
   
   // Auto-switch: 'cards' on small screens (< 768px), 'table' on desktop/tablet
   const [posViewMode, setPosViewMode] = useState(() => {
@@ -336,6 +341,15 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
             </div>
 
             <div className="detail-header-actions">
+              <button
+                type="button"
+                onClick={() => setShowTrackerModal(true)}
+                title="ตั้งค่าสถานะการสมัคร วันสอบ และบันทึกโน้ตส่วนตัว"
+                className="btn-header-action btn-header-tracker"
+              >
+                🎯 ติดตามการสมัคร{tracking?.status && tracking.status !== "interested" ? ` (${STATUS_CONFIG[tracking.status]?.shortLabel || ""})` : ""}
+              </button>
+
               <button
                 type="button"
                 onClick={() => setShowCalendarModal(true)}
@@ -1355,6 +1369,36 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
         {showShareModal && (
           <ShareModal job={job} onClose={() => setShowShareModal(false)} onToast={onToast} />
         )}
+        {showTrackerModal && (
+          <div className="tracker-modal-backdrop" onClick={() => setShowTrackerModal(false)}>
+            <div className="tracker-modal-dialog" onClick={(e) => e.stopPropagation()}>
+              <div className="tracker-modal-header">
+                <div className="modal-title-wrap">
+                  <span className="modal-icon">🎯</span>
+                  <div>
+                    <h3 className="modal-title">ติดตามความคืบหน้าการสมัคร</h3>
+                    <p className="modal-dept">{job?.department}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-modal-close"
+                  onClick={() => setShowTrackerModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="tracker-modal-body">
+                <ApplicationTrackerPanel
+                  job={job}
+                  tracking={tracking}
+                  onUpdateTracking={(updates) => updateJobTracking(job?.id, updates, job)}
+                  onToast={onToast}
+                />
+              </div>
+            </div>
+          </div>
+        )}
         {/* Off-screen Banner Containers for html2canvas */}
         <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>
           <SocialShareCover job={job} aspectRatio="4:5" ref={bannerFeedRef} />
@@ -1379,6 +1423,36 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       )}
       {showShareModal && (
         <ShareModal job={job} onClose={() => setShowShareModal(false)} onToast={onToast} />
+      )}
+      {showTrackerModal && (
+        <div className="tracker-modal-backdrop" onClick={() => setShowTrackerModal(false)}>
+          <div className="tracker-modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="tracker-modal-header">
+              <div className="modal-title-wrap">
+                <span className="modal-icon">🎯</span>
+                <div>
+                  <h3 className="modal-title">ติดตามความคืบหน้าการสมัคร</h3>
+                  <p className="modal-dept">{job?.department}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={() => setShowTrackerModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="tracker-modal-body">
+              <ApplicationTrackerPanel
+                job={job}
+                tracking={tracking}
+                onUpdateTracking={(updates) => updateJobTracking(job?.id, updates, job)}
+                onToast={onToast}
+              />
+            </div>
+          </div>
+        </div>
       )}
       {/* Off-screen Banner Containers for html2canvas */}
       <div style={{ position: "fixed", top: -9999, left: -9999, pointerEvents: "none" }}>

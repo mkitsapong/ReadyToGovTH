@@ -391,3 +391,49 @@ function fallbackDownload(blob, fileName) {
   }, 500);
 }
 
+/**
+ * Build rich calendar event specifically for Exam Date with reminders
+ */
+export function buildExamCalendarEventData(job, examInfo = {}) {
+  const { examDate, examTime, examLocation, seatNumber, notes } = examInfo;
+  if (!examDate) return null;
+
+  const targetDate = examDate;
+  const startIcal = toIcalDate(targetDate);
+  const endIcal = addDaysToIcalDate(targetDate, 1);
+  const startIso = toIsoDateOnly(targetDate);
+  const endIso = toIsoDateOnly(targetDate);
+
+  const dept = job?.department || "งานราชการ";
+  const title = `🎯 วันสอบ: ${dept}${seatNumber ? ` (เลขที่นั่ง ${seatNumber})` : ""}`;
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://readytogov.th";
+  const jobUrl = job?.id ? `${origin}/job/${job.id}` : origin;
+
+  const descLines = [
+    `🎯 กำหนดการสอบ: ${dept}`,
+    examTime ? `⏰ เวลาสอบ: ${examTime}` : null,
+    examLocation ? `📍 สถานที่สอบ: ${examLocation}` : null,
+    seatNumber ? `🎫 เลขประจำตัวสอบ/ที่นั่งสอบ: ${seatNumber}` : null,
+    notes ? `📝 บันทึกช่วยจำ: ${notes}` : null,
+    "",
+    `🔗 ดูรายละเอียดประกาศ: ${jobUrl}`,
+    "",
+    "💡 คำแนะนำ: ตรวจสอบบัตรประจำตัวประชาชน, บัตรประจำตัวสอบ, ดินสอ 2B และอุปกรณ์ตามระเบียบ",
+  ].filter(Boolean).join("\n");
+
+  return {
+    jobId: job?.id || "exam",
+    department: dept,
+    title,
+    targetDate,
+    startIcal,
+    endIcal,
+    startIso,
+    endIso,
+    description: descLines,
+    location: examLocation || "ศูนย์สอบตามประกาศ",
+    reminderDays: [1, 3, 7],
+  };
+}
+
+

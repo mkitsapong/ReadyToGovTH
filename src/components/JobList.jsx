@@ -4,6 +4,7 @@ import JobCard from "./JobCard.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
 import ShareModal from "./ShareModal.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
+import { useApplicationTracker } from "../hooks/useApplicationTracker.js";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts.js";
 import { ExamPrepBanner } from "./ExamResources.jsx";
 import { regions } from "../data/provinces.js";
@@ -217,6 +218,7 @@ export default function JobList({
   }, [onSelectProvince, onChangeUserEducation]);
   
   const { bookmarks = [], toggleBookmark, isBookmarked } = useBookmarks();
+  const { getJobTracking, updateJobTracking } = useApplicationTracker(jobs);
 
   // Count only bookmarks that correspond to real jobs currently available
   const validBookmarkCount = useMemo(() => {
@@ -727,6 +729,16 @@ export default function JobList({
                   )}
                 </button>
 
+                {/* Tracker Quick Nav Chip */}
+                <Link
+                  to="/tracker"
+                  className="filter-chip-btn tracker-nav-chip"
+                  title="เปิดระบบติดตามการสมัครงานราชการ (Application Tracker)"
+                >
+                  <span className="chip-icon">🎯</span>
+                  <span>ติดตามการสมัคร</span>
+                </Link>
+
                 {/* Expired Jobs Filter */}
                 <button
                   type="button"
@@ -841,6 +853,8 @@ export default function JobList({
                     onOpenShare={setShareJob}
                     userEducation={userEducation}
                     isBookmarked={isBookmarked(job.id)}
+                    tracking={getJobTracking(job.id)}
+                    onUpdateTracking={(updates) => updateJobTracking(job.id, updates, job)}
                     onToggleBookmark={() => {
                       const isNowBookmarked = toggleBookmark(job.id, job);
                       if (onToast) {

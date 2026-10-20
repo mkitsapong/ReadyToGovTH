@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../hooks/useTheme.js";
+import { useApplicationTracker } from "../hooks/useApplicationTracker.js";
 
 const NAV_ITEMS = [
   { id: "home",       label: "หน้าแรก" },
@@ -9,6 +10,7 @@ const NAV_ITEMS = [
   { id: "temp",       label: "ลูกจ้างชั่วคราว" },
   { id: "agency",     label: "พนักงานหน่วยงานของรัฐ" },
   { id: "stats",      label: "สถิติ" },
+  { id: "tracker",    label: "ติดตามงาน" },
 ];
 
 export default function Header({
@@ -20,6 +22,8 @@ export default function Header({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+  const { stats } = useApplicationTracker();
+  const trackerCount = stats?.total || 0;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -100,6 +104,9 @@ export default function Header({
               >
                 {activePage === item.id && <span className="nav-dot" />}
                 {item.label}
+                {item.id === "tracker" && trackerCount > 0 && (
+                  <span className="nav-counter-pill">{trackerCount}</span>
+                )}
               </button>
             ))}
 

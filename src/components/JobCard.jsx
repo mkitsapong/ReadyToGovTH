@@ -2,8 +2,22 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CATEGORY_MAP } from "../utils/constants.js";
 import { getDisplayProvinces, daysLeft, formatDate, getTotalJobPositions, getPositionCount } from "../utils/helpers.js";
+import ApplicationTrackerBadge from "./ApplicationTrackerBadge.jsx";
 
-export default function JobCard({ job, style, isAdmin, onEdit, userEducation, isBookmarked, onToggleBookmark, onOpenPoster, onOpenShare }) {
+export default function JobCard({
+  job,
+  style,
+  isAdmin,
+  onEdit,
+  userEducation,
+  isBookmarked,
+  onToggleBookmark,
+  onOpenPoster,
+  onOpenShare,
+  tracking,
+  onUpdateTracking,
+  onOpenTrackerDetails,
+}) {
   const navigate = useNavigate();
   const [logoFailed, setLogoFailed] = useState(false);
 
@@ -88,6 +102,14 @@ export default function JobCard({ job, style, isAdmin, onEdit, userEducation, is
           </div>
 
           <div className="top-bar-right" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {isBookmarked && (
+              <ApplicationTrackerBadge
+                tracking={tracking || { status: "interested" }}
+                onStatusChange={(newStatus) => onUpdateTracking?.({ status: newStatus })}
+                onOpenDetails={onOpenTrackerDetails}
+                compact
+              />
+            )}
             <button
               type="button"
               id={`btn-share-${job.id}`}
