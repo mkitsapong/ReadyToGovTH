@@ -228,15 +228,15 @@ export default function JobCard({
 
         <div className="job-countdown-pill-wrap">
           {!hasDeadline ? (
-            <span className="pill-badge pill-normal">📌 ดูกำหนดในประกาศ</span>
+            <span className="pill-badge pill-normal">ดูกำหนดในประกาศ</span>
           ) : expired ? (
-            <span className="pill-badge pill-expired">⚠️ หมดเขต</span>
+            <span className="pill-badge pill-expired">หมดเขต</span>
           ) : days === 0 ? (
-            <span className="pill-badge pill-today">🚨 ปิดรับวันนี้!</span>
+            <span className="pill-badge pill-today">ปิดรับวันนี้!</span>
           ) : urgent ? (
-            <span className="pill-badge pill-urgent">🔥 เหลือ {days} วัน</span>
+            <span className="pill-badge pill-urgent">เหลือ {days} วัน</span>
           ) : (
-            <span className="pill-badge pill-normal">⏳ เหลือ {days} วัน</span>
+            <span className="pill-badge pill-normal">เหลือ {days} วัน</span>
           )}
         </div>
       </div>

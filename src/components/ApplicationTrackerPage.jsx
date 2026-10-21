@@ -138,23 +138,10 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
               <span className="hero-back-arrow">←</span>
               <span>กลับสู่หน้ารายการประกาศงาน</span>
             </Link>
-            <div className="hero-top-badges">
-              <span className="hero-micro-chip">
-                <span className="hero-live-dot" />
-                ระบบติดตามส่วนตัว
-              </span>
-              <span className="hero-micro-chip">
-                🔒 ข้อมูลบันทึกในเครื่องคุณ (Local & Private)
-              </span>
-            </div>
           </div>
 
           <div className="hero-inner">
             <div className="hero-text-col">
-              <div className="hero-badge-pill">
-                <span className="badge-sparkle">✨</span>
-                <span>Personal Career Tracker</span>
-              </div>
               <h1 className="hero-title">
                 ติดตามการสมัคร<span>งานราชการ</span>
               </h1>
@@ -200,7 +187,7 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
             <div className="next-exam-top-row">
               <div className="next-exam-badge">
                 <span className="badge-pulse-dot" />
-                <span>🎯 การสอบถัดไปของคุณ</span>
+                <span>การสอบถัดไปของคุณ</span>
               </div>
               <span className="next-exam-category-pill">
                 {nextExam.job.category || "งานราชการ"}
@@ -259,7 +246,7 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
                   </span>
                 </div>
                 <span className="countdown-label">
-                  {nextExam.daysLeft === 0 ? "🎯 ขอให้โชคดีกับการสอบ!" : "จะถึงวันสอบ"}
+                  {nextExam.daysLeft === 0 ? "ขอให้โชคดีกับการสอบ!" : "จะถึงวันสอบ"}
                 </span>
               </div>
             </div>
@@ -418,7 +405,7 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
               เพื่อให้คุณติดตามสถานะการสมัครและนับถอยหลังวันสอบได้สะดวก
             </p>
             <Link to="/" className="btn-empty-explore">
-              <span>🚀</span> ค้นหาตำแหน่งงานราชการที่เปิดรับ
+              ค้นหาตำแหน่งงานราชการที่เปิดรับ
             </Link>
           </div>
         ) : (

@@ -58,7 +58,7 @@ describe("StatsDashboard Component", () => {
     );
 
     expect(screen.getByText(/Dashboard สถิติตลาดงานภาครัฐ/i)).toBeInTheDocument();
-    expect(screen.getByText(/ReadyToGov TH Data & Market Intelligence/i)).toBeInTheDocument();
+    expect(screen.getByText(/กลับสู่หน้ารายการประกาศงาน/i)).toBeInTheDocument();
   });
 
   it("calculates and displays overview KPI cards accurately", () => {

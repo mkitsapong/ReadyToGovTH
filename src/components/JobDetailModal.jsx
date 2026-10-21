@@ -569,7 +569,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 <div className="detail-table-wrapper">
                   <div className="detail-table-meta-bar">
                     <span className="detail-table-hint">
-                      💡 คลิกที่แถวหรือปุ่ม <strong>[ดูคุณสมบัติ]</strong> เพื่อดูเงื่อนไขและสาขาวิชา
+                      คลิกที่แถวหรือปุ่ม <strong>[ดูคุณสมบัติ]</strong> เพื่อดูเงื่อนไขและสาขาวิชา
                     </span>
                     {rawPositions.some(p => p.details || (p.units && p.units.length > 0)) && (
                       <button
@@ -624,19 +624,19 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                                     </span>
                                     {hasUnits && (
                                       <span className="table-unit-badge">
-                                        🏢 {pos.units.length} หน่วยงาน
+                                        {pos.units.length} หน่วยงาน
                                       </span>
                                     )}
                                   </div>
                                 </td>
                                 <td className="td-quota">
                                   <span className="table-quota-badge">
-                                    🎯 {quotaText}
+                                    {quotaText}
                                   </span>
                                 </td>
                                 <td className="td-salary">
                                   {pos.salary ? (
-                                    <span className="table-salary-text">💰 {pos.salary}</span>
+                                    <span className="table-salary-text">{pos.salary}</span>
                                   ) : (
                                     <span className="table-muted-text">-</span>
                                   )}
@@ -702,7 +702,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                                       {hasUnits && (
                                         <div className="detail-units-container table-units-container">
                                           <div className="table-units-header">
-                                            <span>📍 รายชื่อหน่วยงานและลักษณะงาน ({pos.units.length} หน่วยงาน):</span>
+                                            <span>รายชื่อหน่วยงานและลักษณะงาน ({pos.units.length} หน่วยงาน):</span>
                                           </div>
                                           {pos.units.map((unit, uIdx) => {
                                             const unitEdus = Array.isArray(unit.education) ? unit.education : (unit.education ? [unit.education] : []);
@@ -715,7 +715,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                                                 </div>
                                                 <div className="detail-unit-specs">
                                                   <div className="unit-edu-row">
-                                                    <span className="unit-spec-title">🎓 วุฒิที่เปิดรับ:</span>
+                                                    <span className="unit-spec-title">วุฒิที่เปิดรับ:</span>
                                                     {unitEdus.map((edu, eIdx) => {
                                                       const eduStyle = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
                                                       return (
@@ -732,7 +732,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                                                   </div>
                                                   {unit.details && (
                                                     <div className="unit-work-row">
-                                                      <span className="unit-spec-title">⚙️ ลักษณะงาน:</span>
+                                                      <span className="unit-spec-title">ลักษณะงาน:</span>
                                                       <span className="unit-work-text">{unit.details}</span>
                                                     </div>
                                                   )}
@@ -770,7 +770,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                             </div>
                             {pos.salary && (
                               <span className="detail-pos-header-salary">
-                                💰 {pos.salary}
+                                {pos.salary}
                               </span>
                             )}
                           </div>
@@ -788,7 +788,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                                   </div>
                                   <div className="detail-unit-specs">
                                     <div className="unit-edu-row">
-                                      <span className="unit-spec-title">🎓 วุฒิที่เปิดรับ:</span>
+                                      <span className="unit-spec-title">วุฒิที่เปิดรับ:</span>
                                       {unitEdus.map((edu, eIdx) => {
                                         const eduStyle = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };
                                         return (
@@ -805,7 +805,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                                     </div>
                                     {unit.details && (
                                       <div className="unit-work-row">
-                                        <span className="unit-spec-title">⚙️ ลักษณะงาน:</span>
+                                        <span className="unit-spec-title">ลักษณะงาน:</span>
                                         <span className="unit-work-text">{unit.details}</span>
                                       </div>
                                     )}
@@ -826,7 +826,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                           <div className="detail-pos-title">{pos.title}</div>
                           {pos.count && (
                             <span className="detail-pos-quota-pill">
-                              🎯 {pos.count} อัตรา
+                              {pos.count} อัตรา
                             </span>
                           )}
                         </div>
@@ -837,13 +837,13 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                           <div className="detail-pos-specs-bar">
                             {pos.salary && (
                               <div className="detail-spec-chip chip-salary">
-                                <span className="spec-label">💰 เงินเดือน:</span>
+                                <span className="spec-label">เงินเดือน:</span>
                                 <span className="spec-value">{pos.salary}</span>
                               </div>
                             )}
                             {posEdus.length > 0 && (
                               <div className="detail-spec-chip chip-education">
-                                <span className="spec-label">🎓 วุฒิ:</span>
+                                <span className="spec-label">วุฒิ:</span>
                                 <div className="spec-edu-tags">
                                   {posEdus.map((edu, eIdx) => {
                                     const style = EDU_COLORS[edu] || { bg: "var(--gray-100)", border: "var(--gray-300)", color: "var(--gray-700)" };

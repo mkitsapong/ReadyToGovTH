@@ -361,15 +361,15 @@ export default function JobPrintSummaryModal({ job, onClose }) {
                     </span>
                     {job.isNoOCSC ? (
                       <span className="a4-badge a4-badge-amber">
-                        ✨ ไม่ต้องผ่าน ภาค ก
+                        ไม่ต้องผ่าน ภาค ก
                       </span>
                     ) : job.isOCSC ? (
                       <span className="a4-badge a4-badge-blue">
-                        📝 ต้องผ่าน ภาค ก
+                        ต้องผ่าน ภาค ก
                       </span>
                     ) : null}
                     <span className={`a4-badge ${days < 0 ? "a4-badge-gray" : days <= 5 ? "a4-badge-red" : "a4-badge-green"}`}>
-                      {days < 0 ? "⚠️ ปิดรับสมัครแล้ว" : days === 0 ? "🔥 ปิดรับวันนี้!" : `⏳ เหลืออีก ${days} วัน`}
+                      {days < 0 ? "ปิดรับสมัครแล้ว" : days === 0 ? "ปิดรับวันนี้!" : `เหลืออีก ${days} วัน`}
                     </span>
                   </div>
                 </div>
@@ -519,7 +519,7 @@ export default function JobPrintSummaryModal({ job, onClose }) {
                 {/* Left Box: Selection Criteria & Exam Stages */}
                 <div className="a4-prep-card">
                   <div className="a4-prep-header">
-                    <span className="a4-prep-title">🎯 เกณฑ์และขั้นตอนการคัดเลือก</span>
+                    <span className="a4-prep-title">เกณฑ์และขั้นตอนการคัดเลือก</span>
                   </div>
                   <div className="a4-exam-stages">
                     <div className="a4-stage-item">
@@ -559,7 +559,7 @@ export default function JobPrintSummaryModal({ job, onClose }) {
                 {/* Right Box: Candidate's Personal Exam Notes (Fillable On Paper) */}
                 <div className="a4-prep-card a4-planner-card">
                   <div className="a4-prep-header">
-                    <span className="a4-prep-title">✍️ บันทึกช่วยจำของผู้สมัคร (กรอกด้วยปากกา)</span>
+                    <span className="a4-prep-title">บันทึกช่วยจำของผู้สมัคร (กรอกด้วยปากกา)</span>
                   </div>
                   <div className="a4-writein-fields">
                     <div className="a4-writein-row">
@@ -593,7 +593,7 @@ export default function JobPrintSummaryModal({ job, onClose }) {
               <div className="a4-checklist-box">
                 <div className="a4-checklist-top">
                   <span className="a4-checklist-title">
-                    ✅ รายการเอกสารที่ต้องใช้สมัครสอบ (ตรวจเช็กและติ๊กยืนยันก่อนยื่น)
+                    รายการเอกสารที่ต้องใช้สมัครสอบ (ตรวจเช็กและติ๊กยืนยันก่อนยื่น)
                   </span>
                   <span className="a4-checklist-sub">เตรียมเอกสารต้นฉบับพร้อมสำเนาเซ็นรับรอง</span>
                 </div>
@@ -658,7 +658,7 @@ export default function JobPrintSummaryModal({ job, onClose }) {
                   </p>
 
                   <div className="a4-action-tip">
-                    💡 <strong>คำแนะนำ:</strong> {isInPerson 
+                    <strong>คำแนะนำ:</strong> {isInPerson 
                       ? "กรุณาตรวจสอบห้องรับสมัคร เอกสารที่ต้องใช้ และเวลาทำการจากประกาศฉบับเต็มก่อนเดินทางไปยื่นใบสมัคร" 
                       : "กรุณาตรวจสอบระเบียบการ คุณสมบัติเฉพาะตำแหน่ง และกำหนดการที่แน่นอนจากประกาศฉบับเต็มอีกครั้งก่อนยื่นใบสมัคร"}
                   </div>

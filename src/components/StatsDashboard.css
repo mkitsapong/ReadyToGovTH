@@ -33,7 +33,6 @@
   border-right: none;
   border-top: none;
   margin-bottom: 0;
-  padding: 36px 0 46px;
   box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.4);
 }
 
@@ -319,7 +318,7 @@
 }
 
 .stats-section-pill {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   padding: 2px 8px;
@@ -813,7 +812,7 @@
 }
 
 .stats-donut-center-label {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   font-weight: 600;
   margin-top: 4px;
@@ -1081,7 +1080,7 @@
   color: var(--accent);
   padding: 3px 8px;
   border-radius: 6px;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -1325,7 +1324,7 @@
   color: var(--accent);
   padding: 2px 7px;
   border-radius: 4px;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   flex-shrink: 0;
@@ -1624,7 +1623,7 @@
 }
 
 .stats-region-special-tag {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 800;
   padding: 2px 7px;
   border-radius: 4px;
@@ -1780,11 +1779,6 @@
     width: 100%;
   }
 
-  .stats-hero {
-    padding: 24px 18px;
-    border-radius: var(--radius-xl);
-    margin-bottom: 18px;
-  }
 
   .stats-hero-title {
     font-size: 1.5rem;
@@ -2001,9 +1995,6 @@
     border-radius: var(--radius-lg);
   }
 
-  .stats-hero {
-    padding: 18px 14px;
-  }
 
   .stats-hero-title {
     font-size: 1.35rem;
@@ -2032,7 +2023,7 @@
   }
 
   .stats-cat-bottom-desc {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
   }
 
   .stats-nationwide-title {
@@ -2040,7 +2031,7 @@
   }
 
   .stats-nationwide-desc {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
   }
 }
 

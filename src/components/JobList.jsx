@@ -448,10 +448,6 @@ export default function JobList({
         <div className="container hero-content">
           {/* Left Column: Title & Stats */}
           <div className="hero-left-col">
-            <div className="hero-badge-pill">
-              <span className="badge-sparkle">✨</span>
-              <span>ศูนย์รวมงานราชการไทย 77 จังหวัด</span>
-            </div>
             <h1 className="hero-title">
               <span>{hero.title}</span>
             </h1>
@@ -498,7 +494,7 @@ export default function JobList({
             <div className="hero-edu-card-top">
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span className="hero-edu-card-title">
-                  🎓 กรองงานตามวุฒิการศึกษา
+                  กรองงานตามวุฒิการศึกษา
                 </span>
                 {userEducation && (
                   <span className="hero-edu-badge">
@@ -554,7 +550,7 @@ export default function JobList({
               </div>
             </div>
             <p className="hero-edu-subtitle">
-              💡 เลือกระดับวุฒิเพื่อกรองเฉพาะตำแหน่งที่วุฒิตรงกัน
+              เลือกระดับวุฒิเพื่อกรองเฉพาะตำแหน่งที่วุฒิตรงกัน
             </p>
           </div>
         </div>
@@ -601,9 +597,9 @@ export default function JobList({
                     onChange={(e) => onChangeUserEducation(e.target.value || null)}
                     aria-label="กรองตามวุฒิการศึกษา"
                   >
-                    <option value="">🎓 ทุกวุฒิการศึกษา</option>
+                    <option value="">ทุกวุฒิการศึกษา</option>
                     {EDUCATION_LEVELS.map((edu) => (
-                      <option key={edu} value={edu}>🎓 {edu}</option>
+                      <option key={edu} value={edu}>{edu}</option>
                     ))}
                   </select>
                 </div>
@@ -617,7 +613,7 @@ export default function JobList({
                     title={selectedProvince ? `จังหวัด: ${selectedProvince}` : "เลือกจังหวัด/ภูมิภาค"}
                   >
                     <span className="filter-select-text">
-                      {selectedProvince ? `📍 ${selectedProvince}` : "📍 ทุกภูมิภาค"}
+                      {selectedProvince ? selectedProvince : "ทุกภูมิภาค"}
                     </span>
                     <span className="filter-select-arrow">▼</span>
                   </button>
@@ -637,7 +633,7 @@ export default function JobList({
                         onClick={() => { onSelectProvince(null); closeRegionDropdown(); }}
                         className={`region-option-all ${!selectedProvince ? "active" : ""}`}
                       >
-                        📍 ทุกภูมิภาค
+                        ทุกภูมิภาค
                       </div>
                       
                       {filteredRegions.length === 0 && (
@@ -652,7 +648,7 @@ export default function JobList({
                             onClick={() => { onSelectProvince(r.name); closeRegionDropdown(); }}
                             className={`region-group-header ${selectedProvince === r.name ? "active" : ""}`}
                           >
-                            <span>📍 {r.name} (ทั้งหมด)</span>
+                            <span>{r.name} (ทั้งหมด)</span>
                             {selectedProvince === r.name && <span style={{ fontSize: "0.8rem" }}>✓</span>}
                           </div>
                           {r.provinces.map(p => {
@@ -684,11 +680,11 @@ export default function JobList({
                     aria-label="เรียงลำดับประกาศ"
                   >
                     {(searchQuery.trim() || sortBy === "relevance") && (
-                      <option value="relevance">🎯 ตรงที่สุดก่อน</option>
+                      <option value="relevance">ตรงที่สุดก่อน</option>
                     )}
-                    <option value="deadline">⏳ ใกล้ปิดรับก่อน</option>
-                    <option value="newest">⚡ ล่าสุดก่อน</option>
-                    <option value="positions">👥 อัตราว่างมากก่อน</option>
+                    <option value="deadline">ใกล้ปิดรับก่อน</option>
+                    <option value="newest">ล่าสุดก่อน</option>
+                    <option value="positions">อัตราว่างมากก่อน</option>
                   </select>
                 </div>
               </div>
@@ -729,7 +725,8 @@ export default function JobList({
                   className={`filter-chip-btn ${showBookmarksOnly ? 'active-bookmark' : ''}`}
                 >
                   <span className="chip-icon">{showBookmarksOnly ? "❤️" : "🤍"}</span>
-                  <span>ที่บันทึกไว้</span>
+                  <span className="chip-text chip-text-full">ที่บันทึกไว้</span>
+                  <span className="chip-text chip-text-short">ที่บันทึก</span>
                   {validBookmarkCount > 0 && (
                     <span className="chip-counter">{validBookmarkCount}</span>
                   )}
@@ -742,7 +739,8 @@ export default function JobList({
                   title="เปิดระบบติดตามการสมัครงานราชการ (Application Tracker)"
                 >
                   <span className="chip-icon">🎯</span>
-                  <span>ติดตามการสมัคร</span>
+                  <span className="chip-text chip-text-full">ติดตามการสมัคร</span>
+                  <span className="chip-text chip-text-short">ติดตาม</span>
                 </Link>
 
                 {/* Expired Jobs Filter */}
@@ -758,7 +756,8 @@ export default function JobList({
                   title={showExpired ? "คลิกเพื่อกลับไปดูงานที่เปิดรับสมัครอยู่" : "ดูประกาศงานราชการที่ปิดรับสมัครแล้ว"}
                 >
                   <span className="chip-icon">⌛</span>
-                  <span>ปิดรับสมัครแล้ว</span>
+                  <span className="chip-text chip-text-full">ปิดรับสมัครแล้ว</span>
+                  <span className="chip-text chip-text-short">ปิดรับแล้ว</span>
                   {expiredCount > 0 && (
                     <span className="chip-counter chip-counter-expired">{expiredCount}</span>
                   )}

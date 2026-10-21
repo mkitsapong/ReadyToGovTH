@@ -141,7 +141,7 @@
 }
 
 .tracker-badge-caret {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   opacity: 0.6;
   margin-left: 2px;
 }
@@ -247,7 +247,7 @@
 }
 
 .tracker-dropdown-item .item-desc {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: var(--text-muted, #94a3b8);
 }
 
@@ -655,7 +655,7 @@
   border-radius: 9999px;
   background: var(--card-accent, #6366f1);
   color: #ffffff;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
@@ -872,8 +872,11 @@
   position: relative;
 }
 
-.dark .tracker-job-card {
+.dark .tracker-job-card,
+[data-theme="dark"] .tracker-job-card {
+  background: var(--card-bg, #0f172a);
   border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .tracker-job-card:hover {
@@ -903,6 +906,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
   padding: 4px;
+}
+
+.dark .card-logo-box,
+[data-theme="dark"] .card-logo-box {
+  background: var(--bg-card-subtle, #162032);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .card-logo-img {
@@ -940,7 +949,7 @@
 }
 
 .card-ocsc-badge {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #0284c7;
   background: rgba(2, 132, 199, 0.1);
@@ -1246,6 +1255,13 @@
   max-width: 620px;
   margin: 40px auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+}
+
+.dark .tracker-empty-state,
+[data-theme="dark"] .tracker-empty-state {
+  background: var(--card-bg, #0f172a);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .empty-icon-glow {
@@ -1617,6 +1633,20 @@
 
 .btn-calendar-mini.ics:hover {
   background: #f3f4f6;
+}
+
+.dark .btn-calendar-mini.google,
+[data-theme="dark"] .btn-calendar-mini.google {
+  background: #1e293b;
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.dark .btn-calendar-mini.ics,
+[data-theme="dark"] .btn-calendar-mini.ics {
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 /* Form Grid */

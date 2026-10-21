@@ -134,24 +134,10 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                 <span className="hero-back-arrow">←</span>
                 <span>กลับสู่หน้ารายการประกาศงาน</span>
               </Link>
-
-              <div className="hero-top-badges">
-                <span className="hero-micro-chip">
-                  <span className="hero-live-dot" />
-                  อัปเดตแบบเรียลไทม์
-                </span>
-                <span className="hero-micro-chip">
-                  ครอบคลุม 77 จังหวัด
-                </span>
-              </div>
             </div>
 
             <div className="hero-inner">
               <div className="hero-text-col">
-                <div className="hero-badge-pill">
-                  <span className="badge-sparkle">✨</span>
-                  <span>ReadyToGov TH Data & Market Intelligence</span>
-                </div>
                 <h1 className="hero-title">
                   <span>Dashboard สถิติตลาดงานภาครัฐ</span>
                 </h1>
