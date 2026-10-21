@@ -422,10 +422,67 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
               const isDeadlineUrgent = hasDeadline && deadlineDays <= 5 && deadlineDays >= 0;
               const isDeadlineExpired = hasDeadline && deadlineDays < 0;
 
+              // Derive clean unified salary text
+              const rawSalaries = job.positionList?.map(p => p.salary?.trim()).filter(Boolean) || [];
+              let displaySalary = null;
+              if (rawSalaries.length > 0) {
+                const nums = rawSalaries
+                  .flatMap(s => s.match(/[\d,]+/g) || [])
+                  .map(n => parseInt(n.replace(/,/g, ''), 10))
+                  .filter(n => n >= 3000);
+
+                if (nums.length > 0) {
+                  const minSalary = Math.min(...nums);
+                  const maxSalary = Math.max(...nums);
+                  displaySalary = minSalary === maxSalary 
+                    ? `${minSalary.toLocaleString()} บ.`
+                    : `${minSalary.toLocaleString()} - ${maxSalary.toLocaleString()} บ.`;
+                } else {
+                  displaySalary = rawSalaries[0];
+                }
+              } else if (job.salary) {
+                displaySalary = job.salary;
+              }
+
+              const statusKey = tracking.status || "interested";
+
               return (
-                <div key={job.id} className="tracker-job-card">
-                  {/* Card Header Row: Logo + Department + Badges */}
-                  <div className="card-header-row">
+                <div
+                  key={job.id}
+                  className={`tracker-job-card tracker-card-status-${statusKey}`}
+                >
+                  {/* Status Indicator Top Line */}
+                  <div className="card-status-indicator-bar" />
+
+                  {/* 1. Top Bar: Badges on Left, Status Dropdown on Right */}
+                  <div className="card-top-bar">
+                    <div className="card-badges-subrow">
+                      <span className={`card-cat-badge ${mainMeta.badge}`}>
+                        {categories[0]}
+                      </span>
+                      {job.isNoOCSC ? (
+                        <span className="card-ocsc-badge badge-no-ocsc">✨ ไม่ต้องผ่าน ภาค ก</span>
+                      ) : job.isOCSC ? (
+                        <span className="card-ocsc-badge badge-ocsc">📝 ต้องผ่าน ภาค ก</span>
+                      ) : null}
+                    </div>
+
+                    <div className="card-status-wrapper">
+                      <ApplicationTrackerBadge
+                        tracking={tracking}
+                        onStatusChange={(newStatus) => {
+                          updateJobTracking(job.id, { status: newStatus }, job);
+                          if (onToast) {
+                            onToast(`เปลี่ยนสถานะเป็น "${STATUS_CONFIG[newStatus]?.label}" แล้ว`, "success");
+                          }
+                        }}
+                        onOpenDetails={() => setEditingJob(job)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 2. Main Identity: Logo + Department Title (Full Width) */}
+                  <div className="card-main-header">
                     <div className="card-logo-box">
                       {job.logoUrl && !logoErrors[job.id] ? (
                         <img
@@ -443,39 +500,20 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
                     </div>
 
                     <div className="card-dept-wrap">
-                      <div className="card-badges-subrow">
-                        <span className={`card-cat-badge ${mainMeta.badge}`}>
-                          {categories[0]}
-                        </span>
-                        {job.isNoOCSC && (
-                          <span className="card-ocsc-badge">✨ ไม่ต้องผ่าน ภาค ก</span>
-                        )}
-                      </div>
                       <h3 className="card-department-name">
-                        <Link to={`/job/${job.id}`}>{job.department}</Link>
+                        <Link to={`/job/${job.id}`} title={job.department}>
+                          {job.department}
+                        </Link>
                       </h3>
-                    </div>
-
-                    <div className="card-status-wrapper">
-                      <ApplicationTrackerBadge
-                        tracking={tracking}
-                        onStatusChange={(newStatus) => {
-                          updateJobTracking(job.id, { status: newStatus }, job);
-                          if (onToast) {
-                            onToast(`เปลี่ยนสถานะเป็น "${STATUS_CONFIG[newStatus]?.label}" แล้ว`, "success");
-                          }
-                        }}
-                        onOpenDetails={() => setEditingJob(job)}
-                      />
                     </div>
                   </div>
 
-                  {/* Positions & Quota Summary */}
+                  {/* 3. Positions & Quota Summary Box */}
                   <div className="card-positions-box">
                     {job.positionList && job.positionList.length > 0 ? (
                       <div className="card-position-text">
-                        <span className="pos-icon">💼</span>
-                        <span className="pos-list-titles">
+                        <span className="pos-icon-badge">💼</span>
+                        <span className="pos-list-titles" title={job.positionList.map(p => p.title).join(", ")}>
                           {job.positionList.slice(0, 2).map((p) => p.title).join(", ")}
                           {job.positionList.length > 2 && (
                             <span className="pos-more-count">
@@ -486,8 +524,8 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
                       </div>
                     ) : (
                       <div className="card-position-text">
-                        <span className="pos-icon">👥</span>
-                        <span>รวม {totalCount || 1} อัตรา</span>
+                        <span className="pos-icon-badge">💼</span>
+                        <span className="pos-list-titles">ตำแหน่งงานตามประกาศรับสมัคร</span>
                       </div>
                     )}
 
@@ -500,18 +538,23 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
                           📍 {provinces[0]}
                         </span>
                       )}
+                      {displaySalary && (
+                        <span className="sub-pill salary">
+                          💰 {displaySalary}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  {/* Exam Countdown or Application Deadline Highlight */}
+                  {/* 4. Exam Countdown or Application Deadline Highlight */}
                   <div className="card-status-info-box">
                     {tracking.examDate ? (
                       <div className={`exam-highlight-strip ${countdown?.isUrgent ? "urgent" : ""}`}>
                         <div className="strip-left">
-                          <span className="strip-icon">
+                          <span className="strip-icon-badge">
                             {countdown?.isToday ? "🔥" : "⏳"}
                           </span>
-                          <div>
+                          <div className="strip-info-col">
                             <div className="strip-title">วันสอบ: {formatDate(tracking.examDate)}</div>
                             {tracking.examLocation && (
                               <div className="strip-subtext">📍 {tracking.examLocation}</div>
@@ -523,31 +566,38 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
                         </div>
                       </div>
                     ) : hasDeadline ? (
-                      <div className={`deadline-strip ${isDeadlineUrgent ? "urgent" : isDeadlineExpired ? "closed" : ""}`}>
-                        <span className="strip-icon">
-                          {isDeadlineExpired ? "⚠️" : isDeadlineUrgent ? "🔥" : "📅"}
-                        </span>
-                        <div className="strip-text">
-                          {isDeadlineExpired ? (
-                            <span>ปิดรับสมัครแล้วเมื่อ {formatDate(job.deadline)}</span>
-                          ) : (
-                            <span>
-                              ปิดรับสมัคร: <strong>{formatDate(job.deadline)}</strong>
-                              {deadlineDays !== null && ` (${deadlineDays === 0 ? "ปิดรับวันนี้!" : `เหลืออีก ${deadlineDays} วัน`})`}
-                            </span>
-                          )}
+                      <div className={`deadline-strip ${isDeadlineUrgent ? "urgent" : isDeadlineExpired ? "closed" : "normal"}`}>
+                        <div className="strip-left">
+                          <span className="strip-icon-badge">
+                            {isDeadlineExpired ? "⚠️" : isDeadlineUrgent ? "🔥" : "📅"}
+                          </span>
+                          <div className="strip-text">
+                            {isDeadlineExpired ? (
+                              <span>ปิดรับสมัครแล้วเมื่อ <strong>{formatDate(job.deadline)}</strong></span>
+                            ) : (
+                              <span>
+                                ปิดรับสมัคร: <strong>{formatDate(job.deadline)}</strong>
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        {deadlineDays !== null && (
+                          <div className={`strip-days-chip ${isDeadlineExpired ? "expired" : isDeadlineUrgent ? "urgent" : ""}`}>
+                            {isDeadlineExpired ? "ปิดรับแล้ว" : deadlineDays === 0 ? "ปิดรับวันนี้!" : `เหลืออีก ${deadlineDays} วัน`}
+                          </div>
+                        )}
                       </div>
                     ) : null}
 
                     {tracking.seatNumber && (
                       <div className="seat-number-chip">
-                        🎫 เลขประจำตัวสอบ: <strong>{tracking.seatNumber}</strong>
+                        <span className="seat-icon">🎫</span>
+                        <span>เลขประจำตัวสอบ: <strong>{tracking.seatNumber}</strong></span>
                       </div>
                     )}
                   </div>
 
-                  {/* Personal Notes Box (If exists) */}
+                  {/* 5. Personal Notes Box (If exists) */}
                   {tracking.notes && (
                     <div className="card-notes-box">
                       <span className="notes-pin">📌</span>
@@ -558,7 +608,7 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
                     </div>
                   )}
 
-                  {/* Card Actions Footer */}
+                  {/* 6. Card Actions Footer */}
                   <div className="card-footer-actions">
                     <Link to={`/job/${job.id}`} className="btn-card-action view">
                       <span>ดูประกาศ</span>
@@ -570,7 +620,7 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
                       onClick={() => setEditingJob(job)}
                       title="ตั้งค่าสถานะ, ใส่วันสอบ, หรือจดโน้ต"
                     >
-                      <span>⚙️</span>
+                      <span className="btn-icon">⚙️</span>
                       <span>ตั้งค่าสอบ/โน้ต</span>
                     </button>
                     <button
@@ -587,8 +637,14 @@ export default function ApplicationTrackerPage({ jobs = [], onToast }) {
                         }
                       }}
                       title="ลบออกจากรายการติดตาม"
+                      aria-label="ลบออกจากรายการติดตาม"
                     >
-                      🗑️
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                      </svg>
                     </button>
                   </div>
                 </div>
