@@ -1,14 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "../hooks/useTheme.js";
 import { useApplicationTracker } from "../hooks/useApplicationTracker.js";
-
-const CATEGORY_ITEMS = [
-  { id: "civil",      label: "ข้าราชการ",             icon: "🏛️", desc: "สอบบรรจุรับราชการ ภาค ก-ข-ค" },
-  { id: "government", label: "พนักงานราชการ",         icon: "📋", desc: "สัญญาจ้างตามกรอบ ไม่ต้องผ่าน ภาค ก" },
-  { id: "state",      label: "รัฐวิสาหกิจ",            icon: "🏢", desc: "รัฐวิสาหกิจและองค์กรของรัฐ" },
-  { id: "temp",       label: "ลูกจ้างชั่วคราว",         icon: "📝", desc: "ลูกจ้างตามภารกิจ / สัญญาจ้าง" },
-  { id: "agency",     label: "พนักงานหน่วยงานของรัฐ",   icon: "🏫", desc: "องค์การมหาชน / หน่วยงานอิสระ" },
-];
 
 export default function Header({
   activePage,
@@ -17,15 +9,11 @@ export default function Header({
   onLogout,
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const categoryDropdownRef = useRef(null);
 
   const { isDark, toggleTheme } = useTheme();
   const { stats } = useApplicationTracker();
   const trackerCount = stats?.total || 0;
-
-  const isCategoryActive = CATEGORY_ITEMS.some((cat) => cat.id === activePage);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,29 +23,9 @@ export default function Header({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close category dropdown on click outside or Escape
-  useEffect(() => {
-    if (!isCategoryOpen) return;
-    const handleClickOutside = (e) => {
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target)) {
-        setIsCategoryOpen(false);
-      }
-    };
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") setIsCategoryOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isCategoryOpen]);
-
   const handleNavClick = (pageId) => {
     onNavigate(pageId);
     setIsMobileMenuOpen(false);
-    setIsCategoryOpen(false);
   };
 
   return (
@@ -137,39 +105,7 @@ export default function Header({
               หน้าแรก
             </button>
 
-            {/* 2. หมวดหมู่ย่อย / ประเภทงาน Dropdown */}
-            <div className="nav-dropdown-wrapper" ref={categoryDropdownRef}>
-              <button
-                type="button"
-                className={`nav-link nav-dropdown-trigger${isCategoryActive ? " active" : ""}${isCategoryOpen ? " is-open" : ""}`}
-                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                aria-expanded={isCategoryOpen}
-                aria-haspopup="true"
-                title="เลือกประเภทงานราชการ"
-              >
-                {isCategoryActive && <span className="nav-dot" />}
-                <span>ประเภทงาน</span>
-                <span className={`dropdown-caret ${isCategoryOpen ? "rotated" : ""}`}>▾</span>
-              </button>
-
-              <div className={`nav-dropdown-menu ${isCategoryOpen ? "is-open" : ""}`}>
-                {CATEGORY_ITEMS.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    className={`nav-dropdown-item ${activePage === cat.id ? "active" : ""}`}
-                    onClick={() => handleNavClick(cat.id)}
-                    title={cat.desc}
-                  >
-                    <span className="dropdown-item-icon">{cat.icon}</span>
-                    {cat.label}
-                    {activePage === cat.id && <span className="dropdown-item-check">✓</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. สถิติ */}
+            {/* 2. สถิติ */}
             <button
               key="stats"
               className={`nav-link${activePage === "stats" ? " active" : ""}`}

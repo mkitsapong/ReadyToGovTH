@@ -7,6 +7,7 @@ import { ModalExamPrepSection } from "./ExamResources.jsx";
 import { CATEGORY_MAP, EDU_COLORS, STATUS_CONFIG } from "../utils/constants.js";
 import { formatDate, daysLeft, getDisplayProvinces, getTotalJobPositions } from "../utils/helpers.js";
 import { getJobSalaryText } from "../utils/shareHelper.js";
+import { getJobSectorMeta } from "../utils/sectorHelper.js";
 import JobPrintSummaryModal from "./JobPrintSummaryModal.jsx";
 import AddToCalendarModal from "./AddToCalendarModal.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
@@ -57,6 +58,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   };
 
   const [expandedRows, setExpandedRows] = useState({});
+  const [showPosterLightbox, setShowPosterLightbox] = useState(false);
 
   const toggleRowExpanded = (idx) => {
     setExpandedRows(prev => ({
@@ -110,7 +112,9 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
         .filter(url => url.length > 0)
         .map(url => (url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`))
     : [];
-  const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const rawCategories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const categories = rawCategories.filter(cat => cat !== "พนักงานหน่วยงานของรัฐ");
+  const sectorMeta = getJobSectorMeta(job);
   const mainMeta = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   const days = daysLeft(job.deadline);
   const totalCount = getTotalJobPositions(job);
@@ -138,6 +142,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   }
 
   const isEmail = Boolean(detectedEmail);
+  const effectivePosterUrl = job.posterUrl || job.imageUrl || "";
   const positionTitle = job.positionList?.[0]?.title || "";
   const emailSubject = `สมัครงาน: ${job.department}${positionTitle ? ` - ตำแหน่ง ${positionTitle}` : ""}`;
   const effectiveApplyUrl = isEmail
@@ -231,6 +236,11 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           {/* Top row: Badges on left, Action Buttons on right */}
           <div className="detail-info-top-row">
             <div className="detail-header-badges">
+              {sectorMeta && sectorMeta.id !== "central" && (
+                <span className="detail-cat-badge badge-sector" title={`แวดวง: ${sectorMeta.label}`}>
+                  <span>{sectorMeta.icon} {sectorMeta.shortLabel}</span>
+                </span>
+              )}
               {categories.map((cat, idx) => {
                 const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
                 return (
@@ -849,6 +859,53 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
           </div>
         )}
 
+
+        {/* ── Official Poster Announcement Card ── */}
+        {effectivePosterUrl && (
+          <div className="detail-poster-card animate-fade-in">
+            <div className="detail-poster-header">
+              <div className="detail-poster-title-wrap">
+                <span className="detail-poster-icon">🖼️</span>
+                <div>
+                  <h3 className="detail-poster-title">ภาพประกาศรับสมัครงานอย่างเป็นทางการ</h3>
+                  <p className="detail-poster-subtitle">
+                    คลิกที่รูปเพื่อเปิดดูขนาดเต็ม ขยายอ่านคุณสมบัติ หรือสแกน QR Code
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPosterLightbox(true)}
+                className="btn btn-outline detail-poster-view-btn"
+                title="คลิกเพื่อดูภาพประกาศขนาดเต็ม"
+              >
+                🔍 ดูรูปขนาดเต็ม
+              </button>
+            </div>
+
+            <div
+              className="detail-poster-preview-box"
+              onClick={() => setShowPosterLightbox(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setShowPosterLightbox(true)}
+              title="คลิกเพื่อขยายดูรูปภาพประกาศขนาดเต็ม"
+            >
+              <img
+                src={effectivePosterUrl}
+                alt={`ประกาศรับสมัคร ${job.department}`}
+                className="detail-poster-img"
+                loading="lazy"
+              />
+              <div className="detail-poster-overlay">
+                <span className="detail-poster-overlay-pill">
+                  🔍 คลิกเพื่อขยายดูรูปขนาดเต็ม / สแกน QR Code
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* แนะนำหนังสือ & คอร์สติวสอบ */}
         <ModalExamPrepSection
           books={books}
@@ -1153,6 +1210,58 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
         {showShareModal && (
           <ShareModal job={job} onClose={() => setShowShareModal(false)} onToast={onToast} />
         )}
+
+        {/* ── Poster Lightbox Modal ── */}
+        {showPosterLightbox && effectivePosterUrl && (
+          <div
+            className="poster-lightbox-overlay"
+            onClick={() => setShowPosterLightbox(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`ภาพประกาศรับสมัคร ${job.department}`}
+          >
+            <div className="poster-lightbox-dialog" onClick={(e) => e.stopPropagation()}>
+              <div className="poster-lightbox-header">
+                <div className="poster-lightbox-title-wrap">
+                  <span className="poster-lightbox-icon">🖼️</span>
+                  <div>
+                    <h4 className="poster-lightbox-title">ประกาศรับสมัครงานฉบับทางการ</h4>
+                    <span className="poster-lightbox-dept">{job.department}</span>
+                  </div>
+                </div>
+                <div className="poster-lightbox-actions">
+                  <a
+                    href={effectivePosterUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={`ประกาศ-${job.department}.png`}
+                    className="btn btn-outline btn-sm poster-lightbox-btn"
+                    title="เปิดรูปภาพในแท็บใหม่ / ดาวน์โหลด"
+                  >
+                    ↗️ เปิดรูปเต็มจอ
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setShowPosterLightbox(false)}
+                    className="poster-lightbox-close"
+                    title="ปิด (Esc)"
+                    aria-label="ปิด"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <div className="poster-lightbox-body">
+                <img
+                  src={effectivePosterUrl}
+                  alt={`ประกาศรับสมัคร ${job.department}`}
+                  className="poster-lightbox-image"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {showTrackerModal && (
           <div className="tracker-modal-backdrop" onClick={() => setShowTrackerModal(false)}>
             <div className="tracker-modal-dialog" onClick={(e) => e.stopPropagation()}>

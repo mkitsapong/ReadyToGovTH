@@ -1,8 +1,9 @@
 import { findOfficialGovLogo } from "../utils/logoHelper.js";
 import { resolveExtractedDates, convertThaiNumeralsToArab } from "../utils/thaiDateParser.js";
+import { getJobSector } from "../utils/sectorHelper.js";
 
 const SYSTEM_INSTRUCTION = `
-คุณเป็นผู้เชี่ยวชาญระดับสูงด้านการวิเคราะห์เอกสารประกาศรับสมัครงานราชการไทย (ข้าราชการ, พนักงานราชการ, รัฐวิสาหกิจ, ลูกจ้างชั่วคราว, พนักงานหน่วยงานของรัฐ)
+คุณเป็นผู้เชี่ยวชาญระดับสูงด้านการวิเคราะห์เอกสารประกาศรับสมัครงานราชการไทย (ข้าราชการ, พนักงานราชการ, รัฐวิสาหกิจ, ลูกจ้างชั่วคราว)
 หน้าที่ของคุณคืออ่านเอกสารประกาศรับสมัครงาน (PDF, รูปภาพ หรือข้อความ) แล้วดึงข้อมูลออกมาเป็น JSON ตามโครงสร้างที่กำหนดอย่างแม่นยำ 100%
 
 ⚠️ กฎสำคัญมากในการอ่านตัวเลขและเลขไทย (Thai Numerals & OCR Disambiguation):
@@ -19,7 +20,7 @@ const SYSTEM_INSTRUCTION = `
 
 กฎการวิเคราะห์ข้อมูลฟิลด์ต่างๆ:
 1. department: ชื่อหน่วยงานต้นสังกัด เช่น "สำนักงานส่งเสริมการเรียนรู้ประจำจังหวัดลพบุรี", "กรมสรรพากร", "การไฟฟ้าส่วนภูมิภาค"
-2. categories: array ของหมวดหมู่ที่ตรงกับประกาศ (เลือกจาก: "ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ")
+2. categories: array ของหมวดหมู่ที่ตรงกับประกาศ (เลือกจาก: "ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว")
 3. dateSnippet: คัดลอกข้อความท่อนที่ระบุวันเวลาเปิดรับสมัครจากเอกสารมาเป๊ะๆ ทุกตัวอักษรและเลขไทย เช่น "ตั้งแต่วันที่ ๒๕ - ๓๑ สิงหาคม ๒๕๖๙ (เว้นวันหยุดราชการ)"
 4. startDay: เลขวันที่เริ่มต้นเป็นเลขอารบิก เช่น 25
 5. endDay: เลขวันที่สิ้นสุดเป็นเลขอารบิก เช่น 31
@@ -34,7 +35,8 @@ const SYSTEM_INSTRUCTION = `
 14. announcementUrl: ลิงก์เอกสารประกาศ (ถ้ามี) หรือ ""
 15. description: สรุปวิธีการรับสมัครและสถานที่รับสมัครสั้นๆ 1-3 ย่อหน้า
 16. provinces: array ของชื่อจังหวัดที่ปฏิบัติงาน เช่น ["ลพบุรี"] หากทั่วประเทศให้ใส่ ["ทุกจังหวัด"]
-17. positionList: array ของตำแหน่งทั้งหมดที่เปิดรับ โดยแต่ละตำแหน่งมีฟิลด์:
+17. sector: แวดวงหน่วยงาน (เลือก 1 ค่าจาก: "hospital" [โรงพยาบาล/สาธารณสุข], "education" [สถานศึกษา/มหาวิทยาลัย/โรงเรียน], "local" [อปท./เทศบาล/อบต./อบจ.], "state" [รัฐวิสาหกิจ], "judicial" [ศาล/องค์กรอิสระ], "central" [กระทรวง/กรมทั่วไป])
+18. positionList: array ของตำแหน่งทั้งหมดที่เปิดรับ โดยแต่ละตำแหน่งมีฟิลด์:
     - title: ชื่อตำแหน่ง เช่น "นักจัดการงานทั่วไป", "นักวิชาการคอมพิวเตอร์"
     - salary: อัตราเงินเดือนเป็นเลขอารบิก เช่น "21,780 บาท" (ตรวจสอบเทียบกับคำสะกดในวงเล็บให้ตรงเป๊ะ)
     - count: จำนวนอัตราว่าง (ตัวเลข integer เช่น 1)
@@ -205,7 +207,7 @@ export async function extractJobDataWithAI({ file, text, apiKey }) {
  */
 function sanitizeExtractedData(data, originalRawText = "") {
   const validEdus = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
-  const validCategories = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ"];
+  const validCategories = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว"];
 
   const categories = Array.isArray(data.categories)
     ? data.categories.filter(c => validCategories.includes(c))
@@ -268,10 +270,16 @@ function sanitizeExtractedData(data, originalRawText = "") {
       }
     }
 
+    const validSectors = ["hospital", "education", "local", "state", "judicial", "central"];
+    const sector = validSectors.includes(data.sector)
+      ? data.sector
+      : getJobSector({ department: dept, description: data.description, positionList, categories });
+
     return {
       department: dept,
       logoUrl,
       categories,
+      sector,
       provinces: Array.isArray(data.provinces) ? data.provinces : [],
       startDate: resolvedDates.startDate || "",
       deadline: resolvedDates.deadline || "",

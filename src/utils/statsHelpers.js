@@ -172,13 +172,6 @@ export const CATEGORY_META = {
     bgSoft: "rgba(124, 58, 237, 0.12)",
     icon: "📝",
   },
-  พนักงานหน่วยงานของรัฐ: {
-    id: "agency",
-    color: "#e11d48",
-    gradient: "linear-gradient(135deg, #f43f5e 0%, #be123c 100%)",
-    bgSoft: "rgba(225, 29, 72, 0.12)",
-    icon: "🏫",
-  },
 };
 
 export function calculateCategoryStats(jobs) {

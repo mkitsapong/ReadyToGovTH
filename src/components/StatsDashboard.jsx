@@ -7,6 +7,7 @@ import {
   calculateProvinceStats,
   calculateOverviewKPIs,
 } from "../utils/statsHelpers.js";
+import { calculateSectorStats } from "../utils/sectorHelper.js";
 import { EDUCATION_LEVELS } from "../utils/constants.js";
 
 export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelectProvince, isAdmin = false, onOpenAnalytics }) {
@@ -37,6 +38,10 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
   );
   const overviewKPIs = useMemo(
     () => calculateOverviewKPIs(activeJobs),
+    [activeJobs]
+  );
+  const sectorStats = useMemo(
+    () => calculateSectorStats(activeJobs),
     [activeJobs]
   );
 
@@ -111,6 +116,11 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
     } else {
       navigate(`/category/${catId}`);
     }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSelectSectorClick = (sectorId) => {
+    navigate(`/?sector=${sectorId}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -636,6 +646,58 @@ export default function StatsDashboard({ jobs = [], onNavigateCategory, onSelect
                   )}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* ── 5. Workplace Sector Breakdown (สถิติแวดวงหน่วยงาน) ── */}
+          <div className="stats-chart-card stats-sector-card" style={{ marginTop: 24, marginBottom: 0 }}>
+            <div className="stats-card-header">
+              <div className="stats-card-title-group">
+                <span className="stats-section-pill">SECTOR INSIGHTS</span>
+                <h2 className="stats-card-title">
+                  <span>สัดส่วนประกาศตามแวดวงหน่วยงาน</span>
+                </h2>
+                <p className="stats-card-subtitle">
+                  จำแนกตามแวดวงสถานที่ปฏิบัติงาน เช่น โรงพยาบาล/สาธารณสุข, สถานศึกษา/มหาวิทยาลัย, ท้องถิ่น อปท., รัฐวิสาหกิจ (คลิกเพื่อค้นหางาน)
+                </p>
+              </div>
+            </div>
+
+            <div className="stats-sector-grid">
+              {sectorStats.map((item) => (
+                <div
+                  key={item.id}
+                  className="stats-sector-card-item clickable"
+                  onClick={() => handleSelectSectorClick(item.id)}
+                  title={`คลิกเพื่อดูประกาศงานในแวดวง ${item.meta.label}`}
+                >
+                  <div className="stats-sector-top-row">
+                    <span className="stats-sector-icon">{item.meta.icon}</span>
+                    <span className="stats-sector-name">{item.meta.label}</span>
+                    <span className="stats-sector-arrow">↗</span>
+                  </div>
+                  <div className="stats-sector-desc">{item.meta.desc}</div>
+                  <div className="stats-sector-metrics-row">
+                    <div className="stats-sector-metric">
+                      <strong className="stats-sector-num" style={{ color: item.meta.color }}>{item.jobCount}</strong>
+                      <span className="stats-sector-unit">ประกาศ ({item.percentage}%)</span>
+                    </div>
+                    <div className="stats-sector-metric">
+                      <strong className="stats-sector-num">{item.positionCount.toLocaleString()}</strong>
+                      <span className="stats-sector-unit">อัตรากำลัง</span>
+                    </div>
+                  </div>
+                  <div className="stats-bar-track" style={{ marginTop: 10 }}>
+                    <div
+                      className="stats-bar-fill"
+                      style={{
+                        width: `${item.percentage}%`,
+                        backgroundColor: item.meta.color,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { extractJobDataWithAI } from "../services/aiJobExtractor.js";
+import { resizeAndOptimizePoster } from "../utils/imageHelper.js";
 
 export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -99,6 +100,16 @@ export default function AdminAIExtractor({ onExtracted, defaultOpen = true }) {
         text: activeTab === "text" ? rawText : null,
         apiKey: apiKey.trim(),
       });
+
+      // If user uploaded an image file (e.g. Infographic poster), also save it to posterUrl!
+      if (activeTab === "file" && file && file.type.startsWith("image/")) {
+        try {
+          const posterBase64 = await resizeAndOptimizePoster(file);
+          extracted.posterUrl = posterBase64;
+        } catch (e) {
+          console.warn("Could not optimize poster image:", e);
+        }
+      }
 
       stopProgress(true);
       await new Promise(r => setTimeout(r, 600)); // Show 100% briefly

@@ -111,9 +111,11 @@ export function waitForElementImages(container, timeoutMs = 5000) {
  * Retains aspect ratio and transparency, exports as compact PNG data URL (<50KB typical).
  * @param {File|Blob|string} imageSource
  * @param {number} maxDim - Maximum width or height in pixels (default: 400)
- * @returns {Promise<string>} Base64 PNG data URL
+ * @param {string} format - Image format MIME type (default: "image/png", or "image/jpeg", "image/webp")
+ * @param {number} quality - Image quality between 0 and 1 (default: 0.9)
+ * @returns {Promise<string>} Base64 data URL
  */
-export async function resizeAndOptimizeImage(imageSource, maxDim = 400) {
+export async function resizeAndOptimizeImage(imageSource, maxDim = 400, format = "image/png", quality = 0.9) {
   let sourceUrl = "";
   if (typeof imageSource === "string") {
     sourceUrl = imageSource;
@@ -152,11 +154,23 @@ export async function resizeAndOptimizeImage(imageSource, maxDim = 400) {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/png"));
+      try {
+        resolve(canvas.toDataURL(format, quality));
+      } catch {
+        resolve(canvas.toDataURL("image/png"));
+      }
     };
     img.onerror = () => reject(new Error("Failed to load image for resizing"));
     img.src = sourceUrl;
   });
+}
+
+/**
+ * Resize and optimize an announcement poster or infographic image.
+ * Uses JPEG/WebP format with max dimension 1400px to maintain high readability and sharp text/QR code.
+ */
+export async function resizeAndOptimizePoster(imageSource, maxDim = 1400, quality = 0.85) {
+  return resizeAndOptimizeImage(imageSource, maxDim, "image/jpeg", quality);
 }
 
 /**

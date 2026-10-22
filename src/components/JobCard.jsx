@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CATEGORY_MAP } from "../utils/constants.js";
+import { getJobSectorMeta } from "../utils/sectorHelper.js";
 import { getDisplayProvinces, daysLeft, formatDate, getTotalJobPositions, getPositionCount } from "../utils/helpers.js";
 import ApplicationTrackerBadge from "./ApplicationTrackerBadge.jsx";
 
 export default function JobCard({
   job,
   style,
+  layout = "grid",
   isAdmin,
   onEdit,
   userEducation,
@@ -33,7 +35,9 @@ export default function JobCard({
     navigate(`/job/${job.id}`);
   };
 
-  const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const rawCategories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const categories = rawCategories.filter(cat => cat !== "พนักงานหน่วยงานของรัฐ");
+  const sectorMeta = getJobSectorMeta(job);
   const provinces = getDisplayProvinces(job);
   const mainMeta = CATEGORY_MAP[categories[0]] || { badge: "badge-civil", icon: "📄" };
   // daysLeft() returns 0 for missing/invalid dates — guard so such jobs aren't shown as "closing today"
@@ -77,6 +81,231 @@ export default function JobCard({
     displaySalary = job.salary;
   }
 
+  // ── 1. Horizontal List Layout (Ultra-Clean Frameless Editorial Style) ──
+  if (layout === "list") {
+    return (
+      <div
+        className={`job-card job-card-clickable job-card-horizontal ${urgent ? 'card-urgent' : expired ? 'card-expired' : ''}`}
+        style={style}
+        onClick={handleCardClick}
+      >
+        <div className="job-horizontal-wrapper">
+          {/* 1. Full-Height Natural Logo (No bounding box) */}
+          <div className="job-horizontal-logo-column">
+            {job.logoUrl && !logoFailed ? (
+              <img
+                src={job.logoUrl}
+                alt={job.department}
+                referrerPolicy="no-referrer"
+                loading="lazy"
+                onError={() => setLogoFailed(true)}
+                className="job-horizontal-logo-img"
+              />
+            ) : (
+              <span className="job-horizontal-logo-fallback">{mainMeta.icon}</span>
+            )}
+          </div>
+
+          {/* 2. Main Content Body */}
+          <div className="job-horizontal-main-body">
+            {/* Top Half: Department Header, Position & Location Subline, Clean Salary */}
+            <div className="job-horizontal-top-section">
+              <div className="job-horizontal-heading-group">
+                {/* Department Name Hero Headline */}
+                <h3 className="job-horizontal-dept-title" title={job.department}>
+                  <Link to={`/job/${job.id}`} onClick={(e) => e.stopPropagation()}>
+                    {job.department}
+                  </Link>
+                </h3>
+
+                {/* Position Title & Location Subline (Natural Editorial Meta) */}
+                <div className="job-horizontal-meta-subline">
+                  <div className="job-horizontal-pos-names">
+                    {job.positionList && job.positionList.length > 0 ? (
+                      <>
+                        {job.positionList.slice(0, 2).map((pos, pIdx) => (
+                          <span key={pIdx} className="job-pos-entry">
+                            <span className="job-pos-title">{pos.title}</span>
+                            {pos.count && (
+                              <span className="job-pos-count-text"> ({pos.count} อัตรา)</span>
+                            )}
+                            {pIdx === 0 && job.positionList.length > 1 && (
+                              <span className="job-pos-bullet">, </span>
+                            )}
+                          </span>
+                        ))}
+                        {job.positionList.length > 2 && (
+                          <span className="job-pos-more-tag">+{job.positionList.length - 2} ตำแหน่ง</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="job-pos-entry">
+                        <span className="job-pos-title">{job.title || "เปิดรับสมัครบุคคลเข้าทำงาน"}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {provinces.length > 0 && (
+                    <span className="job-horizontal-loc-text">
+                      <span className="meta-sep">·</span>
+                      <span className="meta-loc-text">📍 {provinces[0]}{provinces.length > 1 ? ` (+${provinces.length - 1})` : ""}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Top Right: Clean Unboxed Salary & Quick Actions */}
+              <div className="job-horizontal-top-right">
+                <div className="job-horizontal-salary-clean">
+                  <div className="salary-amount-text">{displaySalary || "ตามระเบียบกำหนด"}</div>
+                  <div className="salary-quota-sub">รวม {totalCount} อัตรา</div>
+                </div>
+
+                <div className="job-horizontal-quick-actions">
+                  {isBookmarked && (
+                    <ApplicationTrackerBadge
+                      tracking={tracking || { status: "interested" }}
+                      onStatusChange={(newStatus) => onUpdateTracking?.({ status: newStatus })}
+                      onOpenDetails={onOpenTrackerDetails}
+                      compact
+                    />
+                  )}
+                  <button
+                    type="button"
+                    id={`btn-share-${job.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onOpenShare?.(job);
+                    }}
+                    title="แชร์ประกาศนี้"
+                    aria-label="แชร์ประกาศนี้"
+                    className="job-btn-circle"
+                  >
+                    🔗
+                  </button>
+                  <button
+                    type="button"
+                    id={`btn-bookmark-${job.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onToggleBookmark?.();
+                    }}
+                    title={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+                    aria-label={isBookmarked ? "ยกเลิกบันทึก" : "บันทึกงานนี้"}
+                    className={`job-btn-circle ${isBookmarked ? 'bookmarked' : ''}`}
+                  >
+                    {isBookmarked ? "❤️" : "🤍"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Subtle Divider Line */}
+            <div className="job-horizontal-divider" />
+
+            {/* Bottom Half: Clean Inline Meta on Left + Deadline & CTA on Right */}
+            <div className="job-horizontal-bottom-section">
+              <div className="job-horizontal-tags-row">
+                {/* Official Exam Requirement */}
+                {job.isNoOCSC ? (
+                  <span className="clean-meta-item tag-amber-text">
+                    ✨ ไม่ต้องผ่าน ภาค ก
+                  </span>
+                ) : job.isOCSC ? (
+                  <span className="clean-meta-item tag-blue-text">
+                    📝 ต้องผ่าน ภาค ก
+                  </span>
+                ) : null}
+
+                {/* Sector / Workplace */}
+                {sectorMeta && sectorMeta.id !== "central" && (
+                  <span className="clean-meta-item tag-slate-text" title={`แวดวง: ${sectorMeta.label}`}>
+                    <span className="clean-dot">·</span>
+                    <span>{sectorMeta.shortLabel}</span>
+                  </span>
+                )}
+
+                {/* Personnel Categories */}
+                {categories.map((cat, idx) => (
+                  <span key={idx} className="clean-meta-item tag-slate-text">
+                    <span className="clean-dot">·</span>
+                    <span>{cat}</span>
+                  </span>
+                ))}
+
+                {/* Education */}
+                {uniqueEdus.length > 0 && (
+                  <span className="clean-meta-item tag-slate-text" title={uniqueEdus.join(", ")}>
+                    <span className="clean-dot">·</span>
+                    <span>🎓 {uniqueEdus[0]}{uniqueEdus.length > 1 ? ` +${uniqueEdus.length - 1}` : ""}</span>
+                  </span>
+                )}
+
+                {/* Admin Quick Tools */}
+                {isAdmin && (
+                  <div className="job-horizontal-admin-group">
+                    <button
+                      type="button"
+                      id={`btn-edit-${job.id}`}
+                      onClick={(e) => { e.stopPropagation(); onEdit(job); }}
+                      className="btn-admin-ghost"
+                    >
+                      ✏️ แก้ไข
+                    </button>
+                    {onOpenPoster && (
+                      <button
+                        type="button"
+                        id={`btn-poster-${job.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onOpenPoster(job);
+                        }}
+                        className="btn-admin-ghost"
+                        style={{ color: "#ea580c" }}
+                      >
+                        📢 โพสต์
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Right: Clean Deadline Text & CTA Button */}
+              <div className="job-horizontal-cta-group">
+                <div className="job-horizontal-deadline-text">
+                  {!hasDeadline ? (
+                    <span className="deadline-clean muted">ดูกำหนดในประกาศ</span>
+                  ) : expired ? (
+                    <span className="deadline-clean expired">⚠️ ปิดรับสมัครแล้ว</span>
+                  ) : days === 0 ? (
+                    <span className="deadline-clean today">🔥 ปิดรับวันนี้!</span>
+                  ) : urgent ? (
+                    <span className="deadline-clean urgent">⚡ เหลือ ${days} วัน (${formatDate(job.deadline)})</span>
+                  ) : (
+                    <span className="deadline-clean normal">📅 ปิดรับ ${formatDate(job.deadline)} (เหลือ ${days} วัน)</span>
+                  )}
+                </div>
+
+                <Link
+                  id={`btn-detail-${job.id}`}
+                  to={`/job/${job.id}`}
+                  className="btn-detail-human"
+                >
+                  <span>ดูรายละเอียด</span>
+                  <span className="btn-detail-arrow">➔</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── 2. Grid Card Layout (ตารางการ์ดเดิม) ──
   return (
     <div className="job-card job-card-clickable" style={style} onClick={handleCardClick}>
       {/* ── Card Header ── */}
@@ -167,7 +396,7 @@ export default function JobCard({
               </Link>
             </h3>
 
-            {/* Badges Row (Categories only + Inline Admin Edit) */}
+            {/* Badges Row (Categories + Workplace Sector + Inline Admin Edit) */}
             <div className="job-header-badges">
               {categories.map((cat, idx) => {
                 const catMeta = CATEGORY_MAP[cat] || { badge: "badge-civil" };
@@ -177,6 +406,16 @@ export default function JobCard({
                   </span>
                 );
               })}
+
+              {/* Sector Badge (e.g. 🏥 โรงพยาบาล/สธ., 🎓 สถานศึกษา/มหาลัย) */}
+              {sectorMeta && sectorMeta.id !== "central" && (
+                <span
+                  className={`job-badge-pill ${sectorMeta.badgeClass}`}
+                  title={`แวดวงหน่วยงาน: ${sectorMeta.label}`}
+                >
+                  {sectorMeta.icon} {sectorMeta.shortLabel}
+                </span>
+              )}
 
               {isAdmin && (
                 <>

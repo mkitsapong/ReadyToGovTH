@@ -14,6 +14,7 @@ import { isFirebaseConfigured } from "../firebase.js";
 import { searchJobsLocal } from "../services/searchService.js";
 import { trackSearchQuery } from "../services/analyticsService.js";
 import { EDUCATION_LEVELS } from "../utils/constants.js";
+import { SECTOR_ITEMS, matchesSector, getJobSector } from "../utils/sectorHelper.js";
 
 const CATEGORY_FILTER = {
   home: null,
@@ -23,6 +24,14 @@ const CATEGORY_FILTER = {
   temp: "ลูกจ้างชั่วคราว",
   agency: "พนักงานหน่วยงานของรัฐ",
 };
+
+export const CONTRACT_TYPES = [
+  { id: "all", label: "รูปแบบทั้งหมด", shortLabel: "ทุกรูปแบบ", icon: "🌐" },
+  { id: "civil", label: "ข้าราชการ", shortLabel: "ข้าราชการ", icon: "🏛️", value: "ข้าราชการ" },
+  { id: "government", label: "พนักงานราชการ", shortLabel: "พนักงานราชการ", icon: "📋", value: "พนักงานราชการ" },
+  { id: "state", label: "รัฐวิสาหกิจ", shortLabel: "รัฐวิสาหกิจ", icon: "🏢", value: "รัฐวิสาหกิจ" },
+  { id: "temp", label: "ลูกจ้างชั่วคราว", shortLabel: "ลูกจ้างชั่วคราว", icon: "📝", value: "ลูกจ้างชั่วคราว" },
+];
 
 const PAGE_HERO_MAP = {
   home: { title: "งานราชการทุกประเภท", subtitle: "รวบรวมประกาศรับสมัครงานภาครัฐไทยในที่เดียว อัปเดตล่าสุด" },
@@ -140,9 +149,36 @@ export default function JobList({
     const fromUrl = urlParams.get("ocsc");
     return fromUrl !== null ? fromUrl === "1" : safeGetSession("filterOCSC") === "true";
   });
+  const [selectedContract, setSelectedContract] = useState(() => {
+    const fromUrl = urlParams.get("contract") || urlParams.get("cat");
+    if (fromUrl && CONTRACT_TYPES.some((c) => c.id === fromUrl)) return fromUrl;
+    if (activePage && activePage !== "home" && CATEGORY_FILTER[activePage]) {
+      return activePage;
+    }
+    const fromSession = safeGetSession("selectedContract", "all");
+    return CONTRACT_TYPES.some((c) => c.id === fromSession) ? fromSession : "all";
+  });
+  const [selectedSector, setSelectedSector] = useState(() => {
+    const fromUrl = urlParams.get("sector");
+    return fromUrl !== null ? fromUrl : safeGetSession("selectedSector", "all");
+  });
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
   const [posterJob, setPosterJob] = useState(null);
   const [shareJob, setShareJob] = useState(null);
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      return localStorage.getItem("readytogov_view_mode") || "list";
+    } catch {
+      return "list";
+    }
+  });
+
+  // Sync selectedContract when route /category/:id changes
+  useEffect(() => {
+    if (activePage && activePage !== "home" && CATEGORY_FILTER[activePage]) {
+      setSelectedContract(activePage);
+    }
+  }, [activePage]);
 
   // ── Sync filters → URL + sessionStorage ─────────────────────────────────
   useEffect(() => {
@@ -153,6 +189,8 @@ export default function JobList({
     safeSetSession("showExpired", showExpired);
     safeSetSession("filterNoOCSC", filterNoOCSC);
     safeSetSession("filterOCSC", filterOCSC);
+    safeSetSession("selectedSector", selectedSector);
+    safeSetSession("selectedContract", selectedContract);
     // Sync shareable params into URL
     setUrlParams(prev => {
       const next = new URLSearchParams(prev);
@@ -163,9 +201,11 @@ export default function JobList({
       showExpired ? next.set("expired", "1") : next.delete("expired");
       filterNoOCSC ? next.set("noocsc", "1") : next.delete("noocsc");
       filterOCSC ? next.set("ocsc", "1") : next.delete("ocsc");
+      selectedSector && selectedSector !== "all" ? next.set("sector", selectedSector) : next.delete("sector");
+      selectedContract && selectedContract !== "all" ? next.set("contract", selectedContract) : next.delete("contract");
       return next;
     }, { replace: true });
-  }, [searchQuery, sortBy, currentPage, userEducation, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC, setUrlParams]);
+  }, [searchQuery, sortBy, currentPage, userEducation, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC, selectedSector, selectedContract, setUrlParams]);
 
   // ── Auto relevance sort while searching ──────────────────────────────────────
   // When the user starts typing, switch the default sort (deadline) to relevance.
@@ -203,7 +243,9 @@ export default function JobList({
     filterOCSC ||
     filterNoOCSC ||
     showBookmarksOnly ||
-    showExpired
+    showExpired ||
+    (selectedSector && selectedSector !== "all") ||
+    (selectedContract && selectedContract !== "all")
   );
 
   const handleResetFilters = useCallback(() => {
@@ -214,6 +256,8 @@ export default function JobList({
     setFilterNoOCSC(false);
     setShowBookmarksOnly(false);
     setShowExpired(false);
+    setSelectedSector("all");
+    setSelectedContract("all");
     setCurrentPage(1);
   }, [onSelectProvince, onChangeUserEducation]);
   
@@ -230,6 +274,30 @@ export default function JobList({
   const expiredCount = useMemo(() => {
     if (!jobs || jobs.length === 0) return 0;
     return jobs.filter((j) => j.deadline && daysLeft(j.deadline) < 0).length;
+  }, [jobs]);
+
+  // Count active jobs by contract type
+  const contractCounts = useMemo(() => {
+    if (!jobs || jobs.length === 0) return {};
+    const activeJobs = jobs.filter(isJobActive);
+    const counts = { all: activeJobs.length };
+    CONTRACT_TYPES.forEach((c) => {
+      if (c.id === "all") return;
+      counts[c.id] = activeJobs.filter((j) => jobMatchesCategory(j, c.value)).length;
+    });
+    return counts;
+  }, [jobs]);
+
+  // Count active jobs by sector
+  const sectorCounts = useMemo(() => {
+    if (!jobs || jobs.length === 0) return {};
+    const activeJobs = jobs.filter(isJobActive);
+    const counts = { all: activeJobs.length };
+    activeJobs.forEach((job) => {
+      const s = getJobSector(job);
+      counts[s] = (counts[s] || 0) + 1;
+    });
+    return counts;
   }, [jobs]);
 
   // Prune ghost or deleted job IDs from localStorage once when active jobs are first loaded
@@ -287,9 +355,14 @@ export default function JobList({
   const searchData = useMemo(() => {
     let result = [...jobs];
 
-    // Category filter
-    if (categoryFilter) {
-      result = result.filter((j) => jobMatchesCategory(j, categoryFilter));
+    // Contract / Employment Type filter (ข้าราชการ, พนักงานราชการ, รัฐวิสาหกิจ ฯลฯ)
+    const effectiveContract = selectedContract && selectedContract !== "all" 
+      ? selectedContract 
+      : null;
+
+    if (effectiveContract && CATEGORY_FILTER[effectiveContract]) {
+      const targetCategory = CATEGORY_FILTER[effectiveContract];
+      result = result.filter((j) => jobMatchesCategory(j, targetCategory));
     }
 
     // Expired vs Active filter
@@ -316,6 +389,11 @@ export default function JobList({
     // Province / Region filter
     if (selectedProvince) {
       result = result.filter((j) => jobMatchesProvince(j, selectedProvince));
+    }
+
+    // Workplace Sector filter (โรงพยาบาล, สถานศึกษา, ท้องถิ่น ฯลฯ)
+    if (selectedSector && selectedSector !== "all") {
+      result = result.filter((j) => matchesSector(j, selectedSector));
     }
 
     // Smart Full-text & Fuzzy Search (Thai tokenization + Typo tolerance + Gov Synonyms)
@@ -353,7 +431,7 @@ export default function JobList({
       hasTypoCorrection: searchRes.hasTypoCorrection,
       suggestions: searchRes.suggestions,
     };
-  }, [jobs, categoryFilter, selectedProvince, userEducation, debouncedSearchQuery, sortBy, showBookmarksOnly, showExpired, isBookmarked, filterNoOCSC, filterOCSC]);
+  }, [jobs, selectedContract, categoryFilter, selectedProvince, userEducation, selectedSector, debouncedSearchQuery, sortBy, showBookmarksOnly, showExpired, isBookmarked, filterNoOCSC, filterOCSC]);
 
   const filtered = searchData.jobs;
   const hasTypoCorrection = searchData.hasTypoCorrection;
@@ -385,12 +463,14 @@ export default function JobList({
 
   // Reset page when filters change
   const prevFiltersRef = useRef({
-    categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC
+    selectedContract, selectedSector, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC
   });
   
   useEffect(() => {
     const prev = prevFiltersRef.current;
     if (
+      prev.selectedContract !== selectedContract ||
+      prev.selectedSector !== selectedSector ||
       prev.categoryFilter !== categoryFilter ||
       prev.selectedProvince !== selectedProvince ||
       prev.userEducation !== userEducation ||
@@ -403,10 +483,10 @@ export default function JobList({
     ) {
       setCurrentPage(1);
       prevFiltersRef.current = {
-        categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC
+        selectedContract, selectedSector, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC
       };
     }
-  }, [categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]);
+  }, [selectedContract, selectedSector, categoryFilter, selectedProvince, userEducation, searchQuery, sortBy, showBookmarksOnly, showExpired, filterNoOCSC, filterOCSC]);
 
   // ── Pagination (Clean Classic) ──────────────────────────────────────────────
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -690,6 +770,77 @@ export default function JobList({
               </div>
             </div>
 
+            {/* Dual Taxonomy Filter Rows: รูปแบบการจ้าง & แวดวงงาน */}
+            <div className="filter-taxonomies-card" role="region" aria-label="หมวดหมู่และแวดวงงาน">
+              {/* Row 1: รูปแบบการจ้าง (Contract Type) */}
+              <div className="filter-taxonomy-row" role="region" aria-label="กรองตามรูปแบบการจ้าง">
+                <div className="filter-taxonomy-label-wrap">
+                  <span className="filter-taxonomy-header-tag contract-tag" title="กรองตามรูปแบบสัญญาจ้าง">
+                    <span className="header-tag-icon">📋</span> สัญญาจ้าง
+                  </span>
+                </div>
+                <div className="filter-taxonomy-pills" role="tablist" aria-label="เลือกรูปแบบการจ้าง">
+                  {CONTRACT_TYPES.map((ct) => {
+                    const isActive = (selectedContract || "all") === ct.id;
+                    const count = contractCounts[ct.id] || 0;
+                    return (
+                      <button
+                        key={ct.id}
+                        type="button"
+                        id={`filter-contract-${ct.id}`}
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => {
+                          setSelectedContract(isActive && ct.id !== "all" ? "all" : ct.id);
+                          setCurrentPage(1);
+                        }}
+                        className={`filter-taxonomy-pill filter-contract-pill ${isActive ? "active" : ""} ct-${ct.id}`}
+                        title={ct.label}
+                      >
+                        <span className="taxo-icon">{ct.icon}</span>
+                        <span className="taxo-label">{ct.shortLabel || ct.label}</span>
+                        {count > 0 && <span className="taxo-count">{count}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Row 2: แวดวงงาน (Workplace Sector) */}
+              <div className="filter-taxonomy-row" role="region" aria-label="กรองตามแวดวงหน่วยงาน">
+                <div className="filter-taxonomy-label-wrap">
+                  <span className="filter-taxonomy-header-tag sector-tag" title="กรองตามแวดวงสถานที่ปฏิบัติงาน">
+                    <span className="header-tag-icon">🏛️</span> แวดวงงาน
+                  </span>
+                </div>
+                <div className="filter-taxonomy-pills" role="tablist" aria-label="เลือกแวดวงหน่วยงาน">
+                  {SECTOR_ITEMS.map((sec) => {
+                    const isActive = (selectedSector || "all") === sec.id;
+                    const count = sectorCounts[sec.id] || 0;
+                    return (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        id={`filter-sector-${sec.id}`}
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => {
+                          setSelectedSector(isActive && sec.id !== "all" ? "all" : sec.id);
+                          setCurrentPage(1);
+                        }}
+                        className={`filter-taxonomy-pill filter-sector-pill ${isActive ? "active" : ""} sec-${sec.id}`}
+                        title={sec.label}
+                      >
+                        <span className="taxo-icon">{sec.icon}</span>
+                        <span className="taxo-label">{sec.shortLabel || sec.label}</span>
+                        {count > 0 && <span className="taxo-count">{count}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {/* Typo Correction / Fuzzy Suggestion Banner */}
             {hasTypoCorrection && typoSuggestions.length > 0 && searchQuery.trim() && (
               <div className="search-typo-notice">
@@ -774,11 +925,42 @@ export default function JobList({
                 </div>
               </div>
 
-              {/* Result Count Badge */}
-              <div className="filter-count-badge" aria-live="polite">
-                พบ <strong>{filtered.length.toLocaleString()}</strong> ประกาศ
-                {filtered.length > 0 && <> · <strong>{totalPositions.toLocaleString()}</strong> อัตรา</>}
-                {showExpired ? " (ปิดรับสมัครแล้ว)" : ""}
+              {/* Result Count Badge & View Mode Switcher */}
+              <div className="filter-count-row">
+                <div className="filter-count-badge" aria-live="polite">
+                  พบ <strong>{filtered.length.toLocaleString()}</strong> ประกาศ
+                  {filtered.length > 0 && <> · <strong>{totalPositions.toLocaleString()}</strong> อัตรา</>}
+                  {showExpired ? " (ปิดรับสมัครแล้ว)" : ""}
+                </div>
+
+                <div className="jobs-view-switcher" role="group" aria-label="รูปแบบการแสดงผล">
+                  <button
+                    type="button"
+                    id="btn-view-list"
+                    className={`view-switcher-btn ${viewMode === "list" ? "active" : ""}`}
+                    onClick={() => {
+                      setViewMode("list");
+                      try { localStorage.setItem("readytogov_view_mode", "list"); } catch {}
+                    }}
+                    title="แสดงแบบแนวนอนยาว (List View) สแกนอ่านง่าย"
+                  >
+                    <span className="view-icon">☰</span>
+                    <span className="view-label">แนวนอน</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-view-grid"
+                    className={`view-switcher-btn ${viewMode === "grid" ? "active" : ""}`}
+                    onClick={() => {
+                      setViewMode("grid");
+                      try { localStorage.setItem("readytogov_view_mode", "grid"); } catch {}
+                    }}
+                    title="แสดงแบบตารางการ์ด (Grid View)"
+                  >
+                    <span className="view-icon">⊞</span>
+                    <span className="view-label">ตาราง</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -814,10 +996,10 @@ export default function JobList({
             </div>
           )}
 
-          <div className="jobs-grid">
+          <div className={viewMode === "list" ? "jobs-list" : "jobs-grid"}>
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <JobCardSkeleton key={i} />
+                <JobCardSkeleton key={i} layout={viewMode} />
               ))
             ) : isError ? (
               <div className="empty-state empty-state-error">
@@ -857,6 +1039,7 @@ export default function JobList({
                   <JobCard
                     key={job.id ?? `idx-${i}`}
                     job={job}
+                    layout={viewMode}
                     style={{ animationDelay: `${(i % PAGE_SIZE) * 0.05}s` }}
                     isAdmin={isAdmin}
                     onEdit={onEditJob}

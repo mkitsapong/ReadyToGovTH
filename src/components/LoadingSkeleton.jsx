@@ -76,8 +76,35 @@ export function LoadingBanner({
   );
 }
 
-// High fidelity Job Card Skeleton for the Grid
-export function JobCardSkeleton() {
+// High fidelity Job Card Skeleton for Grid and List layouts
+export function JobCardSkeleton({ layout = "grid" }) {
+  if (layout === "list") {
+    return (
+      <div className="job-card-horizontal skeleton-card" style={{ minHeight: 110, display: "flex", alignItems: "stretch" }}>
+        <div className="horizontal-accent-strip" style={{ background: "var(--border-light, #e2e8f0)" }} />
+        <div className="job-horizontal-wrapper" style={{ alignItems: "center", width: "100%" }}>
+          <div className="skeleton-box skeleton-shimmer" style={{ width: 74, height: 74, borderRadius: 12, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              <div className="skeleton-box skeleton-shimmer" style={{ width: 70, height: 18, borderRadius: 999 }} />
+              <div className="skeleton-box skeleton-shimmer" style={{ width: 90, height: 18, borderRadius: 999 }} />
+            </div>
+            <div className="skeleton-box skeleton-shimmer" style={{ width: "70%", height: 20, borderRadius: 6 }} />
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="skeleton-box skeleton-shimmer" style={{ width: 110, height: 16, borderRadius: 6 }} />
+              <div className="skeleton-box skeleton-shimmer" style={{ width: 80, height: 16, borderRadius: 6 }} />
+              <div className="skeleton-box skeleton-shimmer" style={{ width: 130, height: 16, borderRadius: 6 }} />
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
+            <div className="skeleton-box skeleton-shimmer" style={{ width: 50, height: 24, borderRadius: 999 }} />
+            <div className="skeleton-box skeleton-shimmer" style={{ width: 100, height: 34, borderRadius: 10 }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="job-card skeleton-card">
       {/* Top Banner (Navy Dark Header) */}

@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { getJobSector, getJobSectorMeta, SECTOR_ITEMS } from "../utils/sectorHelper.js";
 import { regions } from "../data/provinces.js";
 import AdminAIExtractor from "./AdminAIExtractor.jsx";
 import SocialPosterModal from "./SocialPosterModal.jsx";
@@ -8,13 +9,14 @@ import { formatDate } from "../utils/helpers.js";
 import {
   convertExternalImageToBase64,
   resizeAndOptimizeImage,
+  resizeAndOptimizePoster,
   removeWhiteBackground,
 } from "../utils/imageHelper.js";
 
-const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว", "พนักงานหน่วยงานของรัฐ"];
+const CATEGORIES = ["ข้าราชการ", "พนักงานราชการ", "รัฐวิสาหกิจ", "ลูกจ้างชั่วคราว"];
 const EDUCATION = ["ม.3", "ม.6", "ปวช.", "ปวส.", "ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก", "ไม่จำกัดวุฒิ"];
 
-const CATEGORY_ICONS = { ข้าราชการ: "🏛️", พนักงานราชการ: "📋", รัฐวิสาหกิจ: "🏢", ลูกจ้างชั่วคราว: "📝", พนักงานหน่วยงานของรัฐ: "🏫" };
+const CATEGORY_ICONS = { ข้าราชการ: "🏛️", พนักงานราชการ: "📋", รัฐวิสาหกิจ: "🏢", ลูกจ้างชั่วคราว: "📝" };
 
 const EMPTY_UNIT = { name: "", count: 1, education: ["ปริญญาตรี"], major: "", details: "" };
 const EMPTY_POSITION = { title: "", salary: "", count: 1, education: ["ปริญญาตรี"], details: "", units: [] };
@@ -29,7 +31,8 @@ const EMPTY_FORM = {
   logoUrl: "",
   applyUrl: "",
   announcementUrl: "",
-  showBooks: true,
+  posterUrl: "",
+  showBooks: false,
   customBookTitle: "",
   customBookUrl: "",
   isNoOCSC: false,
@@ -62,7 +65,8 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
           logoUrl:         editJob.logoUrl || "",
           applyUrl:        editJob.applyUrl || "",
           announcementUrl: editJob.announcementUrl || "",
-          showBooks:       editJob.showBooks !== false,
+          posterUrl:       editJob.posterUrl || editJob.imageUrl || "",
+          showBooks:       Boolean(editJob.showBooks),
           customBookTitle: editJob.customBookTitle || "",
           customBookUrl:   editJob.customBookUrl || "",
           isNoOCSC:        editJob.isNoOCSC || false,
@@ -88,10 +92,28 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
   const [logoLoading, setLogoLoading] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+  const [posterPreview, setPosterPreview] = useState(isEditMode ? (editJob.posterUrl || editJob.imageUrl || "") : "");
+  const [posterLoading, setPosterLoading] = useState(false);
+  const [posterError, setPosterError] = useState(false);
+  const [isDraggingPoster, setIsDraggingPoster] = useState(false);
   const [originalLogo, setOriginalLogo] = useState(null);
   const [hasCutBg, setHasCutBg] = useState(false);
   const [logoFeedback, setLogoFeedback] = useState(null);
   const [provinceOpen, setProvinceOpen] = useState(false);
+
+  // Dynamic Auto-detection of Workplace Sector (แวดวงงาน)
+  const detectedSector = useMemo(() => {
+    return getJobSector({
+      department: form.department,
+      description: form.description,
+      categories: form.categories,
+      positionList: form.positionList,
+    });
+  }, [form.department, form.description, form.categories, form.positionList]);
+
+  const detectedSectorMeta = useMemo(() => {
+    return getJobSectorMeta(detectedSector);
+  }, [detectedSector]);
   const provinceRef = useRef(null);
   const logoConvertTimerRef = useRef(null);
   const logoFeedbackTimerRef = useRef(null);
@@ -178,8 +200,15 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
       postedDate: extractedData.postedDate || prev.postedDate,
       isNoOCSC: typeof extractedData.isNoOCSC === "boolean" ? extractedData.isNoOCSC : prev.isNoOCSC,
       isOCSC: typeof extractedData.isOCSC === "boolean" ? extractedData.isOCSC : prev.isOCSC,
+      sector: extractedData.sector || getJobSector({
+        department: extractedData.department || prev.department,
+        description: extractedData.description || prev.description,
+        categories: extractedData.categories || prev.categories,
+        positionList: extractedData.positionList || prev.positionList,
+      }) || prev.sector || "auto",
       applyUrl: extractedData.applyUrl || prev.applyUrl,
       announcementUrl: extractedData.announcementUrl || prev.announcementUrl,
+      posterUrl: extractedData.posterUrl || prev.posterUrl,
       description: extractedData.description || prev.description,
       positionList: extractedData.positionList?.length ? extractedData.positionList : prev.positionList,
     }));
@@ -257,6 +286,66 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
     }
   }
 
+
+
+  // ── Poster / Infographic Announcement handlers ─────────────────────────────
+  const processPosterFile = useCallback(async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("ไฟล์ที่เลือกไม่ใช่รูปภาพ กรุณาเลือกไฟล์รูปภาพ (PNG, JPG, WEBP)");
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      alert("ไฟล์รูปภาพมีขนาดเกิน 25 MB");
+      return;
+    }
+    setPosterLoading(true);
+    setPosterError(false);
+    try {
+      const base64 = await resizeAndOptimizePoster(file);
+      setPosterPreview(base64);
+      setForm((prev) => ({ ...prev, posterUrl: base64 }));
+    } catch (err) {
+      console.error(err);
+      setPosterError(true);
+      alert("เกิดข้อผิดพลาดในการประมวลผลรูปภาพประกาศ");
+    } finally {
+      setPosterLoading(false);
+    }
+  }, []);
+
+  const handlePosterChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processPosterFile(file);
+      e.target.value = "";
+    }
+  };
+
+  const handlePosterPaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith("image/")) {
+          const file = items[i].getAsFile();
+          if (file) {
+            e.preventDefault();
+            processPosterFile(file);
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  const handlePosterDrop = (e) => {
+    e.preventDefault();
+    setIsDraggingPoster(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      processPosterFile(file);
+    }
+  };
 
   // ── Logo handlers & Clipboard Paste ─────────────────────────────────────────
   const processImageFile = useCallback(async (file, sourceName = "Clipboard") => {
@@ -793,28 +882,7 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                         }
                       }}
                     />
-                    <button
-                      type="button"
-                      onClick={handleAutoDetectLogo}
-                      title="ค้นหาโลโก้ทางการจากชื่อหน่วยงาน"
-                      style={{
-                        background: "rgba(234,88,12,0.1)",
-                        border: "1px solid rgba(234,88,12,0.3)",
-                        color: "#ea580c",
-                        borderRadius: "var(--radius-sm)",
-                        padding: "6px 10px",
-                        fontSize: "0.78rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        height: 34,
-                        whiteSpace: "nowrap",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4
-                      }}
-                    >
-                      ✨ หาโลโก้
-                    </button>
+
 
                     {/* 1-Click Auto Remove White Background */}
                     {logoPreview && !logoError && (
@@ -945,6 +1013,47 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
                 value={form.department}
                 onChange={(e) => handleChange("department", e.target.value)} />
               {errors.department && <p style={{ color: "var(--accent)", fontSize: "0.78rem", marginTop: 4 }}>{errors.department}</p>}
+            </div>
+
+            {/* Workplace Sector (แวดวงงาน) */}
+            <div className="form-group" style={{ background: "rgba(248, 250, 252, 0.7)", border: "1px solid var(--border-light, #e2e8f0)", borderRadius: "var(--radius-md, 10px)", padding: "12px 14px", marginTop: -2 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
+                <label className="form-label" style={{ margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontWeight: 700 }}>🏛️ แวดวงงาน (Workplace Sector)</span>
+                  <span style={{ fontSize: "0.72rem", color: "var(--gray-400)", fontWeight: "normal" }}>(สำหรับฟิลเตอร์และแสดงแท็ก)</span>
+                </label>
+                <div style={{ fontSize: "0.74rem" }}>
+                  {form.sector === "auto" || !form.sector ? (
+                    <span style={{ color: "var(--primary-600, #2563eb)", background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
+                      🤖 ตรวจจับอัตโนมัติ: {detectedSectorMeta?.icon} {detectedSectorMeta?.shortLabel || detectedSectorMeta?.label}
+                    </span>
+                  ) : (
+                    <span style={{ color: "#059669", background: "rgba(5,150,105,0.08)", border: "1px solid rgba(5,150,105,0.2)", padding: "2px 8px", borderRadius: 6, fontWeight: 600 }}>
+                      ✓ แอดมินระบุเจาะจง
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <select
+                id="admin-field-sector"
+                className="form-input"
+                value={form.sector || "auto"}
+                onChange={(e) => handleChange("sector", e.target.value)}
+                style={{ height: 42, cursor: "pointer", fontWeight: 600, background: "var(--bg-card, #ffffff)" }}
+              >
+                <option value="auto">
+                  🤖 ตรวจจับอัตโนมัติตามชื่อหน่วยงาน {detectedSectorMeta ? `(${detectedSectorMeta.icon} ${detectedSectorMeta.label})` : ""}
+                </option>
+                {SECTOR_ITEMS.filter((s) => s.id !== "all").map((sec) => (
+                  <option key={sec.id} value={sec.id}>
+                    {sec.icon} {sec.label}
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: "0.72rem", color: "var(--gray-400)", margin: "6px 0 0 0", lineHeight: 1.4 }}>
+                💡 ระบบจะจัดตำแหน่งงานเข้าฟิลเตอร์หน้าแรกอัตโนมัติ (เช่น 🏥 สาธารณสุข, 🧑‍🏫 ครู/อาจารย์, 🏫 สถานศึกษา, 🛡️ ตำรวจ/ทหาร, 🏡 ท้องถิ่น อปท., 🏢 รัฐวิสาหกิจ) หากต้องการเจาะจงสามารถเลือกเองได้
+              </p>
             </div>
 
             {/* Category + Province */}
@@ -1372,6 +1481,144 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
               />
               <p style={{ fontSize: "0.72rem", color: "var(--gray-400)", marginTop: 4 }}>เมื่อกรอกแล้ว จะแสดงปุ่ม "ประกาศรับสมัคร" ในหน้ารายละเอียด</p>
             </div>
+
+            {/* 🖼️ Poster / Infographic Announcement Image */}
+            <div className="form-group admin-poster-box" style={{
+              background: "rgba(248, 250, 252, 0.8)",
+              border: "1px solid var(--border-light, #e2e8f0)",
+              borderRadius: "var(--radius-md, 10px)",
+              padding: "14px 16px",
+              marginTop: 10
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
+                <label className="form-label" style={{ margin: 0, display: "flex", alignItems: "center", gap: 6, fontWeight: 700 }}>
+                  <span>🖼️ รูปภาพประกาศ / โปสเตอร์รับสมัคร (Poster / Infographic)</span>
+                  <span style={{ fontSize: "0.72rem", color: "var(--gray-400)", fontWeight: "normal" }}>(สำหรับหน่วยงานที่ออกประกาศเป็นรูปภาพ)</span>
+                </label>
+                {(form.posterUrl || posterPreview) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleChange("posterUrl", "");
+                      setPosterPreview("");
+                    }}
+                    style={{
+                      background: "rgba(239, 68, 68, 0.08)",
+                      border: "1px solid rgba(239, 68, 68, 0.2)",
+                      color: "#dc2626",
+                      fontSize: "0.74rem",
+                      cursor: "pointer",
+                      padding: "3px 8px",
+                      borderRadius: 6,
+                      fontWeight: 600
+                    }}
+                  >
+                    ✕ ลบรูปประกาศ
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
+                {/* Poster Dropzone & Thumbnail */}
+                <div
+                  tabIndex={0}
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingPoster(true); }}
+                  onDragLeave={() => setIsDraggingPoster(false)}
+                  onDrop={handlePosterDrop}
+                  onPaste={handlePosterPaste}
+                  onClick={() => document.getElementById("poster-upload-input").click()}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && document.getElementById("poster-upload-input").click()}
+                  style={{
+                    width: 100,
+                    height: 120,
+                    borderRadius: "var(--radius-md, 8px)",
+                    background: isDraggingPoster
+                      ? "rgba(37, 99, 235, 0.12)"
+                      : posterPreview && !posterError
+                      ? "var(--gray-900, #0f172a)"
+                      : "linear-gradient(135deg, rgba(30, 41, 59, 0.05), rgba(15, 23, 42, 0.08))",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    border: `2px dashed ${isDraggingPoster ? "var(--primary-500, #2563eb)" : posterError ? "#ef4444" : "var(--gray-300, #cbd5e1)"}`,
+                    flexShrink: 0,
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "all 0.18s ease",
+                    boxShadow: isDraggingPoster ? "0 0 0 4px rgba(37, 99, 235, 0.2)" : "none",
+                    outline: "none"
+                  }}
+                  title="คลิกเพื่อเลือกไฟล์รูปภาพ หรือลากรูปมาวางที่นี่ หรือกดคลิกแล้ว Ctrl+V วางภาพ"
+                >
+                  {posterLoading ? (
+                    <span style={{ fontSize: "0.68rem", color: "var(--gray-700)", textAlign: "center", fontWeight: 600, padding: 4 }}>
+                      ⏳<br />ประมวลผลรูป...
+                    </span>
+                  ) : isDraggingPoster ? (
+                    <span style={{ fontSize: "0.72rem", color: "var(--primary-600)", fontWeight: 700, textAlign: "center" }}>
+                      📥<br />ปล่อยรูปภาพ
+                    </span>
+                  ) : posterPreview && !posterError ? (
+                    <img
+                      src={posterPreview}
+                      alt="poster preview"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <>
+                      <span style={{ fontSize: "1.8rem" }}>🖼️</span>
+                      <span style={{ fontSize: "0.65rem", color: "var(--gray-500)", marginTop: 4, fontWeight: 600 }}>
+                        Ctrl + V
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* Input Controls */}
+                <div style={{ flex: 1, minWidth: 220, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <input
+                      id="poster-upload-input"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      style={{ display: "none" }}
+                      onChange={handlePosterChange}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      style={{ fontSize: "0.8rem", padding: "6px 12px", flexShrink: 0, height: 36, fontWeight: 600 }}
+                      onClick={() => document.getElementById("poster-upload-input").click()}
+                    >
+                      📁 อัปโหลดรูปโปสเตอร์
+                    </button>
+                    <span style={{ fontSize: "0.8rem", color: "var(--gray-400)" }}>หรือ</span>
+                    <input
+                      id="admin-field-poster-url"
+                      type="text"
+                      placeholder="ใส่ลิงก์รูปภาพ (URL) หรือคลิกแล้วกด Ctrl+V ที่นี่"
+                      className="form-input"
+                      style={{ flex: 1, minWidth: 160, padding: "6px 12px", fontSize: "0.82rem", height: 36 }}
+                      value={form.posterUrl || ""}
+                      onPaste={handlePosterPaste}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        handleChange("posterUrl", val);
+                        setPosterPreview(val);
+                        setPosterError(false);
+                      }}
+                    />
+                  </div>
+
+                  <p style={{ fontSize: "0.72rem", color: "var(--gray-500)", margin: 0, lineHeight: 1.4 }}>
+                    💡 <strong>คำแนะนำ:</strong> สามารถบันทึกรูปประกาศ/แผ่นพับโปสเตอร์ เช่น จาก Facebook หรือเว็บหน่วยงาน แล้วกด <code>Ctrl+V</code> วางรูปได้ทันที ระบบจะบีบอัดรูปภาพให้คมชัดและโหลดไว ผู้สมัครจะสามารถกดดูรูปขนาดเต็มและสแกน QR Code ในหน้ารายละเอียดได้
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="form-group">
               <label className="form-label">🔗 ลิงก์สมัครงาน / อีเมลรับสมัคร</label>
               <input id="admin-field-apply-url" className="form-input"
@@ -1397,14 +1644,14 @@ export default function AdminPanel({ onAddJob, onUpdateJob, onDeleteJob, onClose
               <label className="admin-checkbox-label" style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, margin: 0 }}>
                 <input
                   type="checkbox"
-                  checked={form.showBooks !== false}
+                  checked={Boolean(form.showBooks)}
                   onChange={(e) => handleChange("showBooks", e.target.checked)}
                   style={{ width: 16, height: 16, cursor: "pointer" }}
                 />
                 <span>📚 แสดงกล่องแนะนำหนังสือ & คอร์สติวในป๊อปอัปประกาศนี้</span>
               </label>
 
-              {form.showBooks !== false && (
+              {Boolean(form.showBooks) && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px dashed var(--navy-200)", display: "flex", flexDirection: "column", gap: 10 }}>
                   <div>
                     <label className="form-label" style={{ fontSize: "0.78rem" }}>

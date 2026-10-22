@@ -141,14 +141,14 @@ export default function JobDetailPage({ jobs, books, isLoading = false, isAdmin,
     );
   }
 
-  const categories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const rawCategories = job.categories && job.categories.length > 0 ? job.categories : (job.category ? [job.category] : []);
+  const categories = rawCategories.filter(cat => cat !== "พนักงานหน่วยงานของรัฐ");
   const primaryCategory = categories[0] || "งานราชการ";
   const categoryLink = {
     "ข้าราชการ": "/category/civil",
     "พนักงานราชการ": "/category/government",
     "รัฐวิสาหกิจ": "/category/state",
-    "ลูกจ้างชั่วคราว": "/category/temp",
-    "พนักงานหน่วยงานของรัฐ": "/category/agency"
+    "ลูกจ้างชั่วคราว": "/category/temp"
   }[primaryCategory];
 
   return (

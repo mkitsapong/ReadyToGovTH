@@ -2063,3 +2063,130 @@
     break-inside: avoid;
   }
 }
+
+/* ── Workplace Sector Breakdown Grid (Dashboard) ────────────────────────── */
+.stats-sector-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .stats-sector-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-sector-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stats-sector-card-item {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  background: var(--bg-card-subtle, #f8fafc);
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: var(--radius-lg, 14px);
+  transition: all var(--transition-fast, 0.2s ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-sector-card-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary, #2563eb);
+  box-shadow: var(--shadow-md, 0 4px 14px rgba(0, 0, 0, 0.08));
+  background: var(--bg-card, #ffffff);
+}
+
+[data-theme="dark"] .stats-sector-card-item {
+  background: #111a2e;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .stats-sector-card-item:hover {
+  background: #17233d;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.stats-sector-top-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.stats-sector-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.stats-sector-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main, #0f172a);
+  flex: 1;
+}
+
+[data-theme="dark"] .stats-sector-name {
+  color: #f8fafc;
+}
+
+.stats-sector-arrow {
+  font-size: 0.9rem;
+  color: var(--text-muted, #64748b);
+  opacity: 0.6;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.stats-sector-card-item:hover .stats-sector-arrow {
+  opacity: 1;
+  transform: translate(2px, -2px);
+  color: var(--primary, #2563eb);
+}
+
+.stats-sector-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748b);
+  line-height: 1.45;
+  margin-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.2em;
+}
+
+[data-theme="dark"] .stats-sector-desc {
+  color: #94a3b8;
+}
+
+.stats-sector-metrics-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.stats-sector-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.stats-sector-num {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.stats-sector-unit {
+  font-size: 0.76rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 500;
+}

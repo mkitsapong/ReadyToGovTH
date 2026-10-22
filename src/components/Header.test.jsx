@@ -22,11 +22,6 @@ describe("Header Component", () => {
     render(<Header {...defaultProps} />);
 
     expect(screen.getByText("หน้าแรก")).toBeInTheDocument();
-    expect(screen.getByText("ข้าราชการ")).toBeInTheDocument();
-    expect(screen.getByText("พนักงานราชการ")).toBeInTheDocument();
-    expect(screen.getByText("รัฐวิสาหกิจ")).toBeInTheDocument();
-    expect(screen.getByText("ลูกจ้างชั่วคราว")).toBeInTheDocument();
-    expect(screen.getByText("พนักงานหน่วยงานของรัฐ")).toBeInTheDocument();
     expect(screen.getByText("สถิติ")).toBeInTheDocument();
     expect(screen.getByText("ติดตามงาน")).toBeInTheDocument();
   });
@@ -39,10 +34,10 @@ describe("Header Component", () => {
   });
 
   it("highlights the active navigation item", () => {
-    render(<Header {...defaultProps} activePage="civil" />);
+    render(<Header {...defaultProps} activePage="stats" />);
 
-    const civilButton = screen.getByText("ข้าราชการ");
-    expect(civilButton.className).toContain("active");
+    const statsButton = screen.getByText("สถิติ");
+    expect(statsButton.className).toContain("active");
 
     const homeButton = screen.getByText("หน้าแรก");
     expect(homeButton.className).not.toContain("active");
@@ -52,8 +47,8 @@ describe("Header Component", () => {
     const onNavigate = vi.fn();
     render(<Header {...defaultProps} onNavigate={onNavigate} />);
 
-    fireEvent.click(screen.getByText("รัฐวิสาหกิจ"));
-    expect(onNavigate).toHaveBeenCalledWith("state");
+    fireEvent.click(screen.getByText("สถิติ"));
+    expect(onNavigate).toHaveBeenCalledWith("stats");
   });
 
   it("calls onNavigate('home') when logo is clicked", () => {
