@@ -208,7 +208,7 @@ export default async function handler(request) {
               boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
             }}
           >
-            {/* Department Logo */}
+            {/* Department Logo / Official Medallion */}
             {logo ? (
               <img
                 src={logo}
@@ -216,11 +216,12 @@ export default async function handler(request) {
                 style={{
                   width: '96px',
                   height: '96px',
-                  borderRadius: '20px',
+                  borderRadius: '50%',
                   objectFit: 'contain',
                   backgroundColor: '#ffffff',
+                  border: '2px solid #f59e0b',
                   padding: '8px',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
                 }}
               />
             ) : (
@@ -228,22 +229,22 @@ export default async function handler(request) {
                 style={{
                   width: '96px',
                   height: '96px',
-                  borderRadius: '22px',
-                  backgroundColor: '#0b1222',
-                  border: '1.5px solid rgba(245, 158, 11, 0.4)',
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  border: '2.5px solid #f59e0b',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
                 }}
               >
                 <svg width="60" height="60" viewBox="0 0 64 64" fill="none">
-                  <path d="M32 4c-1.5 0-2.8.8-3.5 2L25 12h14l-3.5-6c-.7-1.2-2-2-3.5-2z" fill="#f59e0b"/>
-                  <path d="M32 14c-4.4 0-8 3.6-8 8 0 2 .7 3.8 2 5.2V32h12v-4.8c1.3-1.4 2-3.2 2-5.2 0-4.4-3.6-8-8-8z" fill="#fbbf24"/>
-                  <path d="M12 20c-4 0-8 3-10 8 5-1 10 1 14 4l4-5c-2.5-4-5-7-8-7zm40 0c-3 0-5.5 3-8 7l4 5c4-3 9-5 14-4-2-5-6-8-10-8z" fill="#f59e0b"/>
-                  <path d="M6 34c4 4 10 7 16 8l2-5c-6-1-12-4-16-8zm52 0c-4 4-10 7-16 8l-2-5c6-1 12-4 16-8z" fill="#f59e0b"/>
-                  <path d="M26 36l-2 16 8-4 8 4-2-16-6 4-6-4z" fill="#fbbf24"/>
-                  <path d="M20 54l12 10 12-10-4-3-8 6-8-6z" fill="#d97706"/>
+                  <path d="M32 4c-1.5 0-2.8.8-3.5 2L25 12h14l-3.5-6c-.7-1.2-2-2-3.5-2z" fill="#d97706"/>
+                  <path d="M32 14c-4.4 0-8 3.6-8 8 0 2 .7 3.8 2 5.2V32h12v-4.8c1.3-1.4 2-3.2 2-5.2 0-4.4-3.6-8-8-8z" fill="#b45309"/>
+                  <path d="M12 20c-4 0-8 3-10 8 5-1 10 1 14 4l4-5c-2.5-4-5-7-8-7zm40 0c-3 0-5.5 3-8 7l4 5c4-3 9-5 14-4-2-5-6-8-10-8z" fill="#d97706"/>
+                  <path d="M6 34c4 4 10 7 16 8l2-5c-6-1-12-4-16-8zm52 0c-4 4-10 7-16 8l-2-5c6-1 12-4 16-8z" fill="#d97706"/>
+                  <path d="M26 36l-2 16 8-4 8 4-2-16-6 4-6-4z" fill="#b45309"/>
+                  <path d="M20 54l12 10 12-10-4-3-8 6-8-6z" fill="#92400e"/>
                 </svg>
               </div>
             )}

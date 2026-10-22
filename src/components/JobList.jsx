@@ -732,17 +732,6 @@ export default function JobList({
                   )}
                 </button>
 
-                {/* Tracker Quick Nav Chip */}
-                <Link
-                  to="/tracker"
-                  className="filter-chip-btn tracker-nav-chip"
-                  title="เปิดระบบติดตามการสมัครงานราชการ (Application Tracker)"
-                >
-                  <span className="chip-icon">🎯</span>
-                  <span className="chip-text chip-text-full">ติดตามการสมัคร</span>
-                  <span className="chip-text chip-text-short">ติดตาม</span>
-                </Link>
-
                 {/* Expired Jobs Filter */}
                 <button
                   type="button"
@@ -805,6 +794,23 @@ export default function JobList({
               <div className="demo-mode-notice-text">
                 <strong>กำลังแสดงข้อมูลตัวอย่าง (Local Demo Mode):</strong> ยังไม่พบการตั้งค่าในไฟล์ <code>.env</code> ระบบจึงแสดงข้อมูลจำลองเพื่อความสะดวกในการทดสอบฟิลเตอร์ ค้นหางาน และสร้างภาพ AI แบนเนอร์
               </div>
+            </div>
+          )}
+
+          {/* Bookmarks Tracker Notice Banner */}
+          {showBookmarksOnly && (
+            <div className="bookmarks-tracker-banner">
+              <div className="banner-info">
+                <span className="banner-icon">❤️</span>
+                <div className="banner-text">
+                  <strong>กำลังแสดงงานที่คุณบันทึกไว้ ({validBookmarkCount} รายการ)</strong>
+                  <span>คุณสามารถตั้งสถานะการสมัคร กำหนดวันสอบ หรือจดโน้ตได้ที่ระบบติดตามงาน</span>
+                </div>
+              </div>
+              <Link to="/tracker" className="banner-tracker-btn" title="เปิดหน้าติดตามการสมัครงานราชการ (Application Tracker)">
+                <span>เปิดหน้าติดตามงาน (Tracker)</span>
+                <span className="banner-arrow">➔</span>
+              </Link>
             </div>
           )}
 

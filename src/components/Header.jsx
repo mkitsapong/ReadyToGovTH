@@ -1,16 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "../hooks/useTheme.js";
 import { useApplicationTracker } from "../hooks/useApplicationTracker.js";
 
-const NAV_ITEMS = [
-  { id: "home",       label: "หน้าแรก" },
-  { id: "civil",      label: "ข้าราชการ" },
-  { id: "government", label: "พนักงานราชการ" },
-  { id: "state",      label: "รัฐวิสาหกิจ" },
-  { id: "temp",       label: "ลูกจ้างชั่วคราว" },
-  { id: "agency",     label: "พนักงานหน่วยงานของรัฐ" },
-  { id: "stats",      label: "สถิติ" },
-  { id: "tracker",    label: "ติดตามงาน" },
+const CATEGORY_ITEMS = [
+  { id: "civil",      label: "ข้าราชการ",             icon: "🏛️", desc: "สอบบรรจุรับราชการ ภาค ก-ข-ค" },
+  { id: "government", label: "พนักงานราชการ",         icon: "📋", desc: "สัญญาจ้างตามกรอบ ไม่ต้องผ่าน ภาค ก" },
+  { id: "state",      label: "รัฐวิสาหกิจ",            icon: "🏢", desc: "รัฐวิสาหกิจและองค์กรของรัฐ" },
+  { id: "temp",       label: "ลูกจ้างชั่วคราว",         icon: "📝", desc: "ลูกจ้างตามภารกิจ / สัญญาจ้าง" },
+  { id: "agency",     label: "พนักงานหน่วยงานของรัฐ",   icon: "🏫", desc: "องค์การมหาชน / หน่วยงานอิสระ" },
 ];
 
 export default function Header({
@@ -20,10 +17,15 @@ export default function Header({
   onLogout,
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const categoryDropdownRef = useRef(null);
+
   const { isDark, toggleTheme } = useTheme();
   const { stats } = useApplicationTracker();
   const trackerCount = stats?.total || 0;
+
+  const isCategoryActive = CATEGORY_ITEMS.some((cat) => cat.id === activePage);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,15 +35,47 @@ export default function Header({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close category dropdown on click outside or Escape
+  useEffect(() => {
+    if (!isCategoryOpen) return;
+    const handleClickOutside = (e) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target)) {
+        setIsCategoryOpen(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setIsCategoryOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isCategoryOpen]);
+
+  const handleNavClick = (pageId) => {
+    onNavigate(pageId);
+    setIsMobileMenuOpen(false);
+    setIsCategoryOpen(false);
+  };
+
   return (
-    <>
     <header className={`header ${isMobileMenuOpen ? "menu-open" : ""} ${isScrolled ? "scrolled" : ""}`}>
       <div className="container">
         {/* Main nav row */}
         <div className="header-inner">
           {/* Logo */}
-          <a className="logo" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); onNavigate("home"); }} href="/" style={{ cursor: "pointer" }}>
-            <img src="/favicon.svg" alt="Logo" style={{ width: "48px", height: "48px", objectFit: "contain", flexShrink: 0 }} />
+          <a
+            className="logo"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick("home");
+            }}
+            href="/"
+            style={{ cursor: "pointer" }}
+          >
+            <img src="/favicon.svg" alt="Logo" style={{ width: "44px", height: "44px", objectFit: "contain", flexShrink: 0 }} />
             <div className="logo-text">
               <span>ReadyToGovTH</span>
               <span>งานราชการไทย</span>
@@ -93,22 +127,70 @@ export default function Header({
 
           {/* Nav links */}
           <nav className="nav">
-            {NAV_ITEMS.map((item) => (
+            {/* 1. หน้าแรก */}
+            <button
+              key="home"
+              className={`nav-link${activePage === "home" ? " active" : ""}`}
+              onClick={() => handleNavClick("home")}
+            >
+              {activePage === "home" && <span className="nav-dot" />}
+              หน้าแรก
+            </button>
+
+            {/* 2. หมวดหมู่ย่อย / ประเภทงาน Dropdown */}
+            <div className="nav-dropdown-wrapper" ref={categoryDropdownRef}>
               <button
-                key={item.id}
-                className={`nav-link${activePage === item.id ? " active" : ""}`}
-                onClick={() => {
-                  onNavigate(item.id);
-                  setIsMobileMenuOpen(false);
-                }}
+                type="button"
+                className={`nav-link nav-dropdown-trigger${isCategoryActive ? " active" : ""}${isCategoryOpen ? " is-open" : ""}`}
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                aria-expanded={isCategoryOpen}
+                aria-haspopup="true"
+                title="เลือกประเภทงานราชการ"
               >
-                {activePage === item.id && <span className="nav-dot" />}
-                {item.label}
-                {item.id === "tracker" && trackerCount > 0 && (
-                  <span className="nav-counter-pill">{trackerCount}</span>
-                )}
+                {isCategoryActive && <span className="nav-dot" />}
+                <span>ประเภทงาน</span>
+                <span className={`dropdown-caret ${isCategoryOpen ? "rotated" : ""}`}>▾</span>
               </button>
-            ))}
+
+              <div className={`nav-dropdown-menu ${isCategoryOpen ? "is-open" : ""}`}>
+                {CATEGORY_ITEMS.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`nav-dropdown-item ${activePage === cat.id ? "active" : ""}`}
+                    onClick={() => handleNavClick(cat.id)}
+                    title={cat.desc}
+                  >
+                    <span className="dropdown-item-icon">{cat.icon}</span>
+                    {cat.label}
+                    {activePage === cat.id && <span className="dropdown-item-check">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. สถิติ */}
+            <button
+              key="stats"
+              className={`nav-link${activePage === "stats" ? " active" : ""}`}
+              onClick={() => handleNavClick("stats")}
+            >
+              {activePage === "stats" && <span className="nav-dot" />}
+              สถิติ
+            </button>
+
+            {/* 4. ติดตามงาน */}
+            <button
+              key="tracker"
+              className={`nav-link${activePage === "tracker" ? " active" : ""}`}
+              onClick={() => handleNavClick("tracker")}
+            >
+              {activePage === "tracker" && <span className="nav-dot" />}
+              ติดตามงาน
+              {trackerCount > 0 && (
+                <span className="nav-counter-pill">{trackerCount}</span>
+              )}
+            </button>
 
             {/* Mobile Drawer Theme Switcher */}
             <div className="mobile-drawer-theme-wrapper">
@@ -139,8 +221,8 @@ export default function Header({
             </div>
           </nav>
 
-          {/* Auth or Live badge & Date */}
-          <div className="header-actions" style={{ marginLeft: 16, display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Auth controls & Day/Night toggle switch */}
+          <div className="header-actions">
             {/* Day / Night Pill Toggle Switch (Desktop) */}
             <button
               type="button"
@@ -160,18 +242,6 @@ export default function Header({
               </span>
             </button>
 
-            {/* Today Thai Date */}
-            <div className="header-date-badge">
-              <span>
-                {new Date().toLocaleDateString("th-TH", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </span>
-            </div>
-
             {user && (
               <>
                 <div className={`header-role-badge ${user.role}`} style={{ whiteSpace: "nowrap", flexShrink: 0 }}>
@@ -186,6 +256,5 @@ export default function Header({
         </div>
       </div>
     </header>
-    </>
   );
 }

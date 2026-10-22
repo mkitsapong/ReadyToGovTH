@@ -52,7 +52,111 @@
   box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
 }
 
-/* ── Filter Chip Link in JobList ── */
+/* ── Bookmarks Tracker Notice Banner in JobList ── */
+.bookmarks-tracker-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.95) 0%, rgba(245, 243, 255, 0.95) 100%);
+  border: 1.5px solid rgba(99, 102, 241, 0.3);
+  border-radius: 18px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px -2px rgba(79, 70, 229, 0.1), 0 1px 3px rgba(0, 0, 0, 0.02);
+  animation: fadeInBanner 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-wrap: wrap;
+}
+
+[data-theme="dark"] .bookmarks-tracker-banner,
+.dark .bookmarks-tracker-banner {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.6) 0%, rgba(46, 16, 101, 0.4) 100%);
+  border-color: rgba(129, 140, 248, 0.35);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes fadeInBanner {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bookmarks-tracker-banner .banner-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bookmarks-tracker-banner .banner-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.bookmarks-tracker-banner .banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bookmarks-tracker-banner .banner-text strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #312e81;
+}
+
+[data-theme="dark"] .bookmarks-tracker-banner .banner-text strong,
+.dark .bookmarks-tracker-banner .banner-text strong {
+  color: #e0e7ff;
+}
+
+.bookmarks-tracker-banner .banner-text span {
+  font-size: 0.78rem;
+  color: #4338ca;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .bookmarks-tracker-banner .banner-text span,
+.dark .bookmarks-tracker-banner .banner-text span {
+  color: #a5b4fc;
+}
+
+.banner-tracker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #ffffff !important;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.banner-tracker-btn:hover {
+  background: linear-gradient(135deg, #4338ca, #6d28d9);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
+}
+
+.banner-tracker-btn .banner-arrow {
+  font-size: 0.88rem;
+  transition: transform 0.2s ease;
+}
+
+.banner-tracker-btn:hover .banner-arrow {
+  transform: translateX(3px);
+}
+
+/* ── Filter Chip Link in JobList (Legacy fallback) ── */
 .tracker-nav-chip {
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.08)) !important;
   color: #4f46e5 !important;
@@ -148,24 +252,49 @@
 
 /* Tracker Dropdown Menu */
 .tracker-badge-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  width: 260px;
+  position: fixed;
+  width: 280px;
+  max-width: calc(100vw - 20px);
+  max-height: min(480px, calc(100vh - 24px));
   background: var(--card-bg, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 14px;
-  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.18), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 20px 45px -8px rgba(15, 23, 42, 0.22), 0 8px 16px -4px rgba(0, 0, 0, 0.08);
   padding: 8px;
-  z-index: 100;
+  z-index: 99999;
   backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   animation: dropdownFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .tracker-badge-dropdown,
+.dark .tracker-badge-dropdown {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 50px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-6px) scale(0.97);
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tracker-badge-dropdown.open-up {
+  animation: dropdownFadeInUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -182,6 +311,13 @@
   font-size: 0.75rem;
   font-weight: 800;
   color: var(--text-muted, #64748b);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .tracker-dropdown-header,
+.dark .tracker-dropdown-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
 }
 
 .tracker-dropdown-details-btn {
@@ -191,13 +327,24 @@
   color: #4f46e5;
   font-weight: 700;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+[data-theme="dark"] .tracker-dropdown-details-btn,
+.dark .tracker-dropdown-details-btn {
+  color: #818cf8;
 }
 
 .tracker-dropdown-details-btn:hover {
-  background: rgba(79, 70, 229, 0.08);
+  background: rgba(79, 70, 229, 0.1);
   text-decoration: underline;
+}
+
+[data-theme="dark"] .tracker-dropdown-details-btn:hover,
+.dark .tracker-dropdown-details-btn:hover {
+  background: rgba(129, 140, 248, 0.16);
 }
 
 .tracker-dropdown-list {
@@ -205,13 +352,34 @@
   flex-direction: column;
   gap: 3px;
   margin-top: 6px;
+  overflow-y: auto;
+  max-height: 360px;
+  padding-right: 2px;
+  overscroll-behavior: contain;
+}
+
+.tracker-dropdown-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.tracker-dropdown-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tracker-dropdown-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+
+.tracker-dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
 }
 
 .tracker-dropdown-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   border-radius: 10px;
   border: none;
   background: none;
@@ -226,18 +394,30 @@
   transform: translateX(2px);
 }
 
+[data-theme="dark"] .tracker-dropdown-item:hover,
+.dark .tracker-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .tracker-dropdown-item.active {
   background: rgba(79, 70, 229, 0.08);
 }
 
+[data-theme="dark"] .tracker-dropdown-item.active,
+.dark .tracker-dropdown-item.active {
+  background: rgba(99, 102, 241, 0.18);
+}
+
 .tracker-dropdown-item .item-icon {
   font-size: 1.05rem;
+  flex-shrink: 0;
 }
 
 .tracker-dropdown-item .item-info {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 
 .tracker-dropdown-item .item-label {
@@ -246,15 +426,32 @@
   color: var(--text-main, #1e293b);
 }
 
+[data-theme="dark"] .tracker-dropdown-item .item-label,
+.dark .tracker-dropdown-item .item-label {
+  color: #f1f5f9;
+}
+
 .tracker-dropdown-item .item-desc {
   font-size: 0.72rem;
   color: var(--text-muted, #94a3b8);
+  line-height: 1.35;
+}
+
+[data-theme="dark"] .tracker-dropdown-item .item-desc,
+.dark .tracker-dropdown-item .item-desc {
+  color: #94a3b8;
 }
 
 .tracker-dropdown-item .item-check {
   font-size: 0.88rem;
   color: #4f46e5;
   font-weight: 800;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .tracker-dropdown-item .item-check,
+.dark .tracker-dropdown-item .item-check {
+  color: #818cf8;
 }
 
 /* ── Application Tracker Dedicated Page (/tracker) ── */
@@ -870,7 +1067,7 @@
   gap: 12px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 2px 4px rgba(15, 23, 42, 0.02);
-  overflow: hidden;
+  overflow: visible;
 }
 
 [data-theme="dark"] .tracker-job-card,

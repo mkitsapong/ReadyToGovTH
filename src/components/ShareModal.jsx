@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import QRCode from "qrcode";
 import "./ShareModal.css";
 import {
-  getJobOgImageUrl,
   getJobDeepLink,
   buildShareSummaryText,
   getSocialShareLinks,
+  getJobSalaryText,
 } from "../utils/shareHelper.js";
 import { getTotalJobPositions, formatDate } from "../utils/helpers.js";
 import { trackJobShare } from "../services/analyticsService.js";
@@ -39,6 +39,19 @@ const SvgX = () => (
   </svg>
 );
 
+const SvgQrCode = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" />
+    <rect x="14" y="3" width="7" height="7" />
+    <rect x="14" y="14" width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
+    <line x1="17" y1="7" x2="17.01" y2="7" />
+    <line x1="7" y1="17" x2="7.01" y2="17" />
+    <line x1="17" y1="17" x2="17.01" y2="17" />
+  </svg>
+);
+
 const SvgSystemShare = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -61,23 +74,25 @@ const SvgCopy = () => (
 );
 
 export default function ShareModal({ job, onClose, onToast }) {
-  const [activeTab, setActiveTab] = useState("preview"); // 'preview' | 'line' | 'qrcode'
   const [includeUtm, setIncludeUtm] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
   const [isCopiedSummary, setIsCopiedSummary] = useState(false);
   const [isCaptionOpen, setIsCaptionOpen] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
-  const [isImageLoading, setIsImageLoading] = useState(true);
 
   const deepLink = job ? getJobDeepLink(job, {
     utmSource: includeUtm ? "share_button" : undefined,
     utmMedium: includeUtm ? "social_deep_link" : undefined,
   }) : "";
 
-  const ogImageUrl = job ? getJobOgImageUrl(job) : "";
   const socialLinks = job ? getSocialShareLinks(job, deepLink) : [];
   const summaryText = job ? buildShareSummaryText(job, deepLink) : "";
   const totalCount = job ? getTotalJobPositions(job) : 0;
+  const salaryText = job ? getJobSalaryText(job) : "ตามระเบียบกำหนด";
+
+  // Primary position title if available
+  const primaryPosition = job?.positionList?.[0]?.title || job?.title || "";
 
   // Generate QR Code with high resolution & custom color
   useEffect(() => {
@@ -86,7 +101,7 @@ export default function ShareModal({ job, onClose, onToast }) {
     QRCode.toDataURL(
       deepLink,
       {
-        width: 360,
+        width: 320,
         margin: 2,
         color: {
           dark: "#0f172a",
@@ -179,12 +194,9 @@ export default function ShareModal({ job, onClose, onToast }) {
               <SvgShare />
             </div>
             <div className="share-header-title-wrap">
-              <div className="share-header-title-row">
-                <h2 className="share-header-title">แชร์ประกาศงาน</h2>
-                <span className="share-header-badge">✨ Dynamic Preview</span>
-              </div>
+              <h2 className="share-header-title">แชร์ประกาศงาน</h2>
               <p className="share-header-subtitle">
-                สร้างลิงก์ตรงและภาพพรีวิวความคมชัดสูง ส่งต่อบน LINE, Facebook หรือ QR Code
+                คัดลอกลิงก์ตรง หรือส่งต่อเข้าแอป LINE, Facebook ได้ทันที
               </p>
             </div>
           </div>
@@ -199,161 +211,68 @@ export default function ShareModal({ job, onClose, onToast }) {
           </button>
         </div>
 
-        {/* Modal Scrollable Body */}
+        {/* Modal Body */}
         <div className="share-modal-body">
           
-          {/* Target Department Hero Card */}
+          {/* Target Department Hero Summary Card */}
           <div className="share-dept-hero-card">
             <div className="share-dept-hero-left">
-              <div className="share-dept-avatar">🏛️</div>
+              {job.logoUrl ? (
+                <img
+                  src={job.logoUrl}
+                  alt={job.department}
+                  className="share-dept-logo-img"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.nextSibling.style.display = "flex";
+                  }}
+                />
+              ) : null}
+              <div
+                className="share-dept-avatar"
+                style={{ display: job.logoUrl ? "none" : "flex" }}
+              >
+                🏛️
+              </div>
               <div className="share-dept-info">
                 <div className="share-dept-name" title={job.department}>
                   {job.department}
                 </div>
-                <div className="share-dept-meta-row">
-                  <span>รวม {totalCount} อัตรา</span>
-                  <span>•</span>
-                  <span>ปิดรับ {job.deadline ? formatDate(job.deadline) : "ไม่ระบุ"}</span>
-                </div>
-              </div>
-            </div>
-            <span className="share-dept-badge">
-              {job.categories?.[0] || job.category || "งานราชการ"}
-            </span>
-          </div>
-
-          {/* Segmented Control Bar */}
-          <div>
-            <div className="share-preview-header">
-              <label className="share-preview-label">
-                <span>ภาพพรีวิวการแชร์ (Dynamic Preview)</span>
-              </label>
-              <div className="share-segmented-tabs">
-                <button
-                  type="button"
-                  className={`share-segmented-tab ${activeTab === "preview" ? "active" : ""}`}
-                  onClick={() => setActiveTab("preview")}
-                >
-                  <span>🖼️</span>
-                  <span>การ์ด OG HD</span>
-                </button>
-                <button
-                  type="button"
-                  className={`share-segmented-tab ${activeTab === "line" ? "active" : ""}`}
-                  onClick={() => setActiveTab("line")}
-                >
-                  <span>💬</span>
-                  <span>แชท LINE</span>
-                </button>
-                <button
-                  type="button"
-                  className={`share-segmented-tab ${activeTab === "qrcode" ? "active" : ""}`}
-                  onClick={() => setActiveTab("qrcode")}
-                >
-                  <span>📱</span>
-                  <span>QR Code</span>
-                </button>
-              </div>
-            </div>
-
-            {/* TAB 1: OG Card Full Preview */}
-            {activeTab === "preview" && (
-              <div className="share-og-preview-card">
-                {isImageLoading && (
-                  <div className="share-og-loading-overlay">
-                    <div className="share-spinner-glow" />
-                    <span>กำลังประมวลผลการ์ดภาพคมชัดระดับ HD...</span>
+                {primaryPosition && (
+                  <div className="share-dept-position">
+                    <span className="share-pos-tag">ตำแหน่ง:</span> {primaryPosition}
                   </div>
                 )}
-                <img
-                  src={ogImageUrl}
-                  alt={`Open Graph preview for ${job.department}`}
-                  className="share-og-preview-img"
-                  onLoad={() => setIsImageLoading(false)}
-                  onError={() => setIsImageLoading(false)}
-                />
-                <a
-                  href={ogImageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="share-og-hd-btn"
-                >
-                  <span>🔍 ดูภาพขนาดเต็ม HD (1200×630)</span>
-                </a>
-              </div>
-            )}
-
-            {/* TAB 2: LINE / Social Chat Bubble Simulation */}
-            {activeTab === "line" && (
-              <div className="share-line-chat-canvas">
-                <div className="share-line-chat-bubble">
-                  <div className="share-line-sender-bar">
-                    <div className="share-line-sender-info">
-                      <div className="share-line-avatar">RG</div>
-                      <span className="share-line-sender-name">
-                        ReadyToGov.th
-                        <span className="share-line-verified" title="Official Verified">✓</span>
-                      </span>
-                    </div>
-                    <span className="share-line-time">12:20 น.</span>
-                  </div>
-                  <img
-                    src={ogImageUrl}
-                    alt="Social Card Preview"
-                    style={{ width: "100%", aspectRatio: "1200 / 630", objectFit: "cover", display: "block" }}
-                  />
-                  <div className="share-line-card-content">
-                    <div className="share-line-domain">readytogov.th</div>
-                    <div className="share-line-title">
-                      รับสมัครงาน: {job.department}
-                    </div>
-                    <div className="share-line-desc">
-                      เปิดรับสมัครรวม {totalCount} อัตรา ดูคุณสมบัติ หลักสูตรวิชาสอบ และวิธีสมัครออนไลน์
-                    </div>
-                    <div className="share-line-action-btn">
-                      <span>เปิดดูประกาศฉบับเต็ม</span>
-                      <span>›</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: QR Code Generator */}
-            {activeTab === "qrcode" && (
-              <div className="share-qr-canvas">
-                <div className="share-qr-frame">
-                  {qrCodeDataUrl ? (
-                    <img src={qrCodeDataUrl} alt="QR Code Deep Link" className="share-qr-img" />
-                  ) : (
-                    <div style={{ width: 180, height: 180, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div className="share-spinner-glow" />
-                    </div>
+                <div className="share-dept-meta-row">
+                  <span>👥 รวม {totalCount} อัตรา</span>
+                  <span>•</span>
+                  <span>💰 {salaryText}</span>
+                  {job.deadline && (
+                    <>
+                      <span>•</span>
+                      <span>📅 ปิดรับ {formatDate(job.deadline)}</span>
+                    </>
                   )}
                 </div>
-                <div className="share-qr-text-wrap">
-                  <div className="share-qr-title">สแกนเพื่อเปิดบนมือถือได้ทันที</div>
-                  <div className="share-qr-subtitle">
-                    เหมาะสำหรับฉายบนจอโปรเจกเตอร์ หรือพรินต์ใส่ใบประกาศประชาสัมพันธ์
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownloadQr}
-                  className="share-qr-download-btn"
-                >
-                  <span>💾</span>
-                  <span>บันทึกรูป QR Code (PNG)</span>
-                </button>
               </div>
-            )}
+            </div>
+            <div className="share-dept-badges-col">
+              <span className="share-dept-badge">
+                {job.categories?.[0] || job.category || "งานราชการ"}
+              </span>
+              {job.isNoOCSC ? (
+                <span className="share-ocsc-badge">✨ ไม่ต้องผ่าน ภาค ก</span>
+              ) : job.isOCSC ? (
+                <span className="share-ocsc-badge">📝 ต้องผ่าน ภาค ก</span>
+              ) : null}
+            </div>
           </div>
 
-          {/* Deep Link URL Box */}
-          <div>
+          {/* Deep Link URL Box (Primary Action) */}
+          <div className="share-section">
             <div className="share-link-header">
               <label className="share-link-label">
-                <span>🔗 Deep Link URL ตรง</span>
+                <span>🔗 ลิงก์ตรงสำหรับเปิดดูประกาศ (Deep Link)</span>
               </label>
               <label
                 className={`share-utm-toggle ${includeUtm ? "active" : ""}`}
@@ -365,7 +284,7 @@ export default function ShareModal({ job, onClose, onToast }) {
                   onChange={(e) => setIncludeUtm(e.target.checked)}
                 />
                 <span className="share-utm-switch-dot" />
-                <span>แท็กสถิติ UTM</span>
+                <span>แท็ก UTM</span>
               </label>
             </div>
 
@@ -377,6 +296,7 @@ export default function ShareModal({ job, onClose, onToast }) {
                 value={deepLink}
                 className="share-link-input"
                 onClick={(e) => e.target.select()}
+                aria-label="ลิงก์สำหรับแชร์"
               />
               <button
                 type="button"
@@ -390,7 +310,7 @@ export default function ShareModal({ job, onClose, onToast }) {
           </div>
 
           {/* 1-Click Social Sharing Intent Buttons */}
-          <div>
+          <div className="share-section">
             <label className="share-link-label" style={{ marginBottom: 10 }}>
               <span>🚀 แชร์ด่วน 1 คลิก ไปยังโซเชียลมีเดีย</span>
             </label>
@@ -432,6 +352,17 @@ export default function ShareModal({ job, onClose, onToast }) {
                 <span>ทวีตบน X</span>
               </a>
 
+              {/* QR Code Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowQrCode((prev) => !prev)}
+                className={`share-social-btn share-social-btn-qr ${showQrCode ? "active" : ""}`}
+                title="เปิด/ปิด รูป QR Code สำหรับสแกน"
+              >
+                <SvgQrCode />
+                <span>QR Code</span>
+              </button>
+
               {/* Native Web Share */}
               <button
                 type="button"
@@ -444,6 +375,35 @@ export default function ShareModal({ job, onClose, onToast }) {
               </button>
             </div>
           </div>
+
+          {/* Collapsible QR Code Panel (Opens on demand) */}
+          {showQrCode && (
+            <div className="share-qr-panel">
+              <div className="share-qr-frame">
+                {qrCodeDataUrl ? (
+                  <img src={qrCodeDataUrl} alt="QR Code Deep Link" className="share-qr-img" />
+                ) : (
+                  <div style={{ width: 160, height: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div className="share-spinner-glow" />
+                  </div>
+                )}
+              </div>
+              <div className="share-qr-text-wrap">
+                <div className="share-qr-title">สแกนเพื่อเปิดบนมือถือได้ทันที</div>
+                <div className="share-qr-subtitle">
+                  เหมาะสำหรับฉายบนจอโปรเจกเตอร์ หรือพรินต์ใส่ใบประกาศประชาสัมพันธ์
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadQr}
+                  className="share-qr-download-btn"
+                >
+                  <span>💾</span>
+                  <span>บันทึกรูป QR Code (PNG)</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Quick Summary Text Caption Box (Collapsible) */}
           <div className="share-caption-card">
@@ -487,7 +447,7 @@ export default function ShareModal({ job, onClose, onToast }) {
         <div className="share-modal-footer">
           <div className="share-footer-status">
             <span className="share-footer-dot" />
-            <span>รองรับการ์ดพรีวิวอัตโนมัติบนทุกแพลตฟอร์ม</span>
+            <span>พร้อมแสดงการ์ดพรีวิวอัตโนมัติเมื่อส่งลง LINE / Facebook</span>
           </div>
           <button
             type="button"
