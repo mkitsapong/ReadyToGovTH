@@ -14,7 +14,7 @@ import { isFirebaseConfigured } from "../firebase.js";
 import { searchJobsLocal } from "../services/searchService.js";
 import { trackSearchQuery } from "../services/analyticsService.js";
 import { EDUCATION_LEVELS } from "../utils/constants.js";
-import { SECTOR_ITEMS, matchesSector, getJobSector } from "../utils/sectorHelper.js";
+import { SECTOR_ITEMS, SECTOR_MAP, matchesSector, getJobSector } from "../utils/sectorHelper.js";
 
 const CATEGORY_FILTER = {
   home: null,
@@ -322,6 +322,8 @@ export default function JobList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobs]);
   const regionDropdownRef = useRef(null);
+  const sectorDropdownRef = useRef(null);
+  const [isSectorDropdownOpen, setIsSectorDropdownOpen] = useState(false);
 
   const closeRegionDropdown = () => {
     setIsRegionDropdownOpen(false);
@@ -333,9 +335,16 @@ export default function JobList({
       if (regionDropdownRef.current && !regionDropdownRef.current.contains(e.target)) {
         closeRegionDropdown();
       }
+      if (sectorDropdownRef.current && !sectorDropdownRef.current.contains(e.target)) {
+        setIsSectorDropdownOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   const filteredRegions = provinceSearchQuery.trim()
@@ -639,26 +648,26 @@ export default function JobList({
       {/* Filter Bar */}
       <div className="filter-bar">
         <div className="container">
-          <div className="filter-bar-inner">
-            {/* Main Controls Row (Search + Region + Sort) */}
-            <div className="filter-main-row">
+          <div className="filter-card-modern">
+            {/* Tier 1: Search & Controls Hub */}
+            <div className="filter-hub-row">
               {/* Search Box */}
-              <div className="filter-search-wrap">
-                <span className="filter-search-icon">🔍</span>
+              <div className="hub-search-field">
+                <span className="hub-search-icon">🔍</span>
                 <input
                   id="job-search-input"
                   type="text"
-                  placeholder={isMobileScreen ? "ค้นหาตำแหน่ง, หน่วยงาน หรือจังหวัด..." : "ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด... (รองรับคำพิมพ์ผิด/คำเหมือน)"}
+                  placeholder={isMobileScreen ? "ค้นหาตำแหน่ง, หน่วยงาน..." : "ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด... (รองรับคำพิมพ์ผิด/คำเหมือน)"}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="filter-search-input"
+                  className="hub-search-input"
                   aria-label="ค้นหาตำแหน่ง หน่วยงาน หรือจังหวัด"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="filter-search-clear"
+                    className="hub-clear-btn"
                     title="ล้างคำค้นหา (Esc)"
                   >
                     ✕
@@ -666,36 +675,21 @@ export default function JobList({
                 )}
               </div>
 
-              {/* Selects Row: Education (mobile) + Region + Sort */}
-              <div className="filter-selects-row">
-                {/* Education select — replaces hero edu card on mobile */}
-                <div className="filter-edu-wrap">
-                  <select
-                    id="job-edu-select"
-                    className={`filter-sort-select filter-edu-select ${userEducation ? "active" : ""}`}
-                    value={userEducation || ""}
-                    onChange={(e) => onChangeUserEducation(e.target.value || null)}
-                    aria-label="กรองตามวุฒิการศึกษา"
-                  >
-                    <option value="">ทุกวุฒิการศึกษา</option>
-                    {EDUCATION_LEVELS.map((edu) => (
-                      <option key={edu} value={edu}>{edu}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Region Dropdown */}
+              {/* Quick Select Controls: 4 Unified Selectors (Region + Sector + Edu on mobile + Sort) */}
+              <div className="hub-controls-group">
+                {/* 1. Region Dropdown */}
                 <div className="custom-region-dropdown" ref={regionDropdownRef}>
                   <button
                     type="button"
-                    className={`filter-select-btn ${selectedProvince ? "active" : ""}`}
+                    className={`hub-select-btn ${selectedProvince ? "active" : ""}`}
                     onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
                     title={selectedProvince ? `จังหวัด: ${selectedProvince}` : "เลือกจังหวัด/ภูมิภาค"}
                   >
-                    <span className="filter-select-text">
+                    <span className="hub-btn-icon">📍</span>
+                    <span className="hub-btn-text">
                       {selectedProvince ? selectedProvince : "ทุกภูมิภาค"}
                     </span>
-                    <span className="filter-select-arrow">▼</span>
+                    <span className="hub-btn-arrow">▼</span>
                   </button>
 
                   {isRegionDropdownOpen && (
@@ -750,11 +744,89 @@ export default function JobList({
                   )}
                 </div>
 
-                {/* Sort Dropdown */}
-                <div className="filter-sort-wrap">
+                {/* 2. Sector Dropdown Menu Button */}
+                <div className="sector-filter-dropdown" ref={sectorDropdownRef}>
+                  <button
+                    type="button"
+                    id="filter-sector-dropdown-btn"
+                    className={`hub-select-btn ${selectedSector && selectedSector !== "all" ? "active-sector" : ""}`}
+                    onClick={() => setIsSectorDropdownOpen(!isSectorDropdownOpen)}
+                    title="กรองตามแวดวงสถานที่ปฏิบัติงาน"
+                  >
+                    <span className="hub-btn-icon">🏛️</span>
+                    <span className="hub-btn-text">
+                      {selectedSector && selectedSector !== "all" 
+                        ? (SECTOR_MAP[selectedSector]?.shortLabel || "แวดวงงาน")
+                        : "ทุกแวดวงงาน"}
+                    </span>
+                    <span className="hub-btn-arrow">▼</span>
+                  </button>
+
+                  {isSectorDropdownOpen && (
+                    <div className="sector-dropdown-card">
+                      <div className="sector-dropdown-title">
+                        <span>เลือกแวดวงหน่วยงาน</span>
+                        {selectedSector && selectedSector !== "all" && (
+                          <button
+                            type="button"
+                            className="sector-reset-inline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedSector("all");
+                              setIsSectorDropdownOpen(false);
+                            }}
+                          >
+                            ล้างค่า
+                          </button>
+                        )}
+                      </div>
+                      <div className="sector-dropdown-list">
+                        {SECTOR_ITEMS.map((sec) => {
+                          const count = sectorCounts[sec.id] || 0;
+                          const isSecActive = (selectedSector || "all") === sec.id;
+                          return (
+                            <button
+                              key={sec.id}
+                              type="button"
+                              className={`sector-dropdown-item ${isSecActive ? "active" : ""}`}
+                              onClick={() => {
+                                setSelectedSector(sec.id);
+                                setIsSectorDropdownOpen(false);
+                                setCurrentPage(1);
+                              }}
+                            >
+                              <span className="sec-item-icon">{sec.icon}</span>
+                              <span className="sec-item-label">{sec.label}</span>
+                              {count > 0 && <span className="sec-item-count">{count}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Education select (mobile only — desktop uses hero card) */}
+                <div className="filter-edu-wrap">
+                  <select
+                    id="job-edu-select"
+                    className={`hub-select-btn filter-edu-select ${userEducation ? "active-edu" : ""}`}
+                    value={userEducation || ""}
+                    onChange={(e) => onChangeUserEducation(e.target.value || null)}
+                    aria-label="กรองตามวุฒิการศึกษา"
+                  >
+                    <option value="">ทุกวุฒิการศึกษา</option>
+                    {EDUCATION_LEVELS.map((edu) => (
+                      <option key={edu} value={edu}>{edu}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 4. Sort Dropdown */}
+                <div className="hub-sort-wrap">
                   <select
                     id="job-sort-select"
-                    className="filter-sort-select"
+                    className="hub-select-btn hub-sort-select"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                     aria-label="เรียงลำดับประกาศ"
@@ -770,113 +842,134 @@ export default function JobList({
               </div>
             </div>
 
-            {/* Dual Taxonomy Filter Rows: รูปแบบการจ้าง & แวดวงงาน */}
-            <div className="filter-taxonomies-card" role="region" aria-label="หมวดหมู่และแวดวงงาน">
-              {/* Row 1: รูปแบบการจ้าง (Contract Type) */}
-              <div className="filter-taxonomy-row" role="region" aria-label="กรองตามรูปแบบการจ้าง">
-                <div className="filter-taxonomy-label-wrap">
-                  <span className="filter-taxonomy-header-tag contract-tag" title="กรองตามรูปแบบสัญญาจ้าง">
-                    <span className="header-tag-icon">📋</span> สัญญาจ้าง
-                  </span>
-                </div>
-                <div className="filter-taxonomy-pills" role="tablist" aria-label="เลือกรูปแบบการจ้าง">
-                  {CONTRACT_TYPES.map((ct) => {
-                    const isActive = (selectedContract || "all") === ct.id;
-                    const count = contractCounts[ct.id] || 0;
-                    return (
-                      <button
-                        key={ct.id}
-                        type="button"
-                        id={`filter-contract-${ct.id}`}
-                        role="tab"
-                        aria-selected={isActive}
-                        onClick={() => {
-                          setSelectedContract(isActive && ct.id !== "all" ? "all" : ct.id);
-                          setCurrentPage(1);
-                        }}
-                        className={`filter-taxonomy-pill filter-contract-pill ${isActive ? "active" : ""} ct-${ct.id}`}
-                        title={ct.label}
-                      >
-                        <span className="taxo-icon">{ct.icon}</span>
-                        <span className="taxo-label">{ct.shortLabel || ct.label}</span>
-                        {count > 0 && <span className="taxo-count">{count}</span>}
-                      </button>
-                    );
-                  })}
-                  {/* Divider separating taxonomy pills from quick action filters */}
-                  <div className="filter-taxonomy-divider" aria-hidden="true" />
-
-                  {/* Bookmarks Quick Filter */}
+            {/* Tier 2: Primary Employment Type Segmented Bar (Full Width Modern Tabs) */}
+            <div className="filter-segmented-bar" role="tablist" aria-label="เลือกรูปแบบสัญญาจ้าง">
+              {CONTRACT_TYPES.map((ct) => {
+                const isActive = (selectedContract || "all") === ct.id;
+                const count = contractCounts[ct.id] || 0;
+                return (
                   <button
+                    key={ct.id}
                     type="button"
-                    id="filter-quick-bookmarks"
+                    id={`filter-contract-${ct.id}`}
+                    role="tab"
+                    aria-selected={isActive}
                     onClick={() => {
-                      const nextVal = !showBookmarksOnly;
-                      setShowBookmarksOnly(nextVal);
-                      if (nextVal) setShowExpired(false);
+                      setSelectedContract(isActive && ct.id !== "all" ? "all" : ct.id);
+                      setCurrentPage(1);
                     }}
-                    className={`filter-taxonomy-pill filter-quick-pill filter-quick-bookmark ${showBookmarksOnly ? "active-bookmark" : ""}`}
-                    title={showBookmarksOnly ? "คลิกเพื่อดูประกาศทั้งหมด" : "ดูประกาศงานที่บันทึกไว้"}
+                    className={`segmented-tab-btn ${isActive ? "active" : ""}`}
+                    title={ct.label}
                   >
-                    <span className="taxo-icon">{showBookmarksOnly ? "❤️" : "🤍"}</span>
-                    <span className="taxo-label">ที่บันทึกไว้</span>
-                    {validBookmarkCount > 0 && (
-                      <span className="taxo-count bookmark-count">{validBookmarkCount}</span>
-                    )}
+                    <span className="seg-icon">{ct.icon}</span>
+                    <span className="seg-label">{ct.shortLabel || ct.label}</span>
+                    {count > 0 && <span className="seg-badge">{count}</span>}
                   </button>
+                );
+              })}
+            </div>
 
-                  {/* Expired Jobs Quick Filter */}
-                  <button
-                    type="button"
-                    id="filter-chip-expired"
-                    onClick={() => {
-                      const nextVal = !showExpired;
-                      setShowExpired(nextVal);
-                      if (nextVal) setShowBookmarksOnly(false);
-                    }}
-                    className={`filter-taxonomy-pill filter-quick-pill filter-quick-expired ${showExpired ? "active-expired" : ""}`}
-                    title={showExpired ? "คลิกเพื่อกลับไปดูงานที่เปิดรับสมัครอยู่" : "ดูประกาศงานราชการที่ปิดรับสมัครแล้ว"}
-                  >
-                    <span className="taxo-icon">⌛</span>
-                    <span className="taxo-label">ปิดรับสมัครแล้ว</span>
-                    {expiredCount > 0 && (
-                      <span className="taxo-count expired-count">{expiredCount}</span>
-                    )}
-                  </button>
+            {/* Tier 3: Sleek Secondary Refinement Toolbar */}
+            <div className="filter-refinement-toolbar">
+              <div className="toolbar-left-chips">
+
+                {/* OCSC (ภาค ก) Segmented Switcher */}
+                <div className="ocsc-segmented-pill" role="group" aria-label="เงื่อนไข ภาค ก">
+                  <span className="ocsc-pill-label">ภาค ก:</span>
+                  {[
+                    { mode: "all", label: "ทั้งหมด" },
+                    { mode: "no",  label: "✨ ไม่ต้องผ่าน" },
+                    { mode: "yes", label: "📝 ต้องผ่าน" },
+                  ].map(({ mode, label }) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      id={`filter-ocsc-${mode}`}
+                      onClick={() => setOcscMode(mode)}
+                      className={`ocsc-sub-btn ${ocscMode === mode ? "active" : ""} ${mode === "no" ? "is-no" : ""}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
+
+                {/* Bookmark Toggle Chip */}
+                <button
+                  type="button"
+                  id="filter-quick-bookmarks"
+                  onClick={() => {
+                    const nextVal = !showBookmarksOnly;
+                    setShowBookmarksOnly(nextVal);
+                    if (nextVal) setShowExpired(false);
+                  }}
+                  className={`toolbar-pill-btn bookmark-chip ${showBookmarksOnly ? "active" : ""}`}
+                  title={showBookmarksOnly ? "คลิกเพื่อดูประกาศทั้งหมด" : "ดูประกาศงานที่บันทึกไว้"}
+                >
+                  <span className="pill-icon">{showBookmarksOnly ? "❤️" : "🤍"}</span>
+                  <span className="pill-text">ที่บันทึกไว้</span>
+                  {validBookmarkCount > 0 && (
+                    <span className="pill-badge-red">{validBookmarkCount}</span>
+                  )}
+                </button>
+
+                {/* Expired Toggle Chip */}
+                <button
+                  type="button"
+                  id="filter-chip-expired"
+                  onClick={() => {
+                    const nextVal = !showExpired;
+                    setShowExpired(nextVal);
+                    if (nextVal) setShowBookmarksOnly(false);
+                  }}
+                  className={`toolbar-pill-btn expired-chip ${showExpired ? "active" : ""}`}
+                  title={showExpired ? "คลิกเพื่อกลับไปดูงานที่เปิดรับสมัครอยู่" : "ดูประกาศงานราชการที่ปิดรับสมัครแล้ว"}
+                >
+                  <span className="pill-icon">⌛</span>
+                  <span className="pill-text">ปิดรับสมัครแล้ว</span>
+                  {expiredCount > 0 && (
+                    <span className="pill-badge-gray">{expiredCount}</span>
+                  )}
+                </button>
+
               </div>
 
-              {/* Row 2: แวดวงงาน (Workplace Sector) */}
-              <div className="filter-taxonomy-row" role="region" aria-label="กรองตามแวดวงหน่วยงาน">
-                <div className="filter-taxonomy-label-wrap">
-                  <span className="filter-taxonomy-header-tag sector-tag" title="กรองตามแวดวงสถานที่ปฏิบัติงาน">
-                    <span className="header-tag-icon">🏛️</span> แวดวงงาน
+              {/* Right: Results Count Badge & View Mode Switcher */}
+              <div className="toolbar-right-meta">
+                <div className="toolbar-results-count" aria-live="polite">
+                  <span className="results-indicator" />
+                  <span>
+                    พบ <strong>{filtered.length.toLocaleString()}</strong> ประกาศ
+                    {filtered.length > 0 && (
+                      <span className="results-positions"> · <strong>{totalPositions.toLocaleString()}</strong> อัตรา</span>
+                    )}
                   </span>
                 </div>
-                <div className="filter-taxonomy-pills" role="tablist" aria-label="เลือกแวดวงหน่วยงาน">
-                  {SECTOR_ITEMS.map((sec) => {
-                    const isActive = (selectedSector || "all") === sec.id;
-                    const count = sectorCounts[sec.id] || 0;
-                    return (
-                      <button
-                        key={sec.id}
-                        type="button"
-                        id={`filter-sector-${sec.id}`}
-                        role="tab"
-                        aria-selected={isActive}
-                        onClick={() => {
-                          setSelectedSector(isActive && sec.id !== "all" ? "all" : sec.id);
-                          setCurrentPage(1);
-                        }}
-                        className={`filter-taxonomy-pill filter-sector-pill ${isActive ? "active" : ""} sec-${sec.id}`}
-                        title={sec.label}
-                      >
-                        <span className="taxo-icon">{sec.icon}</span>
-                        <span className="taxo-label">{sec.shortLabel || sec.label}</span>
-                        {count > 0 && <span className="taxo-count">{count}</span>}
-                      </button>
-                    );
-                  })}
+
+                <div className="toolbar-view-switcher" role="group" aria-label="รูปแบบการแสดงผล">
+                  <button
+                    type="button"
+                    id="btn-view-list"
+                    className={`view-mode-pill ${viewMode === "list" ? "active" : ""}`}
+                    onClick={() => {
+                      setViewMode("list");
+                      try { localStorage.setItem("readytogov_view_mode", "list"); } catch {}
+                    }}
+                    title="แสดงแบบแนวนอน (List View)"
+                  >
+                    ☰ แนวนอน
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-view-grid"
+                    className={`view-mode-pill ${viewMode === "grid" ? "active" : ""}`}
+                    onClick={() => {
+                      setViewMode("grid");
+                      try { localStorage.setItem("readytogov_view_mode", "grid"); } catch {}
+                    }}
+                    title="แสดงแบบตารางการ์ด (Grid View)"
+                  >
+                    ⊞ ตาราง
+                  </button>
                 </div>
               </div>
             </div>
@@ -901,70 +994,6 @@ export default function JobList({
                 </div>
               </div>
             )}
-
-            {/* Quick Filter Chips & Count Row */}
-            <div className="filter-chips-row">
-              <div className="filter-chips-scroll">
-                {/* OCSC (ภาค ก) Segmented Control */}
-                <div className="filter-segment" role="group" aria-label="เงื่อนไข ภาค ก">
-                  <span className="filter-segment-label">ภาค ก</span>
-                  {[
-                    { mode: "all", label: "ทั้งหมด" },
-                    { mode: "no",  label: "✨ ไม่ต้องผ่าน" },
-                    { mode: "yes", label: "📝 ต้องผ่าน" },
-                  ].map(({ mode, label }) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      id={`filter-ocsc-${mode}`}
-                      onClick={() => setOcscMode(mode)}
-                      aria-pressed={ocscMode === mode}
-                      className={`filter-segment-btn seg-${mode} ${ocscMode === mode ? "active" : ""}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Result Count Badge & View Mode Switcher */}
-              <div className="filter-count-row">
-                <div className="filter-count-badge" aria-live="polite">
-                  พบ <strong>{filtered.length.toLocaleString()}</strong> ประกาศ
-                  {filtered.length > 0 && <> · <strong>{totalPositions.toLocaleString()}</strong> อัตรา</>}
-                  {showExpired ? " (ปิดรับสมัครแล้ว)" : ""}
-                </div>
-
-                <div className="jobs-view-switcher" role="group" aria-label="รูปแบบการแสดงผล">
-                  <button
-                    type="button"
-                    id="btn-view-list"
-                    className={`view-switcher-btn ${viewMode === "list" ? "active" : ""}`}
-                    onClick={() => {
-                      setViewMode("list");
-                      try { localStorage.setItem("readytogov_view_mode", "list"); } catch {}
-                    }}
-                    title="แสดงแบบแนวนอนยาว (List View) สแกนอ่านง่าย"
-                  >
-                    <span className="view-icon">☰</span>
-                    <span className="view-label">แนวนอน</span>
-                  </button>
-                  <button
-                    type="button"
-                    id="btn-view-grid"
-                    className={`view-switcher-btn ${viewMode === "grid" ? "active" : ""}`}
-                    onClick={() => {
-                      setViewMode("grid");
-                      try { localStorage.setItem("readytogov_view_mode", "grid"); } catch {}
-                    }}
-                    title="แสดงแบบตารางการ์ด (Grid View)"
-                  >
-                    <span className="view-icon">⊞</span>
-                    <span className="view-label">ตาราง</span>
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
