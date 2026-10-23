@@ -1830,8 +1830,95 @@
   box-shadow: 0 3px 12px rgba(37, 99, 235, 0.35);
 }
 
+/* ── Taxonomy Divider for Quick Action Filters (Row 1) ── */
+.filter-taxonomy-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(203, 213, 225, 0.85);
+  margin: 0 4px 0 auto; /* pushes everything after it to the far right on desktop */
+  flex-shrink: 0;
+  align-self: center;
+}
+
+[data-theme="dark"] .filter-taxonomy-divider {
+  background: rgba(71, 85, 105, 0.7);
+}
+
+/* ── Quick Action Pills (Bookmarks & Expired Jobs) in Taxonomy Row ── */
+.filter-quick-pill {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.filter-quick-bookmark:hover {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.filter-quick-bookmark.active-bookmark {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #dc2626;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.2);
+}
+
+.filter-quick-bookmark .taxo-count.bookmark-count {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .filter-quick-bookmark:hover {
+  border-color: #ef4444;
+  background: rgba(220, 38, 38, 0.15);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .filter-quick-bookmark.active-bookmark {
+  background: rgba(220, 38, 38, 0.25);
+  border-color: #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 2px 12px rgba(220, 38, 38, 0.35);
+}
+
+.filter-quick-expired:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+  color: #334155;
+  transform: translateY(-1px);
+}
+
+.filter-quick-expired.active-expired {
+  background: #f1f5f9;
+  border-color: #64748b;
+  color: #0f172a;
+  box-shadow: 0 2px 10px rgba(71, 85, 105, 0.18);
+}
+
+.filter-quick-expired .taxo-count.expired-count {
+  background: #64748b;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .filter-quick-expired:hover {
+  border-color: #64748b;
+  background: rgba(100, 116, 139, 0.2);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .filter-quick-expired.active-expired {
+  background: rgba(100, 116, 139, 0.3);
+  border-color: #94a3b8;
+  color: #ffffff;
+  box-shadow: 0 2px 12px rgba(100, 116, 139, 0.35);
+}
+
 /* Responsive adjustment for Mobile screens: Sleek Single-Row Horizontal Swipe (Airbnb / YouTube App style) */
 @media (max-width: 640px) {
+  .filter-taxonomy-divider {
+    margin: 0 3px;
+    height: 18px;
+  }
   .filter-taxonomies-card {
     padding: 8px 10px;
     gap: 7px;
@@ -3678,9 +3765,7 @@
   }
 
   .filter-chips-scroll {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    display: flex;
     width: 100%;
     overflow: visible;
   }
@@ -3772,8 +3857,8 @@
 
 @media (min-width: 600px) and (max-width: 768px) {
   .filter-chips-scroll {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    display: flex;
+    width: 100%;
   }
 }
 

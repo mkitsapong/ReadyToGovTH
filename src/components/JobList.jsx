@@ -803,6 +803,46 @@ export default function JobList({
                       </button>
                     );
                   })}
+                  {/* Divider separating taxonomy pills from quick action filters */}
+                  <div className="filter-taxonomy-divider" aria-hidden="true" />
+
+                  {/* Bookmarks Quick Filter */}
+                  <button
+                    type="button"
+                    id="filter-quick-bookmarks"
+                    onClick={() => {
+                      const nextVal = !showBookmarksOnly;
+                      setShowBookmarksOnly(nextVal);
+                      if (nextVal) setShowExpired(false);
+                    }}
+                    className={`filter-taxonomy-pill filter-quick-pill filter-quick-bookmark ${showBookmarksOnly ? "active-bookmark" : ""}`}
+                    title={showBookmarksOnly ? "คลิกเพื่อดูประกาศทั้งหมด" : "ดูประกาศงานที่บันทึกไว้"}
+                  >
+                    <span className="taxo-icon">{showBookmarksOnly ? "❤️" : "🤍"}</span>
+                    <span className="taxo-label">ที่บันทึกไว้</span>
+                    {validBookmarkCount > 0 && (
+                      <span className="taxo-count bookmark-count">{validBookmarkCount}</span>
+                    )}
+                  </button>
+
+                  {/* Expired Jobs Quick Filter */}
+                  <button
+                    type="button"
+                    id="filter-chip-expired"
+                    onClick={() => {
+                      const nextVal = !showExpired;
+                      setShowExpired(nextVal);
+                      if (nextVal) setShowBookmarksOnly(false);
+                    }}
+                    className={`filter-taxonomy-pill filter-quick-pill filter-quick-expired ${showExpired ? "active-expired" : ""}`}
+                    title={showExpired ? "คลิกเพื่อกลับไปดูงานที่เปิดรับสมัครอยู่" : "ดูประกาศงานราชการที่ปิดรับสมัครแล้ว"}
+                  >
+                    <span className="taxo-icon">⌛</span>
+                    <span className="taxo-label">ปิดรับสมัครแล้ว</span>
+                    {expiredCount > 0 && (
+                      <span className="taxo-count expired-count">{expiredCount}</span>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -865,44 +905,6 @@ export default function JobList({
             {/* Quick Filter Chips & Count Row */}
             <div className="filter-chips-row">
               <div className="filter-chips-scroll">
-                {/* Bookmarks Filter */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const nextVal = !showBookmarksOnly;
-                    setShowBookmarksOnly(nextVal);
-                    if (nextVal) setShowExpired(false);
-                  }}
-                  className={`filter-chip-btn ${showBookmarksOnly ? 'active-bookmark' : ''}`}
-                >
-                  <span className="chip-icon">{showBookmarksOnly ? "❤️" : "🤍"}</span>
-                  <span className="chip-text chip-text-full">ที่บันทึกไว้</span>
-                  <span className="chip-text chip-text-short">ที่บันทึก</span>
-                  {validBookmarkCount > 0 && (
-                    <span className="chip-counter">{validBookmarkCount}</span>
-                  )}
-                </button>
-
-                {/* Expired Jobs Filter */}
-                <button
-                  type="button"
-                  id="filter-chip-expired"
-                  onClick={() => {
-                    const nextVal = !showExpired;
-                    setShowExpired(nextVal);
-                    if (nextVal) setShowBookmarksOnly(false);
-                  }}
-                  className={`filter-chip-btn ${showExpired ? 'active-expired' : ''}`}
-                  title={showExpired ? "คลิกเพื่อกลับไปดูงานที่เปิดรับสมัครอยู่" : "ดูประกาศงานราชการที่ปิดรับสมัครแล้ว"}
-                >
-                  <span className="chip-icon">⌛</span>
-                  <span className="chip-text chip-text-full">ปิดรับสมัครแล้ว</span>
-                  <span className="chip-text chip-text-short">ปิดรับแล้ว</span>
-                  {expiredCount > 0 && (
-                    <span className="chip-counter chip-counter-expired">{expiredCount}</span>
-                  )}
-                </button>
-                
                 {/* OCSC (ภาค ก) Segmented Control */}
                 <div className="filter-segment" role="group" aria-label="เงื่อนไข ภาค ก">
                   <span className="filter-segment-label">ภาค ก</span>
