@@ -30,6 +30,11 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [showPosterModal, setShowPosterModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showTrackerModal, setShowTrackerModal] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [job?.id, job?.logoUrl]);
   
   // Auto-switch: 'cards' on small screens (< 768px), 'table' on desktop/tablet
   const [posViewMode, setPosViewMode] = useState(() => {
@@ -216,21 +221,24 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
         <div className="detail-header-inner">
           {/* Main Identity Logo */}
-          <div className="detail-logo-wrapper">
-            {job.logoUrl ? (
-              <img
-                src={job.logoUrl}
-                alt={job.department}
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.style.display = "none";
-                }}
-                className="detail-logo-img"
-              />
-            ) : (
-              <span className="detail-logo-fallback">{mainMeta.icon}</span>
-            )}
+          <div className="detail-logo-wrapper" title={job.department}>
+            <div className="detail-logo-glow" aria-hidden="true" />
+            <div className="detail-logo-inner">
+              {job.logoUrl && !logoFailed ? (
+                <img
+                  src={job.logoUrl}
+                  alt={job.department}
+                  referrerPolicy="no-referrer"
+                  loading="eager"
+                  onError={() => setLogoFailed(true)}
+                  className="detail-logo-img"
+                />
+              ) : (
+                <span className="detail-logo-fallback" role="img" aria-label={job.department}>
+                  {mainMeta.icon}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Top row: Badges on left, Action Buttons on right */}

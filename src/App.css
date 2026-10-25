@@ -5199,46 +5199,133 @@ select.hub-select-btn {
   gap: 24px;
 }
 
+/* Executive Emblem Plaque (Job Detail Logo) */
 .detail-logo-wrapper {
   grid-area: logo;
-  width: 130px;
-  height: 130px;
-  min-width: 130px;
-  min-height: 130px;
+  width: 126px;
+  height: 126px;
+  min-width: 126px;
+  min-height: 126px;
   flex-shrink: 0;
-  background: #ffffff;
-  border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15),
-    0 12px 32px -4px rgba(0, 0, 0, 0.45),
-    0 0 24px rgba(59, 130, 246, 0.22);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+/* Ambient Backlight Aura */
+.detail-logo-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 30px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(59, 130, 246, 0.42) 0%,
+    rgba(99, 102, 241, 0.24) 45%,
+    rgba(249, 115, 22, 0.16) 72%,
+    transparent 88%
+  );
+  filter: blur(14px);
+  opacity: 0.78;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s ease, filter 0.4s ease, transform 0.4s ease;
+}
+
+.detail-logo-wrapper:hover .detail-logo-glow {
+  opacity: 1;
+  filter: blur(18px);
+  transform: scale(1.08);
+}
+
+/* Polished Porcelain Plaque Container */
+.detail-logo-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  background: linear-gradient(155deg, #ffffff 0%, #fbfcfd 55%, #f1f5f9 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 14px 34px -4px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    inset 0 1px 1.5px rgba(255, 255, 255, 1),
+    inset 0 -2px 4px rgba(15, 23, 42, 0.03);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 6px;
-  position: relative;
+  padding: 10px;
+  box-sizing: border-box;
   transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1),
-    box-shadow 0.35s ease;
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
 }
 
-.detail-logo-wrapper:hover {
-  transform: scale(1.04) translateY(-2px);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25),
-    0 16px 40px -4px rgba(0, 0, 0, 0.55),
-    0 0 30px rgba(249, 115, 22, 0.35);
+/* Light sweep shine on hover */
+.detail-logo-inner::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -130%;
+  width: 65%;
+  height: 220%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    transparent 100%
+  );
+  transform: rotate(26deg);
+  pointer-events: none;
+  z-index: 3;
+  transition: none;
 }
 
+.detail-logo-wrapper:hover .detail-logo-inner {
+  transform: translateY(-3px) scale(1.02);
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 20px 42px -6px rgba(0, 0, 0, 0.55),
+    0 0 32px rgba(59, 130, 246, 0.28),
+    inset 0 1px 2px #ffffff;
+}
+
+.detail-logo-wrapper:hover .detail-logo-inner::after {
+  left: 170%;
+  transition: left 0.85s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Emblem Image - Preserves Full Aspect Ratio and Text */
 .detail-logo-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 4px;
-  border-radius: 50%;
+  object-position: center;
+  border-radius: 0;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.07));
+  transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.detail-logo-wrapper:hover .detail-logo-img {
+  transform: scale(1.04);
 }
 
 .detail-logo-fallback {
-  font-size: 3.4rem;
+  font-size: 3.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.12));
+  transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.detail-logo-wrapper:hover .detail-logo-fallback {
+  transform: scale(1.1);
 }
 
 .detail-title-block {
@@ -6339,20 +6426,31 @@ select.hub-select-btn {
 
   .detail-logo-wrapper {
     grid-area: logo;
-    width: 76px;
-    height: 76px;
-    min-width: 76px;
-    min-height: 76px;
+    width: 86px;
+    height: 86px;
+    min-width: 86px;
+    min-height: 86px;
     margin: 0 auto;
-    padding: 3px;
-    border-width: 2.5px;
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12),
-      0 8px 24px -3px rgba(0, 0, 0, 0.45);
+  }
+
+  .detail-logo-glow {
+    inset: -3px;
+    border-radius: 22px;
+    filter: blur(10px);
+  }
+
+  .detail-logo-inner {
+    border-radius: 18px;
+    padding: 7px;
+    border-width: 1.5px;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.16),
+      0 8px 22px -3px rgba(0, 0, 0, 0.45),
+      inset 0 1px 1px rgba(255, 255, 255, 1);
   }
 
   .detail-logo-img {
-    padding: 2px;
+    padding: 0;
   }
 
   .detail-logo-fallback {
@@ -10801,6 +10899,9 @@ select.hub-select-btn {
   line-height: 1.35;
   color: #0f172a;
   letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .job-horizontal-dept-title a {
@@ -10813,28 +10914,34 @@ select.hub-select-btn {
   color: #1d4ed8;
 }
 
-/* Position Title & Location Subline (Natural Editorial Meta) */
+/* Position Title & Location Subline (Natural Editorial Meta - strictly single line) */
 .job-horizontal-meta-subline {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   font-size: 0.88rem;
   line-height: 1.4;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .job-horizontal-pos-names {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .job-pos-entry {
-  display: inline-flex;
-  align-items: baseline;
+  display: inline;
   color: #334155;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .job-pos-title {
@@ -10846,6 +10953,7 @@ select.hub-select-btn {
   font-weight: 500;
   color: #64748b;
   margin-left: 2px;
+  white-space: nowrap;
 }
 
 .job-pos-bullet {
@@ -10858,6 +10966,7 @@ select.hub-select-btn {
   font-weight: 500;
   color: #64748b;
   margin-left: 4px;
+  white-space: nowrap;
 }
 
 .job-horizontal-loc-text {
@@ -10866,6 +10975,8 @@ select.hub-select-btn {
   gap: 6px;
   color: #64748b;
   font-size: 0.86rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .job-horizontal-loc-text .meta-sep {

@@ -119,7 +119,12 @@ export default function JobCard({
                 </h3>
 
                 {/* Position Title & Location Subline (Natural Editorial Meta) */}
-                <div className="job-horizontal-meta-subline">
+                <div 
+                  className="job-horizontal-meta-subline"
+                  title={job.positionList && job.positionList.length > 0 
+                    ? job.positionList.map(p => `${p.title}${p.count ? ` (${p.count} อัตรา)` : ''}`).join(", ") 
+                    : (job.title || "")}
+                >
                   <div className="job-horizontal-pos-names">
                     {job.positionList && job.positionList.length > 0 ? (
                       <>
@@ -283,9 +288,9 @@ export default function JobCard({
                   ) : days === 0 ? (
                     <span className="deadline-clean today">🔥 ปิดรับวันนี้!</span>
                   ) : urgent ? (
-                    <span className="deadline-clean urgent">⚡ เหลือ ${days} วัน (${formatDate(job.deadline)})</span>
+                    <span className="deadline-clean urgent">⚡ เหลือ {days} วัน ({formatDate(job.deadline)})</span>
                   ) : (
-                    <span className="deadline-clean normal">📅 ปิดรับ ${formatDate(job.deadline)} (เหลือ ${days} วัน)</span>
+                    <span className="deadline-clean normal">📅 ปิดรับ {formatDate(job.deadline)} (เหลือ {days} วัน)</span>
                   )}
                 </div>
 
