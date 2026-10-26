@@ -128,33 +128,6 @@ export default function Header({
               )}
             </button>
 
-            {/* Mobile Drawer Theme Switcher */}
-            <div className="mobile-drawer-theme-wrapper">
-              <div className="drawer-theme-row">
-                <span className="drawer-theme-label">
-                  {isDark ? "โหมดมืด (Dark Mode)" : "โหมดสว่าง (Light Mode)"}
-                </span>
-                <button
-                  type="button"
-                  className={`theme-pill-switch ${isDark ? "dark" : "light"}`}
-                  onClick={() => {
-                    toggleTheme();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  role="switch"
-                  aria-checked={isDark}
-                  aria-label={isDark ? "สลับเป็นโหมดสว่าง" : "สลับเป็นโหมดมืด"}
-                >
-                  <span className="theme-switch-track">
-                    <span className="theme-switch-icon-sun" aria-hidden="true">☀️</span>
-                    <span className="theme-switch-icon-moon" aria-hidden="true">🌙</span>
-                    <span className="theme-switch-knob">
-                      <span className="theme-knob-icon">{isDark ? "🌙" : "☀️"}</span>
-                    </span>
-                  </span>
-                </button>
-              </div>
-            </div>
           </nav>
 
           {/* Auth controls & Day/Night toggle switch */}

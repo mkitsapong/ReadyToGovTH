@@ -2493,8 +2493,15 @@ select.hub-select-btn {
     flex-direction: column;
     align-items: stretch;
     gap: 9px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .toolbar-left-chips {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -2508,19 +2515,19 @@ select.hub-select-btn {
   .toolbar-pill-btn,
   .ocsc-segmented-pill {
     flex-shrink: 0;
-    height: 32px;
+    height: 36px;
   }
   .toolbar-pill-btn {
+    padding: 0 12px;
+    font-size: 0.8rem;
+  }
+  .ocsc-sub-btn {
     padding: 0 10px;
     font-size: 0.78rem;
   }
-  .ocsc-sub-btn {
-    padding: 0 8px;
-    font-size: 0.75rem;
-  }
   .ocsc-pill-label {
-    padding: 0 3px 0 6px;
-    font-size: 0.72rem;
+    padding: 0 4px 0 8px;
+    font-size: 0.74rem;
   }
   .toolbar-right-meta {
     display: flex;
@@ -2537,10 +2544,13 @@ select.hub-select-btn {
   .toolbar-results-count {
     font-size: 0.78rem;
   }
+  .toolbar-view-switcher {
+    padding: 3px;
+  }
   .view-mode-pill {
-    height: 28px;
-    padding: 0 9px;
-    font-size: 0.74rem;
+    height: 34px;
+    padding: 0 12px;
+    font-size: 0.78rem;
   }
 }
 
@@ -3683,10 +3693,12 @@ select.hub-select-btn {
   background: none;
   border: none;
   color: var(--navy-300);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-family: var(--font-sans);
   cursor: pointer;
-  padding: 0;
+  padding: 6px 4px;
+  display: inline-flex;
+  align-items: center;
   transition: color var(--transition-fast);
 }
 
@@ -4475,12 +4487,6 @@ select.hub-select-btn {
 
   .header-role-badge {
     display: none;
-  }
-
-  /* Nav full row */
-  .nav-link {
-    padding: 5px 8px;
-    font-size: 0.76rem;
   }
 
   /* Hero */
@@ -5648,12 +5654,14 @@ select.hub-select-btn {
 .view-toggle-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 14px;
   border: none;
   border-radius: 999px;
   background: transparent;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--navy-600);
   cursor: pointer;
@@ -11423,6 +11431,8 @@ select.hub-select-btn {
 
   .job-horizontal-wrapper {
     flex-direction: column;
+    align-items: stretch;
+    width: 100%;
   }
 
   .job-horizontal-logo-column {
@@ -11433,6 +11443,8 @@ select.hub-select-btn {
   }
 
   .job-horizontal-main-body {
+    width: 100%;
+    box-sizing: border-box;
     padding: 12px 14px;
   }
 
@@ -11440,6 +11452,48 @@ select.hub-select-btn {
     flex-direction: column;
     gap: 10px;
     width: 100%;
+    min-width: 0;
+  }
+
+  .job-horizontal-heading-group {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .job-horizontal-dept-title {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .job-horizontal-dept-title a {
+    display: inline;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .job-horizontal-meta-subline {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .job-horizontal-pos-names {
+    white-space: normal;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .job-pos-entry {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   .job-horizontal-top-right {

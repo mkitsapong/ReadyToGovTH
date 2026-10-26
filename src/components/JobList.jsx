@@ -165,13 +165,46 @@ export default function JobList({
   const [provinceSearchQuery, setProvinceSearchQuery] = useState("");
   const [posterJob, setPosterJob] = useState(null);
   const [shareJob, setShareJob] = useState(null);
+  const [isMobileScreen, setIsMobileScreen] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false
+  );
+
   const [viewMode, setViewMode] = useState(() => {
     try {
-      return localStorage.getItem("readytogov_view_mode") || "list";
+      const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+      const key = isMobile ? "readytogov_view_mode_mobile" : "readytogov_view_mode_desktop";
+      const saved = localStorage.getItem(key);
+      if (saved) return saved;
+      return isMobile ? "grid" : "list";
     } catch {
-      return "list";
+      return typeof window !== "undefined" && window.innerWidth <= 768 ? "grid" : "list";
     }
   });
+
+  // Track screen resize and switch default viewMode accordingly if not overridden for that screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth <= 768;
+      setIsMobileScreen(isMobile);
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // When crossing mobile/desktop breakpoint, load the appropriate view mode preference
+  const prevIsMobileRef = useRef(isMobileScreen);
+  useEffect(() => {
+    if (prevIsMobileRef.current !== isMobileScreen) {
+      prevIsMobileRef.current = isMobileScreen;
+      try {
+        const key = isMobileScreen ? "readytogov_view_mode_mobile" : "readytogov_view_mode_desktop";
+        const saved = localStorage.getItem(key);
+        setViewMode(saved || (isMobileScreen ? "grid" : "list"));
+      } catch {
+        setViewMode(isMobileScreen ? "grid" : "list");
+      }
+    }
+  }, [isMobileScreen]);
 
   // Sync selectedContract when route /category/:id changes
   useEffect(() => {
@@ -223,18 +256,6 @@ export default function JobList({
 
   // ── Keyboard Shortcuts ─────────────────────────────────────────────────
   useKeyboardShortcuts({ searchInputId: "job-search-input" });
-
-  // ── Responsive Screen Width (for mobile UI & placeholder) ─────────────
-  const [isMobileScreen, setIsMobileScreen] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth < 640 : false
-  );
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobileScreen(window.innerWidth < 640);
-    };
-    window.addEventListener("resize", handleResize, { passive: true });
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   const hasActiveFilters = Boolean(
     searchQuery ||
@@ -952,7 +973,10 @@ export default function JobList({
                     className={`view-mode-pill ${viewMode === "list" ? "active" : ""}`}
                     onClick={() => {
                       setViewMode("list");
-                      try { localStorage.setItem("readytogov_view_mode", "list"); } catch {}
+                      try {
+                        const key = isMobileScreen ? "readytogov_view_mode_mobile" : "readytogov_view_mode_desktop";
+                        localStorage.setItem(key, "list");
+                      } catch {}
                     }}
                     title="แสดงแบบแนวนอน (List View)"
                   >
@@ -964,7 +988,10 @@ export default function JobList({
                     className={`view-mode-pill ${viewMode === "grid" ? "active" : ""}`}
                     onClick={() => {
                       setViewMode("grid");
-                      try { localStorage.setItem("readytogov_view_mode", "grid"); } catch {}
+                      try {
+                        const key = isMobileScreen ? "readytogov_view_mode_mobile" : "readytogov_view_mode_desktop";
+                        localStorage.setItem(key, "grid");
+                      } catch {}
                     }}
                     title="แสดงแบบตารางการ์ด (Grid View)"
                   >

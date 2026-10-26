@@ -51,11 +51,11 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
                   background: "none",
                   border: "none",
                   color: "var(--navy-400)",
-                  fontSize: "0.72rem",
+                  fontSize: "0.76rem",
                   cursor: "pointer",
                   opacity: 0.6,
                   transition: "opacity 0.2s",
-                  padding: 0
+                  padding: "6px 8px"
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.6")}
