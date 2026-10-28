@@ -25,6 +25,7 @@ const NotFoundPage  = lazy(() => import("./components/NotFoundPage.jsx"));
 const StatsDashboard = lazy(() => import("./components/StatsDashboard.jsx"));
 const ApplicationTrackerPage = lazy(() => import("./components/ApplicationTrackerPage.jsx"));
 const AdminAnalyticsDashboard = lazy(() => import("./components/AdminAnalyticsDashboard.jsx"));
+const ContactPage = lazy(() => import("./components/ContactPage.jsx"));
 import { trackPageView } from "./services/analyticsService.js";
 
 function ModalLoadingFallback() {
@@ -64,6 +65,7 @@ function Toast({ toasts }) {
 
 // Helper to determine active page from pathname
 function getActivePage(pathname) {
+  if (pathname.includes("/contact")) return "contact";
   if (pathname.includes("/tracker")) return "tracker";
   if (pathname.includes("/stats") || pathname.includes("/dashboard")) return "stats";
   if (pathname.includes("/category/civil")) return "civil";
@@ -329,6 +331,11 @@ export default function App() {
   const selectedProvince = searchParams.get("province");
 
   function handleNavigate(page) {
+    if (page === "contact") {
+      navigate("/contact");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     if (page.startsWith("policy/")) {
       navigate(`/${page}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -405,6 +412,7 @@ export default function App() {
               />
             } />
             <Route path="/policy/:policyId" element={<PolicyPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

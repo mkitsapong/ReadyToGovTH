@@ -265,10 +265,8 @@ const SocialShareCover = forwardRef(({ job, aspectRatio = "4:5" }, ref) => {
 
         {/* Bottom Left Branding for standard 4:5 */}
         {!isStory && (
-          <div style={{ position: "absolute", bottom: 35, left: 50, display: "flex", alignItems: "center", gap: 14, opacity: 0.9 }}>
-            <div style={{ position: "relative", top: "8px" }}>
-              <img src={iconImage} alt="ReadyToGov" style={{ width: 56, height: 56, objectFit: "contain" }} />
-            </div>
+          <div style={{ position: "absolute", bottom: 35, left: 50, display: "flex", alignItems: "center", gap: 14, opacity: 0.95 }}>
+            <img src={iconImage} alt="ReadyToGov" style={{ width: 56, height: 56, objectFit: "contain" }} />
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span style={{ fontSize: "1.6rem", fontWeight: 900, color: "#0f172a", letterSpacing: "-0.5px", lineHeight: 1 }}>
                 ReadyToGov<span style={{ color: "#ea580c" }}>.th</span>

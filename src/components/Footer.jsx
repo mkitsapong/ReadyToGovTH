@@ -5,8 +5,14 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
         <div className="footer-compact">
           {/* Brand */}
           <div className="footer-brand-compact">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <img src="/favicon.svg" alt="Logo" style={{ width: "24px", height: "24px", objectFit: "contain", flexShrink: 0 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <img
+                src="/logo.png"
+                alt="ReadyToGovTH Logo"
+                className="footer-logo-img"
+                width="28"
+                height="28"
+              />
               <span style={{ color: "var(--white)", fontWeight: 700, fontSize: "0.95rem" }}>
                 ReadyToGovTH
               </span>
@@ -28,7 +34,7 @@ export default function Footer({ onNavigate, onLoginClick, user }) {
             <span className="dot">•</span>
             <button onClick={() => onNavigate("policy/cookies")}>นโยบายการใช้คุกกี้</button>
             <span className="dot">•</span>
-            <button onClick={() => window.location.href = "mailto:readytogovth@gmail.com"} title="ส่งอีเมลติดต่อเรา: readytogovth@gmail.com">ติดต่อเรา</button>
+            <button onClick={() => onNavigate("contact")}>ติดต่อเรา</button>
           </div>
         </div>
 

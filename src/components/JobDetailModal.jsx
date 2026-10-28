@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { Link } from "react-router-dom";
 import { useBookmarks } from "../hooks/useBookmarks.js";
 import { useApplicationTracker } from "../hooks/useApplicationTracker.js";
@@ -19,7 +19,7 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
   const [showPdf, setShowPdf] = useState(false);
   const [selectedPdfIndex, setSelectedPdfIndex] = useState(0);
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
-  const [useGoogleDocsViewer, setUseGoogleDocsViewer] = useState(true);
+  const [useGoogleDocsViewer, setUseGoogleDocsViewer] = useState(false);
   const [isPdfLoading, setIsPdfLoading] = useState(true);
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(job?.id);
@@ -36,31 +36,22 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
     setLogoFailed(false);
   }, [job?.id, job?.logoUrl]);
   
-  // Auto-switch: 'cards' on small screens (< 768px), 'table' on desktop/tablet
-  const [posViewMode, setPosViewMode] = useState(() => {
-    return typeof window !== "undefined" && window.innerWidth < 768 ? "cards" : "table";
+  // Responsive layout: 'cards' on small screens (< 768px), 'table' on desktop/tablet
+  const [isMobileScreen, setIsMobileScreen] = useState(() => {
+    return typeof window !== "undefined" && window.innerWidth < 768;
   });
-  const userSelectedModeRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mql = window.matchMedia("(max-width: 767px)");
-    const handleScreenChange = (e) => {
-      // Auto-switch only if user hasn't manually clicked a preference in this session
-      if (!userSelectedModeRef.current) {
-        setPosViewMode(e.matches ? "cards" : "table");
-      }
-    };
+    const handleScreenChange = (e) => setIsMobileScreen(e.matches);
     if (mql.addEventListener) {
       mql.addEventListener("change", handleScreenChange);
       return () => mql.removeEventListener("change", handleScreenChange);
     }
   }, []);
 
-  const handleSelectViewMode = (mode) => {
-    userSelectedModeRef.current = true;
-    setPosViewMode(mode);
-  };
+  const posViewMode = isMobileScreen ? "cards" : "table";
 
   const [expandedRows, setExpandedRows] = useState({});
   const [showPosterLightbox, setShowPosterLightbox] = useState(false);
@@ -77,11 +68,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
     if (!showPdf) return;
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        if (isPdfFullscreen) {
-          setIsPdfFullscreen(false);
-        } else {
-          setShowPdf(false);
-        }
+        setShowPdf(false);
+        setIsPdfFullscreen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -471,34 +459,12 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
                 <div className="detail-section-title-wrap">
                   <span className="detail-section-icon">📋</span>
                   <h2 className="detail-section-title">ตำแหน่งที่เปิดรับสมัคร</h2>
-                  <span className="detail-section-count-badge">({rawPositions.length} ตำแหน่ง)</span>
+                  <span className="detail-section-count-badge">{rawPositions.length} ตำแหน่ง</span>
                 </div>
 
                 <div className="detail-section-actions">
-                  {/* View Mode Toggle: Table (default) vs Cards */}
-                  <div className="detail-view-toggle" role="group" aria-label="สลับมุมมองตำแหน่ง">
-                    <button
-                      type="button"
-                      className={`view-toggle-btn ${posViewMode === "table" ? "active" : ""}`}
-                      onClick={() => handleSelectViewMode("table")}
-                      title="มุมมองแบบตาราง (กะทัดรัด ประหยัดพื้นที่)"
-                    >
-                      <span className="view-toggle-icon">📋</span>
-                      <span className="view-toggle-text">ตาราง</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`view-toggle-btn ${posViewMode === "cards" ? "active" : ""}`}
-                      onClick={() => handleSelectViewMode("cards")}
-                      title="มุมมองแบบการ์ด (เหมาะกับมือถือ)"
-                    >
-                      <span className="view-toggle-icon">🗂️</span>
-                      <span className="view-toggle-text">การ์ด</span>
-                    </button>
-                  </div>
-
                   <div className="detail-section-total-pill">
-                    รวม {totalCount} อัตรา
+                    🎯 รวม {totalCount} อัตรา
                   </div>
                 </div>
               </div>
@@ -942,7 +908,8 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
               onClick={() => {
                 setSelectedPdfIndex(0);
                 setIsPdfLoading(true);
-                setUseGoogleDocsViewer(true);
+                setUseGoogleDocsViewer(false);
+                setIsPdfFullscreen(true);
                 setShowPdf(true);
                 trackDocView(job, selectedPdfIndex);
                 window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1026,153 +993,153 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
 
   if (showPdf) {
     const currentPdfUrl = pdfUrls[selectedPdfIndex] || "";
-    const embedUrl = currentPdfUrl.includes("drive.google.com/file/d/")
+    const isGoogleDrive = currentPdfUrl.includes("drive.google.com/file/d/");
+    const pdfViewParam = isMobileScreen ? "view=FitH" : "view=Fit";
+    const embedUrl = isGoogleDrive
       ? currentPdfUrl.replace(/\/view.*$/, "/preview")
       : useGoogleDocsViewer
       ? `https://docs.google.com/viewer?url=${encodeURIComponent(currentPdfUrl)}&embedded=true`
-      : `${currentPdfUrl}${currentPdfUrl.includes("#") ? "&" : "#"}view=FitH`;
+      : `${currentPdfUrl}${currentPdfUrl.includes("#") ? "&" : "#"}page=1&${pdfViewParam}&toolbar=1`;
 
     const pdfContent = (
-      <div className={`doc-viewer-wrapper ${inline ? "inline-mode" : "modal-mode"} ${isPdfFullscreen ? "fullscreen-mode" : ""}`}>
-        {/* Top Header / Control Bar */}
-        <div className="doc-viewer-header">
-          {/* Left: Back button & Department Context */}
-          <div className="doc-viewer-left">
+      <div className={`doc-viewer-wrapper cmr-wrapper ${inline ? "inline-mode" : "modal-mode"} ${isPdfFullscreen ? "fullscreen-mode" : ""}`}>
+        {/* Sleek Frosted Glass Header */}
+        <header className="cmr-header">
+          {/* Left: Back & Department / Status Context */}
+          <div className="cmr-header-left">
             <button
               type="button"
               onClick={() => {
-                if (isPdfFullscreen) {
-                  setIsPdfFullscreen(false);
-                } else {
-                  setShowPdf(false);
-                }
+                setShowPdf(false);
+                setIsPdfFullscreen(false);
+                if (!inline && onClose) onClose();
               }}
-              className="doc-viewer-back-btn"
-              title={isPdfFullscreen ? "ออกจากโหมดเต็มจอ (Esc)" : "ปิดเอกสารกลับสู่หน้ารายละเอียด (Esc)"}
+              className="cmr-back-btn"
+              title="ปิดเอกสารกลับสู่หน้ารายละเอียด (Esc)"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              <span>{isPdfFullscreen ? "ย่อหน้าจอ" : "ปิดเอกสาร"}</span>
+              <span>ปิด<span className="hide-on-mobile">เอกสาร</span></span>
+              <kbd className="cmr-kbd">Esc</kbd>
             </button>
 
-            <div className="doc-viewer-divider" />
+            <div className="cmr-divider" />
 
-            <div className="doc-viewer-title-group">
-              <div className="doc-viewer-dept" title={job.department}>
-                {job.department}
+            <div className="cmr-title-group">
+              <div className="cmr-dept-name" title={job.department}>
+                🏛️ {job.department}
               </div>
-              <div className="doc-viewer-subtitle">
-                <span className="doc-viewer-badge">
+              <div className="cmr-meta-badges">
+                <span className="cmr-badge category hide-on-mobile">
                   {mainMeta.icon || "📄"} {categories[0] || "งานราชการ"}
                 </span>
-                <span>• ประกาศรับสมัครงานฉบับเต็ม</span>
+                {days >= 0 ? (
+                  <span className="cmr-badge days-active">
+                    ⏳ เหลือ {days === 0 ? "วันสุดท้าย" : `${days} วัน`}
+                  </span>
+                ) : (
+                  <span className="cmr-badge days-closed">ปิดรับสมัครแล้ว</span>
+                )}
+                {positionTitle && (
+                  <span className="cmr-badge-sub hide-on-mobile" title={positionTitle}>
+                    • {positionTitle}
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Center: File Switcher Tabs (if multiple attachments) */}
+          {/* Center: File Switcher Tabs */}
           {pdfUrls.length > 1 && (
-            <div className="doc-viewer-center">
-              {pdfUrls.map((url, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    setSelectedPdfIndex(idx);
-                    setIsPdfLoading(true);
-                  }}
-                  className={`doc-file-pill ${selectedPdfIndex === idx ? "active" : ""}`}
-                  title={`สลับดูไฟล์ที่ ${idx + 1}`}
-                >
-                  <span>📄</span>
-                  <span>ฉบับที่ {idx + 1}</span>
-                </button>
-              ))}
+            <div className="cmr-header-center">
+              <div className="cmr-file-tabs">
+                {pdfUrls.map((url, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPdfIndex(idx);
+                      setIsPdfLoading(true);
+                      trackDocView(job, idx);
+                    }}
+                    className={`cmr-file-tab ${selectedPdfIndex === idx ? "active" : ""}`}
+                    title={`สลับดูเอกสารฉบับที่ ${idx + 1}`}
+                  >
+                    <span>📄 ฉบับที่ {idx + 1}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Right: Action tools */}
-          <div className="doc-viewer-right">
-
-            {/* Toggle Fullscreen Theater Mode */}
+          {/* Right: Action Tools */}
+          <div className="cmr-header-right">
+            {/* Toggle Fullscreen / Theater Mode */}
             <button
               type="button"
               onClick={() => setIsPdfFullscreen(prev => !prev)}
-              className="doc-tool-btn accent"
-              title={isPdfFullscreen ? "ย่อขนาดจอ (Esc)" : "ขยายโหมดอ่านเต็มหน้าจอ (Fullscreen)"}
+              className="cmr-tool-btn accent"
+              title={isPdfFullscreen ? "ย่อหน้าจอ (Esc)" : "ขยายโหมดอ่านเต็มหน้าจอ (Fullscreen)"}
             >
               {isPdfFullscreen ? (
                 <>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
                   </svg>
-                  <span className="btn-label">ย่อหน้าจอ</span>
+                  <span className="btn-label">ย่อจอ</span>
                 </>
               ) : (
                 <>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
                   </svg>
-                  <span className="btn-label">ขยายเต็มจอ</span>
+                  <span className="btn-label">เต็มจอ</span>
                 </>
               )}
             </button>
 
-            {/* Close Cross Button for Modal, Inline or Fullscreen */}
+            {/* Quick Apply Button in Header */}
+            {days >= 0 && effectiveApplyUrl && (
+              <a
+                href={effectiveApplyUrl}
+                target={isEmail ? undefined : "_blank"}
+                rel="noopener noreferrer"
+                onClick={() => trackJobApply(job)}
+                className="cmr-apply-btn"
+                title={isEmail ? "ส่งใบสมัครทางอีเมล" : "ไปที่หน้าเว็บสมัครออนไลน์"}
+              >
+                <span>{isEmail ? "ส่งอีเมลสมัคร" : "สมัครออนไลน์"}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </a>
+            )}
+
+            {/* Close Cross Button */}
             <button
               type="button"
               onClick={() => {
-                if (isPdfFullscreen) {
-                  setIsPdfFullscreen(false);
-                } else if (inline) {
-                  setShowPdf(false);
-                } else {
-                  onClose ? onClose() : setShowPdf(false);
-                }
+                setShowPdf(false);
+                setIsPdfFullscreen(false);
+                if (!inline && onClose) onClose();
               }}
-              className="doc-tool-icon-btn"
+              className="cmr-close-btn"
               title="ปิดเอกสาร (Esc)"
             >
               ✕
             </button>
           </div>
-        </div>
-
-        {/* Informative Sub-toolbar / Troubleshooting helper */}
-        <div className="doc-viewer-infobar">
-          <div className="doc-viewer-infobar-left">
-            <span>
-              📄 เอกสารฉบับที่ {selectedPdfIndex + 1} จาก {pdfUrls.length}
-            </span>
-            <span style={{ opacity: 0.4 }}>|</span>
-            <span>
-              💡 แนะนำ: กดปุ่ม <strong>"ขยายเต็มจอ"</strong> เพื่ออ่านเอกสาร A4 และตารางคะแนนได้ชัดเจนที่สุด
-            </span>
-          </div>
-          <div className="doc-viewer-infobar-right">
-            <span>เอกสารไม่ขึ้นหรือโหลดช้า?</span>
-            <button
-              type="button"
-              onClick={() => {
-                setUseGoogleDocsViewer((prev) => !prev);
-                setIsPdfLoading(true);
-              }}
-              className="inline-link"
-              title="สลับโหมดการแสดงผลกรณีต้องการเปิดไฟล์ PDF โดยตรงหรือสลับมุมมอง"
-            >
-              🔄 {useGoogleDocsViewer ? "สลับเป็นมุมมองตรง (Direct PDF)" : "เปิดผ่าน Google Viewer"}
-            </button>
-          </div>
-        </div>
+        </header>
 
         {/* Viewer Canvas */}
         <div className="doc-viewer-body">
           {isPdfLoading && (
             <div className="doc-viewer-loader">
               <div className="doc-viewer-spinner" />
-              <div style={{ fontSize: "0.85rem", fontWeight: 500, color: "#94a3b8" }}>
+              <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#f8fafc" }}>
                 กำลังเชื่อมต่อและโหลดเอกสารประกาศ...
               </div>
             </div>
@@ -1189,7 +1156,17 @@ export default function JobDetailModal({ job, books = [], onClose, inline = fals
       </div>
     );
 
-    if (inline && !isPdfFullscreen) return pdfContent;
+    if (inline) {
+      return (
+        <div
+          className={isPdfFullscreen ? "modal-overlay" : ""}
+          style={isPdfFullscreen ? { zIndex: 99999, padding: 0 } : undefined}
+          onClick={(e) => e.target === e.currentTarget && !isPdfFullscreen && setShowPdf(false)}
+        >
+          {pdfContent}
+        </div>
+      );
+    }
 
     return (
       <div

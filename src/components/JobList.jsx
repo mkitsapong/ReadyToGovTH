@@ -169,42 +169,16 @@ export default function JobList({
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
 
-  const [viewMode, setViewMode] = useState(() => {
-    try {
-      const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
-      const key = isMobile ? "readytogov_view_mode_mobile" : "readytogov_view_mode_desktop";
-      const saved = localStorage.getItem(key);
-      if (saved) return saved;
-      return isMobile ? "grid" : "list";
-    } catch {
-      return typeof window !== "undefined" && window.innerWidth <= 768 ? "grid" : "list";
-    }
-  });
-
-  // Track screen resize and switch default viewMode accordingly if not overridden for that screen size
+  // Track screen resize for responsive layout (mobile vs desktop)
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = window.innerWidth <= 768;
-      setIsMobileScreen(isMobile);
+      setIsMobileScreen(window.innerWidth <= 768);
     };
     window.addEventListener("resize", handleResize, { passive: true });
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // When crossing mobile/desktop breakpoint, load the appropriate view mode preference
-  const prevIsMobileRef = useRef(isMobileScreen);
-  useEffect(() => {
-    if (prevIsMobileRef.current !== isMobileScreen) {
-      prevIsMobileRef.current = isMobileScreen;
-      try {
-        const key = isMobileScreen ? "readytogov_view_mode_mobile" : "readytogov_view_mode_desktop";
-        const saved = localStorage.getItem(key);
-        setViewMode(saved || (isMobileScreen ? "grid" : "list"));
-      } catch {
-        setViewMode(isMobileScreen ? "grid" : "list");
-      }
-    }
-  }, [isMobileScreen]);
+  const viewMode = isMobileScreen ? "grid" : "list";
 
   // Sync selectedContract when route /category/:id changes
   useEffect(() => {
@@ -954,7 +928,7 @@ export default function JobList({
 
               </div>
 
-              {/* Right: Results Count Badge & View Mode Switcher */}
+              {/* Right: Results Count Badge */}
               <div className="toolbar-right-meta">
                 <div className="toolbar-results-count" aria-live="polite">
                   <span className="results-indicator" />
@@ -964,39 +938,6 @@ export default function JobList({
                       <span className="results-positions"> · <strong>{totalPositions.toLocaleString()}</strong> อัตรา</span>
                     )}
                   </span>
-                </div>
-
-                <div className="toolbar-view-switcher" role="group" aria-label="รูปแบบการแสดงผล">
-                  <button
-                    type="button"
-                    id="btn-view-list"
-                    className={`view-mode-pill ${viewMode === "list" ? "active" : ""}`}
-                    onClick={() => {
-                      setViewMode("list");
-                      try {
-                        const key = isMobileScreen ? "readytogov_view_mode_mobile" : "readytogov_view_mode_desktop";
-                        localStorage.setItem(key, "list");
-                      } catch {}
-                    }}
-                    title="แสดงแบบแนวนอน (List View)"
-                  >
-                    ☰ แนวนอน
-                  </button>
-                  <button
-                    type="button"
-                    id="btn-view-grid"
-                    className={`view-mode-pill ${viewMode === "grid" ? "active" : ""}`}
-                    onClick={() => {
-                      setViewMode("grid");
-                      try {
-                        const key = isMobileScreen ? "readytogov_view_mode_mobile" : "readytogov_view_mode_desktop";
-                        localStorage.setItem(key, "grid");
-                      } catch {}
-                    }}
-                    title="แสดงแบบตารางการ์ด (Grid View)"
-                  >
-                    ⊞ ตาราง
-                  </button>
                 </div>
               </div>
             </div>

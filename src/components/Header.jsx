@@ -43,7 +43,13 @@ export default function Header({
             href="/"
             style={{ cursor: "pointer" }}
           >
-            <img src="/favicon.svg" alt="Logo" style={{ width: "44px", height: "44px", objectFit: "contain", flexShrink: 0 }} />
+            <img
+              src="/logo.png"
+              alt="ReadyToGovTH Logo"
+              className="header-logo-img"
+              width="40"
+              height="40"
+            />
             <div className="logo-text">
               <span>ReadyToGovTH</span>
               <span>งานราชการไทย</span>

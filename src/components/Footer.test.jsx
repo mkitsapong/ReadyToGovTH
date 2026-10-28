@@ -51,6 +51,9 @@ describe("Footer Component", () => {
 
     fireEvent.click(screen.getByText("นโยบายการใช้คุกกี้"));
     expect(onNavigate).toHaveBeenCalledWith("policy/cookies");
+
+    fireEvent.click(screen.getByText("ติดต่อเรา"));
+    expect(onNavigate).toHaveBeenCalledWith("contact");
   });
 
   it("shows admin login link when user is NOT logged in", () => {
